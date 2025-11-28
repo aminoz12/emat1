@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
         const deptStr = String(dept).padStart(2, '0')
         return code === deptStr || code === dept
       })
-    } else if (departments && typeof departments === 'object') {
+    } else if (departments !== null && typeof departments === 'object') {
       // Si c'est un objet, chercher directement par clé
       departmentData = departments[dept] || departments[String(dept).padStart(2, '0')]
     }
