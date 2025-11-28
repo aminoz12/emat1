@@ -1,0 +1,994 @@
+'use client'
+
+import { useState } from 'react'
+import { CheckCircle, Flag, Percent, Truck, Star, Camera } from 'lucide-react'
+import Image from 'next/image'
+
+export default function PlaqueImmatriculationPage() {
+  const [registrationNumber, setRegistrationNumber] = useState('')
+  const [vehicleType, setVehicleType] = useState('auto')
+  const [material, setMaterial] = useState('plexiglass')
+  const [selectedDepartment, setSelectedDepartment] = useState<string | null>(null)
+  const [fixingMode, setFixingMode] = useState<string | null>(null)
+  const [textOption, setTextOption] = useState('no-text')
+  const [customText, setCustomText] = useState('')
+  const [quantity, setQuantity] = useState(1)
+  const [regionLogoError, setRegionLogoError] = useState(false)
+  const [euFlagError, setEuFlagError] = useState(false)
+
+  // Region logos mapping (local files in public/regions/)
+  const regionLogos: { [key: string]: string } = {
+    'auvergne-rhone-alpes': '/d1.jpeg',
+    'bourgogne-franche-comte': '/d2.jpeg',
+    'bretagne': '/d3.jpeg',
+    'centre-val-de-loire': '/d4.jpeg',
+    'corse': '/d5.jpeg',
+    'grand-est': '/d6.jpeg',
+    'hauts-de-france': '/d7.jpeg',
+    'ile-de-france': '/d8.jpeg',
+    'normandie': '/d9.jpeg',
+    'nouvelle-aquitaine': '/d10.jpeg',
+    'occitanie': '/d11.jpeg',
+    'pays-de-la-loire': '/d12.jpeg',
+    'paca': '/d13.jpeg',
+    'guadeloupe': '/d14.jpeg',
+    'martinique': '/d15.jpeg',
+    'guyane': '/d16.jpeg',
+    'la-reunion': '/d17.jpeg',
+    'mayotte': '/d18.jpeg',
+  }
+
+  // Department to region mapping
+  const getRegionLogo = (deptCode: string): string => {
+    const regionMap: { [key: string]: string } = {
+      // Auvergne–Rhône–Alpes
+      '01': 'auvergne-rhone-alpes', '03': 'auvergne-rhone-alpes', '07': 'auvergne-rhone-alpes',
+      '15': 'auvergne-rhone-alpes', '26': 'auvergne-rhone-alpes', '38': 'auvergne-rhone-alpes',
+      '42': 'auvergne-rhone-alpes', '43': 'auvergne-rhone-alpes', '63': 'auvergne-rhone-alpes',
+      '69': 'auvergne-rhone-alpes', '73': 'auvergne-rhone-alpes', '74': 'auvergne-rhone-alpes',
+      // Bourgogne–Franche–Comté
+      '21': 'bourgogne-franche-comte', '25': 'bourgogne-franche-comte', '39': 'bourgogne-franche-comte',
+      '58': 'bourgogne-franche-comte', '70': 'bourgogne-franche-comte', '71': 'bourgogne-franche-comte',
+      '89': 'bourgogne-franche-comte', '90': 'bourgogne-franche-comte',
+      // Bretagne
+      '22': 'bretagne', '29': 'bretagne', '35': 'bretagne', '56': 'bretagne',
+      // Centre–Val de Loire
+      '18': 'centre-val-de-loire', '28': 'centre-val-de-loire', '36': 'centre-val-de-loire',
+      '37': 'centre-val-de-loire', '41': 'centre-val-de-loire', '45': 'centre-val-de-loire',
+      // Corse
+      '2A': 'corse', '2B': 'corse',
+      // Grand Est
+      '08': 'grand-est', '10': 'grand-est', '51': 'grand-est', '52': 'grand-est',
+      '54': 'grand-est', '55': 'grand-est', '57': 'grand-est', '67': 'grand-est',
+      '68': 'grand-est', '88': 'grand-est',
+      // Hauts-de-France
+      '02': 'hauts-de-france', '59': 'hauts-de-france', '60': 'hauts-de-france',
+      '62': 'hauts-de-france', '80': 'hauts-de-france',
+      // Île-de-France
+      '75': 'ile-de-france', '77': 'ile-de-france', '78': 'ile-de-france',
+      '91': 'ile-de-france', '92': 'ile-de-france', '93': 'ile-de-france',
+      '94': 'ile-de-france', '95': 'ile-de-france',
+      // Normandie
+      '14': 'normandie', '27': 'normandie', '50': 'normandie', '61': 'normandie', '76': 'normandie',
+      // Nouvelle-Aquitaine
+      '16': 'nouvelle-aquitaine', '17': 'nouvelle-aquitaine', '19': 'nouvelle-aquitaine',
+      '23': 'nouvelle-aquitaine', '24': 'nouvelle-aquitaine', '33': 'nouvelle-aquitaine',
+      '40': 'nouvelle-aquitaine', '47': 'nouvelle-aquitaine', '64': 'nouvelle-aquitaine',
+      '79': 'nouvelle-aquitaine', '86': 'nouvelle-aquitaine', '87': 'nouvelle-aquitaine',
+      // Occitanie
+      '09': 'occitanie', '11': 'occitanie', '12': 'occitanie', '30': 'occitanie',
+      '31': 'occitanie', '32': 'occitanie', '34': 'occitanie', '46': 'occitanie',
+      '48': 'occitanie', '65': 'occitanie', '66': 'occitanie', '81': 'occitanie', '82': 'occitanie',
+      // Pays de la Loire
+      '44': 'pays-de-la-loire', '49': 'pays-de-la-loire', '53': 'pays-de-la-loire',
+      '72': 'pays-de-la-loire', '85': 'pays-de-la-loire',
+      // Provence–Alpes–Côte d'Azur
+      '04': 'paca', '05': 'paca', '06': 'paca', '13': 'paca', '83': 'paca', '84': 'paca',
+      // DROM
+      '971': 'guadeloupe',
+      '972': 'martinique',
+      '973': 'guyane',
+      '974': 'la-reunion',
+      '976': 'mayotte',
+    }
+    const region = regionMap[deptCode] || 'ile-de-france'
+    return regionLogos[region] || ''
+  }
+
+  // French departments (1-95)
+  const departments = [
+    { code: '01', name: 'Ain' },
+    { code: '02', name: 'Aisne' },
+    { code: '03', name: 'Allier' },
+    { code: '04', name: 'Alpes-de-Haute-Provence' },
+    { code: '05', name: 'Hautes-Alpes' },
+    { code: '06', name: 'Alpes-Maritimes' },
+    { code: '07', name: 'Ardèche' },
+    { code: '08', name: 'Ardennes' },
+    { code: '09', name: 'Ariège' },
+    { code: '10', name: 'Aube' },
+    { code: '11', name: 'Aude' },
+    { code: '12', name: 'Aveyron' },
+    { code: '13', name: 'Bouches-du-Rhône' },
+    { code: '14', name: 'Calvados' },
+    { code: '15', name: 'Cantal' },
+    { code: '16', name: 'Charente' },
+    { code: '17', name: 'Charente-Maritime' },
+    { code: '18', name: 'Cher' },
+    { code: '19', name: 'Corrèze' },
+    { code: '21', name: 'Côte-d\'Or' },
+    { code: '22', name: 'Côtes-d\'Armor' },
+    { code: '23', name: 'Creuse' },
+    { code: '24', name: 'Dordogne' },
+    { code: '25', name: 'Doubs' },
+    { code: '26', name: 'Drôme' },
+    { code: '27', name: 'Eure' },
+    { code: '28', name: 'Eure-et-Loir' },
+    { code: '29', name: 'Finistère' },
+    { code: '30', name: 'Gard' },
+    { code: '31', name: 'Haute-Garonne' },
+    { code: '32', name: 'Gers' },
+    { code: '33', name: 'Gironde' },
+    { code: '34', name: 'Hérault' },
+    { code: '35', name: 'Ille-et-Vilaine' },
+    { code: '36', name: 'Indre' },
+    { code: '37', name: 'Indre-et-Loire' },
+    { code: '38', name: 'Isère' },
+    { code: '39', name: 'Jura' },
+    { code: '40', name: 'Landes' },
+    { code: '41', name: 'Loir-et-Cher' },
+    { code: '42', name: 'Loire' },
+    { code: '43', name: 'Haute-Loire' },
+    { code: '44', name: 'Loire-Atlantique' },
+    { code: '45', name: 'Loiret' },
+    { code: '46', name: 'Lot' },
+    { code: '47', name: 'Lot-et-Garonne' },
+    { code: '48', name: 'Lozère' },
+    { code: '49', name: 'Maine-et-Loire' },
+    { code: '50', name: 'Manche' },
+    { code: '51', name: 'Marne' },
+    { code: '52', name: 'Haute-Marne' },
+    { code: '53', name: 'Mayenne' },
+    { code: '54', name: 'Meurthe-et-Moselle' },
+    { code: '55', name: 'Meuse' },
+    { code: '56', name: 'Morbihan' },
+    { code: '57', name: 'Moselle' },
+    { code: '58', name: 'Nièvre' },
+    { code: '59', name: 'Nord' },
+    { code: '60', name: 'Oise' },
+    { code: '61', name: 'Orne' },
+    { code: '62', name: 'Pas-de-Calais' },
+    { code: '63', name: 'Puy-de-Dôme' },
+    { code: '64', name: 'Pyrénées-Atlantiques' },
+    { code: '65', name: 'Hautes-Pyrénées' },
+    { code: '66', name: 'Pyrénées-Orientales' },
+    { code: '67', name: 'Bas-Rhin' },
+    { code: '68', name: 'Haut-Rhin' },
+    { code: '69', name: 'Rhône' },
+    { code: '70', name: 'Haute-Saône' },
+    { code: '71', name: 'Saône-et-Loire' },
+    { code: '72', name: 'Sarthe' },
+    { code: '73', name: 'Savoie' },
+    { code: '74', name: 'Haute-Savoie' },
+    { code: '75', name: 'Paris' },
+    { code: '76', name: 'Seine-Maritime' },
+    { code: '77', name: 'Seine-et-Marne' },
+    { code: '78', name: 'Yvelines' },
+    { code: '79', name: 'Deux-Sèvres' },
+    { code: '80', name: 'Somme' },
+    { code: '81', name: 'Tarn' },
+    { code: '82', name: 'Tarn-et-Garonne' },
+    { code: '83', name: 'Var' },
+    { code: '84', name: 'Vaucluse' },
+    { code: '85', name: 'Vendée' },
+    { code: '86', name: 'Vienne' },
+    { code: '87', name: 'Haute-Vienne' },
+    { code: '88', name: 'Vosges' },
+    { code: '89', name: 'Yonne' },
+    { code: '90', name: 'Territoire de Belfort' },
+    { code: '91', name: 'Essonne' },
+    { code: '92', name: 'Hauts-de-Seine' },
+    { code: '93', name: 'Seine-Saint-Denis' },
+    { code: '94', name: 'Val-de-Marne' },
+    { code: '95', name: 'Val-d\'Oise' },
+    { code: '2A', name: 'Corse-du-Sud' },
+    { code: '2B', name: 'Haute-Corse' },
+    { code: '971', name: 'Guadeloupe' },
+    { code: '972', name: 'Martinique' },
+    { code: '973', name: 'Guyane' },
+    { code: '974', name: 'La Réunion' },
+    { code: '976', name: 'Mayotte' },
+  ]
+
+  const fixingModes = [
+    { id: 'rivets', name: '2 rivets', size: '4x20mm', price: 'Gratuit', image: '/simple.png' },
+    { id: 'rivets-premium', name: '2 rivets premium', size: '4x20mm', price: '1,90 €', image: '/prenium.png' },
+    { id: 'rivets-premium-noirs', name: '2 rivets premium noirs', size: '4x20mm', price: '1,90 €', image: '/noire.png' },
+    { id: 'kit-pose', name: 'Kit pose', additional: '+ 2 rivets premium', size: '', price: '14,90 €', image: '/kitpose.png' },
+  ]
+
+  const handleRegistrationNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Convert to uppercase and remove all non-alphanumeric characters
+    const value = e.target.value
+    const filtered = value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, 10)
+    setRegistrationNumber(filtered)
+    // Reset image error states when registration changes
+    setRegionLogoError(false)
+    setEuFlagError(false)
+  }
+
+  // Format registration number for display (AA-123-AB)
+  const formatRegistrationNumber = (num: string): string => {
+    if (!num) return 'AA-123-AB'
+    // Remove all non-alphanumeric characters
+    const cleaned = num.replace(/[^a-zA-Z0-9]/g, '').toUpperCase()
+    // Format as AA-123-AB (2 letters, 3 digits, 2 letters)
+    if (cleaned.length <= 2) {
+      return cleaned
+    } else if (cleaned.length <= 5) {
+      return `${cleaned.slice(0, 2)}-${cleaned.slice(2)}`
+    } else {
+      return `${cleaned.slice(0, 2)}-${cleaned.slice(2, 5)}-${cleaned.slice(5, 7)}`
+    }
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    // Validate required fields
+    if (!registrationNumber || registrationNumber.trim() === '') {
+      alert('Le numéro d\'immatriculation est obligatoire.')
+      return
+    }
+    
+    if (!selectedDepartment) {
+      alert('Veuillez sélectionner un département.')
+      return
+    }
+
+    try {
+      // Calculate price
+      const basePrice = 15.90
+      let totalPrice = basePrice
+      
+      if (textOption === 'website') {
+        totalPrice -= 1.00
+      } else if (textOption === 'custom') {
+        totalPrice += 1.50
+      }
+      
+      if (fixingMode === 'rivets-premium' || fixingMode === 'rivets-premium-noirs') {
+        totalPrice += 1.90
+      } else if (fixingMode === 'kit-pose') {
+        totalPrice += 14.90
+      }
+      
+      totalPrice *= quantity
+
+      // Create order data with all metadata
+      const { createOrder } = await import('@/lib/services/orderService')
+      
+      const orderData = {
+        type: 'plaque' as const,
+        vehicleData: {
+          registrationNumber: registrationNumber.trim().toUpperCase().replace(/\s+/g, ''),
+        },
+        serviceType: 'plaque-immatriculation',
+        price: totalPrice,
+        metadata: {
+          registrationNumber: registrationNumber.trim().toUpperCase().replace(/\s+/g, ''),
+          vehicleType,
+          material,
+          department: selectedDepartment,
+          fixingMode,
+          textOption,
+          customText: textOption === 'custom' ? customText : '',
+          quantity,
+          basePrice,
+          calculatedPrice: totalPrice,
+        }
+      }
+
+      const result = await createOrder(orderData)
+      
+      if (!result.success || !result.order) {
+        throw new Error(result.error || 'Erreur lors de la création de la commande')
+      }
+
+      // Store order reference for payment page
+      localStorage.setItem('currentOrderId', result.order.id)
+      localStorage.setItem('currentOrderRef', result.order.reference)
+      localStorage.setItem('currentOrderPrice', String(totalPrice))
+
+      // Redirect to dashboard or payment
+      alert(`Commande créée avec succès ! Référence: ${result.order.reference}`)
+      window.location.href = '/dashboard'
+
+    } catch (error: any) {
+      console.error('Erreur soumission:', error)
+      alert(error.message || 'Une erreur est survenue. Veuillez réessayer.')
+    }
+  }
+
+  // Calculate total price
+  const calculateTotal = () => {
+    let total = 15.90 // Base price for Plexiglass auto
+    
+    // Text option adjustments
+    if (textOption === 'website') {
+      total -= 1.00
+    } else if (textOption === 'custom') {
+      total += 1.50
+    }
+    
+    // Fixing mode adjustments
+    if (fixingMode === 'rivets-premium' || fixingMode === 'rivets-premium-noirs') {
+      total += 1.90
+    } else if (fixingMode === 'kit-pose') {
+      total += 14.90
+    }
+    
+    // Multiply by quantity
+    total *= quantity
+    
+    return total.toFixed(2).replace('.', ',')
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Top Header Bar */}
+      <div className="bg-gray-100 border-b border-gray-200 py-2.5">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-wrap items-center justify-center gap-8 text-sm text-gray-700">
+            <div className="flex items-center space-x-1.5">
+              <Flag className="w-4 h-4 text-primary-600" />
+              <span>Made in France</span>
+            </div>
+            <div className="flex items-center space-x-1.5">
+              <Percent className="w-4 h-4 text-primary-600" />
+              <span>Economisez jusqu'à 50%</span>
+            </div>
+            <div className="flex items-center space-x-1.5">
+              <Truck className="w-4 h-4 text-primary-600" />
+              <span>Livraison en 24/48h</span>
+            </div>
+            <div className="flex items-center space-x-1.5">
+              <Star className="w-4 h-4 text-primary-600" />
+              <span>Matériaux haut de gamme</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="container mx-auto px-4 py-10">
+        <div className="max-w-5xl mx-auto">
+          {/* Title and Description */}
+          <div className="text-center mb-10">
+            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-3">
+              Quelles plaques souhaitez-vous commander?
+            </h1>
+            <p className="text-base text-gray-600 max-w-3xl mx-auto leading-relaxed">
+              Toutes nos plaques d'immatriculation sont fabriquées en France <span className="font-semibold">Fr</span> dans les meilleurs matériaux. La fabrication et l'expédition sont effectuées sous 24h.
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Step 1: Registration Number */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 md:p-8 relative">
+              <div className="absolute top-5 right-5">
+                <span className="text-xs text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full font-medium">
+                  Obligatoire
+                </span>
+              </div>
+              
+              <div className="flex items-start space-x-4 pr-32">
+                <div className="w-10 h-10 bg-primary-600 text-white rounded-full flex items-center justify-center flex-shrink-0 font-bold text-lg">
+                  1
+                </div>
+                <div className="flex-1">
+                  <h2 className="text-xl font-bold text-gray-900 mb-5">
+                    Indiquez le numéro d'immatriculation
+                  </h2>
+                  
+                  <div className="flex flex-col lg:flex-row gap-6">
+                    <div className="flex-1">
+                      <input
+                        type="text"
+                        value={registrationNumber}
+                        onChange={handleRegistrationNumberChange}
+                        placeholder="AA - 123 - AA"
+                        maxLength={10}
+                        className="w-full px-5 py-4 text-base border-2 border-gray-300 rounded-lg focus:border-primary-600 focus:ring-2 focus:ring-primary-600 focus:ring-opacity-20 outline-none transition-all placeholder:text-gray-400 uppercase"
+                        required
+                      />
+                    </div>
+                    
+                    <div className="lg:w-64">
+                      <h3 className="text-sm font-semibold text-gray-900 mb-3">
+                        Exemples possibles
+                      </h3>
+                      <div className="space-y-2.5">
+                        <div className="bg-gray-50 px-3 py-2 rounded-md border border-gray-100">
+                          <div className="text-sm font-medium text-gray-900">AA-123-AA</div>
+                          <div className="text-xs text-gray-500 mt-0.5">Numéro actuel</div>
+                        </div>
+                        <div className="bg-gray-50 px-3 py-2 rounded-md border border-gray-100">
+                          <div className="text-sm font-medium text-gray-900">123 ABC 01</div>
+                          <div className="text-xs text-gray-500 mt-0.5">Ancien numéro</div>
+                        </div>
+                        <div className="bg-gray-50 px-3 py-2 rounded-md border border-gray-100">
+                          <div className="text-sm font-medium text-gray-900">LIVRAISON</div>
+                          <div className="text-xs text-gray-500 mt-0.5">Texte libre</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Step 2: Vehicle Type */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 md:p-8 relative">
+              <div className="absolute top-5 right-5">
+                <CheckCircle className="w-6 h-6 text-primary-600" />
+              </div>
+              
+              <div className="flex items-start space-x-4 pr-16">
+                <div className="w-10 h-10 bg-primary-600 text-white rounded-full flex items-center justify-center flex-shrink-0 font-bold text-lg">
+                  2
+                </div>
+                <div className="flex-1">
+                  <h2 className="text-xl font-bold text-gray-900 mb-5">
+                    Choisissez le type de véhicule
+                  </h2>
+                  
+                  <div className="flex flex-wrap gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setVehicleType('auto')}
+                      className={`px-5 py-4 rounded-lg border-2 transition-all flex items-center justify-between min-w-[180px] ${
+                        vehicleType === 'auto'
+                          ? 'border-primary-600 bg-primary-50'
+                          : 'border-gray-200 bg-white hover:border-gray-300'
+                      }`}
+                    >
+                      <div className="flex items-center space-x-3">
+                        <div className="relative w-6 h-6 flex-shrink-0">
+                          <Image
+                            src="/voiture-musclee.png"
+                            alt="Auto"
+                            width={24}
+                            height={24}
+                            className="object-contain"
+                          />
+                        </div>
+                        <span className={`font-semibold text-sm ${vehicleType === 'auto' ? 'text-primary-600' : 'text-gray-700'}`}>
+                          Auto
+                        </span>
+                      </div>
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                        vehicleType === 'auto'
+                          ? 'border-primary-600 bg-primary-600'
+                          : 'border-gray-300 bg-white'
+                      }`}>
+                        {vehicleType === 'auto' && (
+                          <div className="w-2.5 h-2.5 bg-white rounded-full"></div>
+                        )}
+                      </div>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Step 3: Material */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 md:p-8 relative">
+              <div className="absolute top-5 right-5">
+                <CheckCircle className="w-6 h-6 text-primary-600" />
+              </div>
+              
+              <div className="flex items-start space-x-4 pr-16">
+                <div className="w-10 h-10 bg-primary-600 text-white rounded-full flex items-center justify-center flex-shrink-0 font-bold text-lg">
+                  3
+                </div>
+                <div className="flex-1">
+                  <h2 className="text-xl font-bold text-gray-900 mb-5">
+                    Choisissez le matériau
+                  </h2>
+                  
+                  <div className="flex flex-wrap gap-4">
+                    <button
+                      type="button"
+                      onClick={() => setMaterial('plexiglass')}
+                      className={`relative p-4 rounded-lg border-2 transition-all text-left w-full sm:w-[280px] ${
+                        material === 'plexiglass'
+                          ? 'border-primary-600 bg-primary-50'
+                          : 'border-gray-200 bg-white hover:border-gray-300'
+                      }`}
+                    >
+                      {/* Radio button in top right corner */}
+                      <div className="absolute top-3 right-3">
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                          material === 'plexiglass'
+                            ? 'border-primary-600 bg-primary-600'
+                            : 'border-gray-300 bg-white'
+                        }`}>
+                          {material === 'plexiglass' && (
+                            <div className="w-2.5 h-2.5 bg-white rounded-full"></div>
+                          )}
+                        </div>
+                      </div>
+                      
+                      {/* License Plate Image */}
+                      <div className="mb-3 mt-1">
+                        <div className="relative bg-gray-50 rounded-lg aspect-[520/110] overflow-hidden border border-gray-100">
+                          {/* Camera icon on image */}
+                          <div className="absolute top-2 right-2 z-10 bg-white rounded-full p-1.5 shadow-sm">
+                            <Camera className="w-3.5 h-3.5 text-gray-500" />
+                          </div>
+                          
+                          {/* License Plate Image */}
+                          <Image
+                            src="/p.png"
+                            alt="Plexiglass auto plaque"
+                            width={520}
+                            height={110}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      </div>
+                      
+                      {/* Material Info */}
+                      <h3 className={`font-semibold text-base mb-1.5 ${material === 'plexiglass' ? 'text-primary-600' : 'text-gray-900'}`}>
+                        Plexiglass auto
+                      </h3>
+                      <p className="text-sm text-gray-600 mb-2">
+                        520x110mm
+                      </p>
+                      <p className="text-lg font-bold text-gray-900">
+                        15,90 €
+                      </p>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Step 4: Department Selection */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 md:p-8 relative">
+              <div className="absolute top-5 right-5">
+                <span className="text-xs text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full font-medium">
+                  Obligatoire
+                </span>
+              </div>
+              
+              <div className="flex items-start space-x-4 pr-32">
+                <div className="w-10 h-10 bg-primary-600 text-white rounded-full flex items-center justify-center flex-shrink-0 font-bold text-lg">
+                  4
+                </div>
+                <div className="flex-1">
+                  <h2 className="text-xl font-bold text-gray-900 mb-5">
+                    Choisissez la région et le département
+                  </h2>
+                  
+                  {/* Scrollable Department List */}
+                  <div className="border-2 border-gray-200 rounded-lg overflow-hidden">
+                    <div className="max-h-96 overflow-y-auto">
+                      {departments.map((dept) => (
+                        <button
+                          key={dept.code}
+                          type="button"
+                          onClick={() => {
+                            setSelectedDepartment(dept.code)
+                            setRegionLogoError(false)
+                          }}
+                          className={`w-full px-4 py-3 flex items-center space-x-3 border-b border-gray-100 last:border-b-0 transition-all hover:bg-gray-50 ${
+                            selectedDepartment === dept.code
+                              ? 'bg-primary-50 border-l-4 border-l-primary-600'
+                              : 'bg-white'
+                          }`}
+                        >
+                          {/* Department Logo (Region Logo) */}
+                          <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center bg-gray-50 rounded-lg border border-gray-200">
+                            <Image
+                              src={getRegionLogo(dept.code)}
+                              alt={`Logo ${dept.name}`}
+                              width={40}
+                              height={40}
+                              className="object-contain"
+                              onError={(e) => {
+                                // Hide image if it doesn't exist
+                                e.currentTarget.style.display = 'none'
+                              }}
+                            />
+                          </div>
+                          
+                          {/* Department Info */}
+                          <div className="flex-1 text-left">
+                            <div className={`font-semibold text-sm ${
+                              selectedDepartment === dept.code
+                                ? 'text-primary-600'
+                                : 'text-gray-900'
+                            }`}>
+                              {dept.code} - {dept.name}
+                            </div>
+                          </div>
+                          
+                          {/* Selection Indicator */}
+                          {selectedDepartment === dept.code && (
+                            <div className="flex-shrink-0">
+                              <CheckCircle className="w-5 h-5 text-primary-600" />
+                            </div>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Step 5: Fixing Mode */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 md:p-8 relative">
+              <div className="absolute top-5 right-5">
+                <span className="text-xs text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full font-medium">
+                  Obligatoire
+                </span>
+              </div>
+              
+              <div className="flex items-start space-x-4 pr-32">
+                <div className="w-10 h-10 bg-primary-600 text-white rounded-full flex items-center justify-center flex-shrink-0 font-bold text-lg">
+                  5
+                </div>
+                <div className="flex-1">
+                  <h2 className="text-xl font-bold text-gray-900 mb-5">
+                    Choisissez le mode de fixation
+                  </h2>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {fixingModes.map((mode) => (
+                      <button
+                        key={mode.id}
+                        type="button"
+                        onClick={() => setFixingMode(mode.id)}
+                        className={`p-4 rounded-lg border-2 transition-all text-left relative ${
+                          fixingMode === mode.id
+                            ? 'border-primary-600 bg-primary-50'
+                            : 'border-gray-200 bg-white hover:border-gray-300'
+                        }`}
+                      >
+                        {/* Radio button in top right */}
+                        <div className="absolute top-3 right-3">
+                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                            fixingMode === mode.id
+                              ? 'border-primary-600 bg-primary-600'
+                              : 'border-gray-300 bg-white'
+                          }`}>
+                            {fixingMode === mode.id && (
+                              <div className="w-2.5 h-2.5 bg-white rounded-full"></div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Image */}
+                        <div className="mb-3 mt-1 h-24 flex items-center justify-center">
+                          <Image
+                            src={mode.image}
+                            alt={mode.name}
+                            width={100}
+                            height={80}
+                            className="object-contain max-w-full max-h-full"
+                            onError={(e) => {
+                              // Fallback if image doesn't exist
+                              e.currentTarget.style.display = 'none'
+                            }}
+                          />
+                        </div>
+
+                        {/* Description */}
+                        <h3 className={`font-semibold text-sm mb-1 ${fixingMode === mode.id ? 'text-primary-600' : 'text-gray-900'}`}>
+                          {mode.name}
+                        </h3>
+                        {mode.additional && (
+                          <p className="text-xs text-gray-600 mb-1">
+                            {mode.additional}
+                          </p>
+                        )}
+                        {mode.size && (
+                          <p className="text-xs text-gray-600 mb-2">
+                            {mode.size}
+                          </p>
+                        )}
+                        <p className={`text-base font-bold ${fixingMode === mode.id ? 'text-primary-600' : 'text-gray-900'}`}>
+                          {mode.price}
+                        </p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Step 6: Add Text Under Plate */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 md:p-8 relative">
+              <div className="absolute top-5 right-5">
+                <span className="text-xs text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full font-medium">
+                  Obligatoire
+                </span>
+              </div>
+              
+              <div className="flex items-start space-x-4 pr-32">
+                <div className="w-10 h-10 bg-primary-600 text-white rounded-full flex items-center justify-center flex-shrink-0 font-bold text-lg">
+                  6
+                </div>
+                <div className="flex-1">
+                  <h2 className="text-xl font-bold text-gray-900 mb-5">
+                    Ajoutez un texte sous votre plaque
+                  </h2>
+                  
+                  <div className="space-y-3">
+                    <button
+                      type="button"
+                      onClick={() => setTextOption('no-text')}
+                      className={`w-full p-4 rounded-lg border-2 transition-all flex items-center justify-between ${
+                        textOption === 'no-text'
+                          ? 'border-primary-600 bg-primary-50'
+                          : 'border-gray-200 bg-white hover:border-gray-300'
+                      }`}
+                    >
+                      <span className={`font-medium ${textOption === 'no-text' ? 'text-primary-600' : 'text-gray-700'}`}>
+                        Pas de texte
+                      </span>
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                        textOption === 'no-text'
+                          ? 'border-primary-600 bg-primary-600'
+                          : 'border-gray-300 bg-white'
+                      }`}>
+                        {textOption === 'no-text' && (
+                          <div className="w-2.5 h-2.5 bg-white rounded-full"></div>
+                        )}
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setTextOption('website')}
+                      className={`w-full p-4 rounded-lg border-2 transition-all flex items-center justify-between ${
+                        textOption === 'website'
+                          ? 'border-primary-600 bg-primary-50'
+                          : 'border-gray-200 bg-white hover:border-gray-300'
+                      }`}
+                    >
+                      <div className="flex items-center space-x-3">
+                        <span className={`font-medium ${textOption === 'website' ? 'text-primary-600' : 'text-gray-700'}`}>
+                          Ajouter www.ematricule.fr
+                        </span>
+                        <span className="text-sm text-green-600 font-medium">
+                          -1,00 € / plaque
+                        </span>
+                      </div>
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                        textOption === 'website'
+                          ? 'border-primary-600 bg-primary-600'
+                          : 'border-gray-300 bg-white'
+                      }`}>
+                        {textOption === 'website' && (
+                          <div className="w-2.5 h-2.5 bg-white rounded-full"></div>
+                        )}
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setTextOption('custom')}
+                      className={`w-full p-4 rounded-lg border-2 transition-all flex items-center justify-between ${
+                        textOption === 'custom'
+                          ? 'border-primary-600 bg-primary-50'
+                          : 'border-gray-200 bg-white hover:border-gray-300'
+                      }`}
+                    >
+                      <div className="flex items-center space-x-3">
+                        <span className={`font-medium ${textOption === 'custom' ? 'text-primary-600' : 'text-gray-700'}`}>
+                          Texte personnalisé
+                        </span>
+                        <span className="text-sm text-red-600 font-medium">
+                          +1,50 € / plaque
+                        </span>
+                      </div>
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                        textOption === 'custom'
+                          ? 'border-primary-600 bg-primary-600'
+                          : 'border-gray-300 bg-white'
+                      }`}>
+                        {textOption === 'custom' && (
+                          <div className="w-2.5 h-2.5 bg-white rounded-full"></div>
+                        )}
+                      </div>
+                    </button>
+
+                    {textOption === 'custom' && (
+                      <div className="mt-3">
+                        <input
+                          type="text"
+                          value={customText}
+                          onChange={(e) => setCustomText(e.target.value)}
+                          placeholder="Entrez votre texte personnalisé"
+                          className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-lg focus:border-primary-600 focus:ring-2 focus:ring-primary-600 focus:ring-opacity-20 outline-none transition-all"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Step 7: Quantity */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 md:p-8 relative">
+              <div className="absolute top-5 right-5">
+                <CheckCircle className="w-6 h-6 text-primary-600" />
+              </div>
+              
+              <div className="flex items-start space-x-4 pr-16">
+                <div className="w-10 h-10 bg-primary-600 text-white rounded-full flex items-center justify-center flex-shrink-0 font-bold text-lg">
+                  7
+                </div>
+                <div className="flex-1">
+                  <h2 className="text-xl font-bold text-gray-900 mb-5">
+                    Quantité
+                  </h2>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Sélectionner la quantité
+                    </label>
+                    <select
+                      value={quantity}
+                      onChange={(e) => setQuantity(Number(e.target.value))}
+                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-primary-600 focus:ring-2 focus:ring-primary-600 focus:ring-opacity-20 outline-none transition-all appearance-none bg-white"
+                    >
+                      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
+                        <option key={num} value={num}>
+                          {num} {num === 1 ? 'plaque' : 'plaques'}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Step 8: Plate Preview */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 md:p-8 relative">
+              <div className="flex items-start space-x-4">
+                <div className="w-10 h-10 bg-primary-600 text-white rounded-full flex items-center justify-center flex-shrink-0 font-bold text-lg">
+                  8
+                </div>
+                <div className="flex-1">
+                  <h2 className="text-xl font-bold text-gray-900 mb-5">
+                    Visuel de votre plaque
+                  </h2>
+                  
+                  {/* License Plate Preview */}
+                  <div className="mb-4 flex justify-center">
+                    <div className="relative bg-white border-2 border-gray-400 rounded-md overflow-hidden shadow-xl" style={{ aspectRatio: '520/110', maxWidth: '520px', width: '100%' }}>
+                      {/* Left EU band with f.jpg */}
+                      <div className="absolute left-[-2px] top-0 bottom-[-4px] w-16 bg-gradient-to-b from-blue-600 via-blue-500 to-blue-600 flex items-center justify-center">
+                        {!euFlagError ? (
+                        <Image
+                            src="/f.jpg"
+                          alt="EU band with F"
+                            width={64}
+                          height={110}
+                          className="w-full h-full object-cover"
+                            style={{ filter: 'brightness(1.15) contrast(1.1)' }}
+                            onError={() => setEuFlagError(true)}
+                          />
+                        ) : (
+                          <div className="flex flex-col items-center justify-center h-full w-full">
+                            <div className="flex items-center justify-center mb-1">
+                              <div className="grid grid-cols-3 gap-0.5">
+                                {[...Array(12)].map((_, i) => (
+                                  <div key={i} className="w-1.5 h-1.5 bg-yellow-200 rounded-sm shadow-sm" style={{ filter: 'brightness(1.3)' }}></div>
+                                ))}
+                              </div>
+                            </div>
+                            <div className="text-white font-bold text-lg leading-none mt-0.5 drop-shadow-lg" style={{ filter: 'brightness(1.2)', textShadow: '0 0 2px rgba(255,255,255,0.8)' }}>F</div>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Main plate area with registration number */}
+                      <div className="absolute left-16 right-14 top-0 bottom-0 flex items-center justify-center bg-white">
+                        <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-black tracking-[0.2em] font-mono select-none">
+                          {formatRegistrationNumber(registrationNumber)}
+                        </div>
+                      </div>
+                      
+                      {/* Right band with region logo and department number */}
+                      <div className="absolute right-0 top-0 bottom-0 w-14 bg-gradient-to-b from-blue-600 via-blue-500 to-blue-600 flex flex-col overflow-hidden">
+                        {selectedDepartment ? (
+                          <>
+                            {/* Top part: Region logo */}
+                            <div className="flex-1 flex items-center justify-center p-1.5 min-h-0">
+                              {!regionLogoError ? (
+                                <Image
+                                  src={getRegionLogo(selectedDepartment)}
+                                  alt="Region logo"
+                                  width={40}
+                                  height={40}
+                                  className="w-full h-full object-contain"
+                                  onError={() => setRegionLogoError(true)}
+                                />
+                              ) : (
+                                <div className="text-white font-bold text-xs text-center leading-tight px-1">
+                                  Logo
+                                </div>
+                              )}
+                            </div>
+                            {/* Bottom part: Department number */}
+                            <div className="flex-shrink-0 h-8 flex items-center justify-center border-t border-blue-400/30">
+                              <div className="text-white font-bold text-sm leading-none">
+                                {selectedDepartment}
+                              </div>
+                            </div>
+                          </>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Text under plate display (if selected) */}
+                  {(textOption === 'website' || (textOption === 'custom' && customText)) && (
+                    <div className="mb-4 text-center">
+                      <div className="inline-block px-4 py-2 bg-gray-100 rounded-lg border border-gray-200">
+                        <div className="text-sm text-gray-700 font-medium">
+                          {textOption === 'website' ? 'www.ematricule.fr' : customText}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Add different plate button */}
+                  <button
+                    type="button"
+                    className="w-full py-2.5 px-4 bg-blue-50 text-primary-600 rounded-lg border border-primary-200 hover:bg-blue-100 transition-colors flex items-center justify-center space-x-2 font-medium"
+                  >
+                    <span className="text-lg">+</span>
+                    <span>Ajouter une plaque différente</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom Navigation and Total */}
+            <div className="flex flex-col items-center space-y-4 pt-6">
+              {/* Total Price */}
+              <div className="text-right w-full max-w-5xl">
+                <div className="text-2xl font-bold text-gray-900">
+                  Total {calculateTotal()} €
+                </div>
+              </div>
+
+              {/* Next Button */}
+              <button
+                type="submit"
+                className="bg-primary-600 text-white px-12 py-3.5 rounded-lg font-semibold text-base hover:bg-primary-700 transition-colors shadow-md"
+              >
+                Suivant
+              </button>
+
+              {/* Previous Link */}
+              <button
+                type="button"
+                className="text-gray-500 hover:text-gray-700 transition-colors text-sm"
+              >
+                &lt; Précédent
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  )
+}

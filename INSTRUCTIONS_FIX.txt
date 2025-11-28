@@ -1,0 +1,35 @@
+========================================
+INSTRUCTIONS POUR CORRIGER L'ERREUR
+========================================
+
+ERREUR: "Database error saving new user"
+
+SOLUTION:
+---------
+1. Ouvrez Supabase Dashboard
+2. Allez dans SQL Editor
+3. Executez le fichier: scripts/FIX_NOW.sql
+   (PAS le fichier .md, mais le fichier .sql!)
+
+FICHIERS A EXECUTER:
+-------------------
+- scripts/FIX_NOW.sql  (CE FICHIER!)
+- OU scripts/fix-client-profile-creation.sql
+- OU scripts/diagnose-and-fix.sql
+
+NE PAS EXECUTER:
+---------------
+- Les fichiers .md (Markdown) - ce sont des documents
+- Les fichiers .txt - ce sont des instructions
+
+APRES L'EXECUTION:
+-----------------
+1. Testez en creant un nouveau compte sur votre site
+2. Verifiez que le profil est cree dans Supabase
+
+SI CA NE FONCTIONNE PAS:
+-----------------------
+1. Verifiez les logs Supabase (Logs > Postgres Logs)
+2. Partagez l'erreur exacte
+
+

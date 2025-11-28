@@ -1,0 +1,77 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: emattricule
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - emattricule-network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - emattricule-network
+
+  # Backend API
+  backend:
+    build: ./backend
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://postgres:password@postgres:5432/emattricule?schema=public
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=your-super-secret-jwt-key
+      - JWT_EXPIRES_IN=7d
+      - STRIPE_SECRET_KEY=sk_test_...
+      - STRIPE_PUBLISHABLE_KEY=pk_test_...
+      - STRIPE_WEBHOOK_SECRET=whsec_...
+      - SMTP_HOST=smtp.gmail.com
+      - SMTP_PORT=587
+      - SMTP_USER=your-email@gmail.com
+      - SMTP_PASS=your-app-password
+      - FROM_EMAIL=noreply@emattricule.com
+      - FROM_NAME=EMatricule
+      - VIN_DECODER_API_KEY=your-vin-decoder-api-key
+      - VIN_DECODER_BASE_URL=https://vindecoder.eu/api/v2
+      - CORS_ORIGIN=http://localhost:3000
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - emattricule-network
+
+  # Frontend (Next.js)
+  frontend:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://localhost:3001
+      - NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
+    depends_on:
+      - backend
+    networks:
+      - emattricule-network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  emattricule-network:
+    driver: bridge
