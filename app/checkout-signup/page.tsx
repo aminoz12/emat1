@@ -141,21 +141,25 @@ export default function CheckoutSignupPage() {
       const supabase = createClient()
 
       // Créer le compte utilisateur via l'API avec confirmation automatique de l'email
+      const userDataToSend = {
+        email: userData.email,
+        password: formData.password,
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        phone: userData.phone,
+        address: userData.address,
+        postalCode: userData.postalCode,
+        city: userData.city,
+      }
+      
+      console.log('Données utilisateur à envoyer:', userDataToSend)
+      
       const createUserResponse = await fetch('/api/auth/create-user', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          email: userData.email,
-          password: formData.password,
-          firstName: userData.firstName,
-          lastName: userData.lastName,
-          phone: userData.phone,
-          address: userData.address,
-          postalCode: userData.postalCode,
-          city: userData.city,
-        }),
+        body: JSON.stringify(userDataToSend),
       })
 
       const createUserResult = await createUserResponse.json()

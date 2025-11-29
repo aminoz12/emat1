@@ -7,6 +7,17 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { email, password, firstName, lastName, phone, address, postalCode, city } = body
 
+    console.log('Création utilisateur - Données reçues:', {
+      email,
+      hasPassword: !!password,
+      firstName,
+      lastName,
+      phone,
+      address,
+      postalCode,
+      city
+    })
+
     if (!email || !password) {
       return NextResponse.json(
         { error: 'Email et mot de passe sont requis' },
@@ -43,24 +54,54 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Create profile
-    const { error: profileError } = await supabaseAdmin
+    // Wait a bit for trigger to create profile (if it exists)
+    await new Promise(resolve => setTimeout(resolve, 100))
+
+    // Update profile with user information (profile might already exist from trigger)
+    const { data: profileData, error: profileError } = await supabaseAdmin
       .from('profiles')
-      .insert({
-        id: authData.user.id,
+      .update({
         email: email,
-        first_name: firstName || '',
-        last_name: lastName || '',
-        phone: phone || '',
-        address: address || '',
-        postal_code: postalCode || '',
-        city: city || '',
-        role: 'USER',
+        first_name: firstName || null,
+        last_name: lastName || null,
+        phone: phone || null,
+        address: address || null,
+        zip_code: postalCode || null,
+        city: city || null,
+        updated_at: new Date().toISOString(),
       })
+      .eq('id', authData.user.id)
+      .select()
+      .single()
 
     if (profileError) {
-      console.error('Erreur création profil:', profileError)
-      // Continue anyway - user is created
+      console.error('Erreur mise à jour profil (essai update):', profileError)
+      
+      // If update failed, try insert (profile might not exist yet)
+      const { data: insertData, error: insertError } = await supabaseAdmin
+        .from('profiles')
+        .insert({
+          id: authData.user.id,
+          email: email,
+          first_name: firstName || null,
+          last_name: lastName || null,
+          phone: phone || null,
+          address: address || null,
+          zip_code: postalCode || null,
+          city: city || null,
+          role: 'USER',
+        })
+        .select()
+        .single()
+
+      if (insertError) {
+        console.error('Erreur insertion profil:', insertError)
+        console.error('Détails erreur:', JSON.stringify(insertError, null, 2))
+      } else {
+        console.log('Profil créé avec succès (insert):', insertData)
+      }
+    } else {
+      console.log('Profil mis à jour avec succès (update):', profileData)
     }
 
     return NextResponse.json({
