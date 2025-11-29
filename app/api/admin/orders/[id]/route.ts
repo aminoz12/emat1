@@ -5,7 +5,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 // GET - Get a single order with all details (admin only)
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
     const supabase = await createClient()
@@ -34,7 +34,7 @@ export async function GET(
       )
     }
 
-    const { id: orderId } = await params
+    const orderId = params.id
 
     // Use admin client to bypass RLS
     const adminSupabase = createAdminClient()
@@ -126,7 +126,7 @@ export async function GET(
 // PATCH - Update order status (admin only)
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
     const supabase = await createClient()
@@ -155,7 +155,7 @@ export async function PATCH(
       )
     }
 
-    const { id: orderId } = await params
+    const orderId = params.id
     const { status } = await request.json()
 
     if (!status || !['pending', 'processing', 'completed', 'cancelled'].includes(status)) {

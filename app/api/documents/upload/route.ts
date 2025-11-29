@@ -9,6 +9,7 @@ export async function POST(request: NextRequest) {
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     
     if (authError || !user) {
+      console.error('Erreur auth upload:', authError)
       return NextResponse.json(
         { error: 'Non autorisé. Veuillez vous connecter.' },
         { status: 401 }
@@ -20,7 +21,10 @@ export async function POST(request: NextRequest) {
     const orderId = formData.get('orderId') as string
     const documentType = formData.get('documentType') as string
 
+    console.log('Upload document - orderId:', orderId, 'documentType:', documentType, 'fileName:', file?.name, 'fileSize:', file?.size)
+
     if (!file) {
+      console.error('Aucun fichier fourni')
       return NextResponse.json(
         { error: 'Aucun fichier fourni' },
         { status: 400 }
@@ -28,6 +32,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (!orderId) {
+      console.error('ID de commande manquant')
       return NextResponse.json(
         { error: 'ID de commande requis' },
         { status: 400 }
@@ -43,15 +48,21 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (orderError || !order) {
+      console.error('Erreur vérification commande:', orderError, 'orderId:', orderId, 'userId:', user.id)
       return NextResponse.json(
         { error: 'Commande non trouvée ou non autorisée' },
         { status: 404 }
       )
     }
 
+    console.log('Commande vérifiée:', order.id)
+
     // Generate unique filename
-    const fileExt = file.name.split('.').pop()
-    const fileName = `${user.id}/${orderId}/${documentType || 'document'}_${Date.now()}.${fileExt}`
+    const fileExt = file.name.split('.').pop() || 'pdf'
+    const timestamp = Date.now()
+    const fileName = `${user.id}/${orderId}/${documentType || 'document'}_${timestamp}.${fileExt}`
+    
+    console.log('Nom de fichier généré:', fileName)
 
     // Convert file to buffer
     const arrayBuffer = await file.arrayBuffer()
@@ -98,6 +109,8 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       )
     }
+
+    console.log('Document sauvegardé avec succès:', document.id, document.name)
 
     return NextResponse.json({
       success: true,

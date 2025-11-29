@@ -1,10 +1,15 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { CheckCircle, Flag, Percent, Truck, Star, Camera } from 'lucide-react'
 import Image from 'next/image'
+import { useSupabaseSession } from '@/hooks/useSupabaseSession'
+import { createOrder, uploadDocuments } from '@/lib/services/orderService'
 
 export default function PlaqueImmatriculationPage() {
+  const router = useRouter()
+  const { user, loading: sessionLoading } = useSupabaseSession()
   const [registrationNumber, setRegistrationNumber] = useState('')
   const [vehicleType, setVehicleType] = useState('auto')
   const [material, setMaterial] = useState('plexiglass')
@@ -15,6 +20,19 @@ export default function PlaqueImmatriculationPage() {
   const [quantity, setQuantity] = useState(1)
   const [regionLogoError, setRegionLogoError] = useState(false)
   const [euFlagError, setEuFlagError] = useState(false)
+  
+  // Client information fields
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
+  const [email, setEmail] = useState('')
+  const [phone, setPhone] = useState('')
+  const [streetNumber, setStreetNumber] = useState('')
+  const [streetType, setStreetType] = useState('')
+  const [streetName, setStreetName] = useState('')
+  const [postalCode, setPostalCode] = useState('')
+  const [city, setCity] = useState('')
+  const [carteGriseFile, setCarteGriseFile] = useState<File | null>(null)
+  const [acceptResponsibility, setAcceptResponsibility] = useState(false)
 
   // Region logos mapping (local files in public/regions/)
   const regionLogos: { [key: string]: string } = {
@@ -202,7 +220,7 @@ export default function PlaqueImmatriculationPage() {
 
   const fixingModes = [
     { id: 'rivets', name: '2 rivets', size: '4x20mm', price: 'Gratuit', image: '/simple.png' },
-    { id: 'rivets-premium', name: '2 rivets premium', size: '4x20mm', price: '1,90 €', image: '/prenium.png' },
+    { id: 'rivets-premium', name: '2 rivets premium', size: '4x20mm', price: '1,90 €', image: '/premium.png' },
     { id: 'rivets-premium-noirs', name: '2 rivets premium noirs', size: '4x20mm', price: '1,90 €', image: '/noire.png' },
     { id: 'kit-pose', name: 'Kit pose', additional: '+ 2 rivets premium', size: '', price: '14,90 €', image: '/kitpose.png' },
   ]
@@ -246,6 +264,24 @@ export default function PlaqueImmatriculationPage() {
       return
     }
 
+    // Validate client information
+    if (!firstName || !lastName || !email || !phone || !streetNumber || !streetType || !streetName || !postalCode || !city) {
+      alert('Veuillez remplir tous les champs d\'information client.')
+      return
+    }
+
+    // Validate carte grise upload
+    if (!carteGriseFile) {
+      alert('Veuillez uploader votre carte grise pour confirmer que vous êtes le propriétaire du véhicule.')
+      return
+    }
+
+    // Validate responsibility checkbox
+    if (!acceptResponsibility) {
+      alert('Veuillez accepter la déclaration de responsabilité.')
+      return
+    }
+
     try {
       // Calculate price
       const basePrice = 15.90
@@ -265,9 +301,9 @@ export default function PlaqueImmatriculationPage() {
       
       totalPrice *= quantity
 
+      const fullAddress = `${streetNumber} ${streetType} ${streetName}`.trim()
+
       // Create order data with all metadata
-      const { createOrder } = await import('@/lib/services/orderService')
-      
       const orderData = {
         type: 'plaque' as const,
         vehicleData: {
@@ -276,6 +312,16 @@ export default function PlaqueImmatriculationPage() {
         serviceType: 'plaque-immatriculation',
         price: totalPrice,
         metadata: {
+          firstName,
+          lastName,
+          email,
+          phone,
+          streetNumber,
+          streetType,
+          streetName,
+          address: fullAddress,
+          postalCode,
+          city,
           registrationNumber: registrationNumber.trim().toUpperCase().replace(/\s+/g, ''),
           vehicleType,
           material,
@@ -289,20 +335,84 @@ export default function PlaqueImmatriculationPage() {
         }
       }
 
-      const result = await createOrder(orderData)
-      
-      if (!result.success || !result.order) {
-        throw new Error(result.error || 'Erreur lors de la création de la commande')
+      // Store all form data temporarily in localStorage for checkout-signup page
+      const formDataToStore = {
+        orderData,
+        finalPrice: totalPrice,
       }
-
-      // Store order reference for payment page
-      localStorage.setItem('currentOrderId', result.order.id)
-      localStorage.setItem('currentOrderRef', result.order.reference)
-      localStorage.setItem('currentOrderPrice', String(totalPrice))
-
-      // Redirect to dashboard or payment
-      alert(`Commande créée avec succès ! Référence: ${result.order.reference}`)
-      window.location.href = '/dashboard'
+      
+      localStorage.setItem('pendingOrderData', JSON.stringify(formDataToStore))
+      
+      // Convert carte grise file to base64 and store in sessionStorage
+      const convertFileToBase64 = (file: File): Promise<string> => {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader()
+          reader.readAsDataURL(file)
+          reader.onload = () => {
+            const base64 = (reader.result as string).split(',')[1]
+            resolve(base64)
+          }
+          reader.onerror = reject
+        })
+      }
+      
+      const filesToStore: { [key: string]: { name: string; type: string; base64: string } } = {}
+      if (carteGriseFile) {
+        const base64 = await convertFileToBase64(carteGriseFile)
+        filesToStore.carteGriseFile = { name: carteGriseFile.name, type: carteGriseFile.type, base64 }
+      }
+      
+      // Check if user is already logged in
+      if (user && !sessionLoading) {
+        // User is logged in - create order directly and redirect to payment
+        try {
+          const base64ToFile = (base64: string, filename: string, mimeType: string): File => {
+            const byteCharacters = atob(base64)
+            const byteNumbers = new Array(byteCharacters.length)
+            for (let i = 0; i < byteCharacters.length; i++) {
+              byteNumbers[i] = byteCharacters.charCodeAt(i)
+            }
+            const byteArray = new Uint8Array(byteNumbers)
+            return new File([byteArray], filename, { type: mimeType })
+          }
+          
+          const filesToUpload: Array<{ file: File; documentType: string }> = []
+          if (filesToStore.carteGriseFile) {
+            filesToUpload.push({ 
+              file: base64ToFile(filesToStore.carteGriseFile.base64, filesToStore.carteGriseFile.name, filesToStore.carteGriseFile.type), 
+              documentType: 'carte_grise' 
+            })
+          }
+          
+          const result = await createOrder(orderData)
+          
+          if (!result.success || !result.order) {
+            throw new Error(result.error || 'Erreur lors de la création de la commande')
+          }
+          
+          if (filesToUpload.length > 0) {
+            await uploadDocuments(filesToUpload, result.order.id)
+          }
+          
+          localStorage.setItem('currentOrderId', result.order.id)
+          localStorage.setItem('currentOrderRef', result.order.reference)
+          localStorage.setItem('currentOrderPrice', String(orderData.price))
+          
+          localStorage.removeItem('pendingOrderData')
+          sessionStorage.removeItem('pendingOrderFiles')
+          
+          router.push('/payment')
+          return
+        } catch (error: any) {
+          console.error('Erreur création commande:', error)
+          alert('Erreur lors de la création de la commande: ' + (error.message || 'Une erreur est survenue'))
+          return
+        }
+      }
+      
+      // User is not logged in - store data and redirect to checkout-signup
+      sessionStorage.setItem('pendingOrderFiles', JSON.stringify(filesToStore))
+      window.location.href = '/checkout-signup'
 
     } catch (error: any) {
       console.error('Erreur soumission:', error)
@@ -949,15 +1059,180 @@ export default function PlaqueImmatriculationPage() {
                     </div>
                   )}
 
-                  {/* Add different plate button */}
-                  <button
-                    type="button"
-                    className="w-full py-2.5 px-4 bg-blue-50 text-primary-600 rounded-lg border border-primary-200 hover:bg-blue-100 transition-colors flex items-center justify-center space-x-2 font-medium"
-                  >
-                    <span className="text-lg">+</span>
-                    <span>Ajouter une plaque différente</span>
-                  </button>
                 </div>
+              </div>
+            </div>
+
+            {/* Client Information Section */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 md:p-8 mt-6">
+              <h3 className="text-xl font-bold text-gray-900 mb-6">Vos informations</h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Prénom *
+                  </label>
+                  <input
+                    type="text"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    required
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-600 focus:border-primary-600 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Nom *
+                  </label>
+                  <input
+                    type="text"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    required
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-600 focus:border-primary-600 outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Email *
+                  </label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-600 focus:border-primary-600 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Téléphone *
+                  </label>
+                  <input
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    required
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-600 focus:border-primary-600 outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Adresse *
+                </label>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <input
+                    type="text"
+                    value={streetNumber}
+                    onChange={(e) => setStreetNumber(e.target.value)}
+                    placeholder="N°"
+                    required
+                    className="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-600 focus:border-primary-600 outline-none"
+                  />
+                  <select
+                    value={streetType}
+                    onChange={(e) => setStreetType(e.target.value)}
+                    required
+                    className="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-600 focus:border-primary-600 outline-none"
+                  >
+                    <option value="">Type</option>
+                    <option value="Rue">Rue</option>
+                    <option value="Avenue">Avenue</option>
+                    <option value="Boulevard">Boulevard</option>
+                    <option value="Place">Place</option>
+                    <option value="Chemin">Chemin</option>
+                    <option value="Allée">Allée</option>
+                    <option value="Autre">Autre</option>
+                  </select>
+                  <input
+                    type="text"
+                    value={streetName}
+                    onChange={(e) => setStreetName(e.target.value)}
+                    placeholder="Nom de la rue"
+                    required
+                    className="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-600 focus:border-primary-600 outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Code postal *
+                  </label>
+                  <input
+                    type="text"
+                    value={postalCode}
+                    onChange={(e) => setPostalCode(e.target.value)}
+                    required
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-600 focus:border-primary-600 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Ville *
+                  </label>
+                  <input
+                    type="text"
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                    required
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-600 focus:border-primary-600 outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* Carte Grise Upload */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Carte grise du véhicule *
+                </label>
+                <p className="text-xs text-gray-500 mb-3">
+                  Veuillez uploader votre carte grise pour confirmer que vous êtes le propriétaire du véhicule.
+                </p>
+                <div className="flex items-center space-x-3">
+                  <label className="cursor-pointer">
+                    <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                      </svg>
+                      <span>Choisir un fichier</span>
+                    </span>
+                    <input
+                      type="file"
+                      onChange={(e) => setCarteGriseFile(e.target.files?.[0] || null)}
+                      className="hidden"
+                      accept="image/*,.pdf"
+                      required
+                    />
+                  </label>
+                  <span className="text-sm text-gray-500">
+                    {carteGriseFile ? carteGriseFile.name : 'Aucun fichier choisi'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Responsibility Checkbox */}
+              <div className="mb-6">
+                <label className="flex items-start space-x-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={acceptResponsibility}
+                    onChange={(e) => setAcceptResponsibility(e.target.checked)}
+                    required
+                    className="mt-1 w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-600"
+                  />
+                  <span className="text-sm text-gray-700">
+                    J'assume la responsabilité totale de la commande de cette plaque d'immatriculation. 
+                    Je certifie être le propriétaire légitime du véhicule immatriculé <strong>{formatRegistrationNumber(registrationNumber) || 'XXXXX'}</strong> et que toutes les informations fournies sont exactes. Je comprends que l'utilisation de cette plaque 
+                    est soumise aux réglementations en vigueur et que toute utilisation frauduleuse est passible de sanctions pénales. *
+                  </span>
+                </label>
               </div>
             </div>
 

@@ -67,14 +67,18 @@ export async function GET(request: NextRequest) {
     // Get order counts for each user
     const usersWithStats = await Promise.all(
       (users || []).map(async (u) => {
-        const { count: orderCount } = await supabase
+        const { count, error: countError } = await supabase
           .from('orders')
           .select('*', { count: 'exact', head: true })
           .eq('user_id', u.id)
 
+        if (countError) {
+          console.error(`Error counting orders for user ${u.id}:`, countError)
+        }
+
         return {
           ...u,
-          orderCount: orderCount || 0
+          orderCount: count ?? 0
         }
       })
     )

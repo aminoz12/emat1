@@ -42,14 +42,19 @@ export async function POST(request: NextRequest) {
       })
     }
     
-    // Charger le PDF template
-    const templatePath = path.join(process.cwd(), 'public', 'mandat.pdf')
+    // Charger le PDF template (essayer les deux cas)
+    const publicDir = path.join(process.cwd(), 'public')
+    let templatePath = path.join(publicDir, 'Mandat.pdf')
     
     if (!fs.existsSync(templatePath)) {
-      return NextResponse.json(
-        { error: 'Template PDF (mandat.pdf) non trouvé dans le dossier public' },
-        { status: 404 }
-      )
+      // Essayer avec minuscules
+      templatePath = path.join(publicDir, 'mandat.pdf')
+      if (!fs.existsSync(templatePath)) {
+        return NextResponse.json(
+          { error: 'Template PDF (Mandat.pdf ou mandat.pdf) non trouvé dans le dossier public' },
+          { status: 404 }
+        )
+      }
     }
     
     const templateBytes = fs.readFileSync(templatePath)

@@ -81,7 +81,7 @@ export default function AdminOrdersPage() {
   const [orderDetails, setOrderDetails] = useState<any>(null)
   const [isDetailsLoading, setIsDetailsLoading] = useState(false)
   const [isDetailsOpen, setIsDetailsOpen] = useState(false)
-  const [isDownloading, setIsDownloading] = useState(false)
+  const [downloadingOrders, setDownloadingOrders] = useState<Set<string>>(new Set())
   const [openActionMenu, setOpenActionMenu] = useState<string | null>(null)
 
   useEffect(() => {
@@ -176,7 +176,9 @@ export default function AdminOrdersPage() {
   }
 
   const downloadAllDocuments = async (orderId: string) => {
-    setIsDownloading(true)
+    // Add orderId to downloading set
+    setDownloadingOrders(prev => new Set(prev).add(orderId))
+    
     try {
       const response = await fetch(`/api/admin/orders/${orderId}/download-documents`)
       
@@ -189,7 +191,7 @@ export default function AdminOrdersPage() {
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `documents_${orderId}_${Date.now()}.zip`
+      a.download = `commande-${orderId}.zip`
       document.body.appendChild(a)
       a.click()
       window.URL.revokeObjectURL(url)
@@ -199,7 +201,12 @@ export default function AdminOrdersPage() {
     } catch (err: any) {
       alert(err.message)
     } finally {
-      setIsDownloading(false)
+      // Remove orderId from downloading set
+      setDownloadingOrders(prev => {
+        const newSet = new Set(prev)
+        newSet.delete(orderId)
+        return newSet
+      })
     }
   }
 
@@ -567,13 +574,27 @@ export default function AdminOrdersPage() {
                           </div>
                         </td>
                         <td className="py-5 px-6">
-                          <button
-                            onClick={() => fetchOrderDetails(order.id)}
-                            className="inline-flex items-center gap-1.5 px-3 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-all shadow-sm hover:shadow-md"
-                            title="Voir les détails"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </button>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => fetchOrderDetails(order.id)}
+                              className="inline-flex items-center gap-1.5 px-3 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-all shadow-sm hover:shadow-md"
+                              title="Voir les détails"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => downloadAllDocuments(order.id)}
+                              disabled={downloadingOrders.has(order.id)}
+                              className="inline-flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                              title="Télécharger tous les documents"
+                            >
+                              {downloadingOrders.has(order.id) ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <Download className="w-4 h-4" />
+                              )}
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))
@@ -673,11 +694,11 @@ export default function AdminOrdersPage() {
                 onClick={() => {
                   downloadAllDocuments(selectedOrder.id)
                 }}
-                disabled={isDownloading}
+                disabled={downloadingOrders.has(selectedOrder.id)}
                 className="w-full text-left px-4 py-3 bg-gray-50 hover:bg-blue-50 hover:text-blue-700 rounded-lg flex items-center gap-3 transition-all group disabled:opacity-50"
               >
                 <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-blue-200 transition-colors">
-                  {isDownloading ? (
+                  {downloadingOrders.has(selectedOrder.id) ? (
                     <Loader2 className="w-5 h-5 text-blue-600 animate-spin" />
                   ) : (
                     <Download className="w-5 h-5 text-blue-600" />
@@ -1007,10 +1028,10 @@ export default function AdminOrdersPage() {
                       <div className="mb-5">
                         <button
                           onClick={() => downloadAllDocuments(orderDetails.id)}
-                          disabled={isDownloading}
+                          disabled={downloadingOrders.has(orderDetails.id)}
                           className="w-full inline-flex items-center justify-center gap-3 px-6 py-4 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition-all disabled:opacity-50 shadow-md hover:shadow-lg font-semibold"
                         >
-                          {isDownloading ? (
+                          {downloadingOrders.has(orderDetails.id) ? (
                             <>
                               <Loader2 className="w-5 h-5 animate-spin" />
                               <span>Téléchargement en cours...</span>

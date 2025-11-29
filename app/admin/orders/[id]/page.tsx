@@ -326,12 +326,47 @@ export default function AdminOrderDetailsPage() {
           )}
 
           {/* Documents */}
-          {order.documents && order.documents.length > 0 && (
+          {order.documents && order.documents.length > 0 ? (
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <FileText className="w-5 h-5 text-primary-600" />
-                Documents ({order.documents.length})
-              </h2>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                  <FileText className="w-5 h-5 text-primary-600" />
+                  Documents ({order.documents.length})
+                </h2>
+              </div>
+              
+              {/* Download All Button */}
+              <div className="mb-4">
+                <button
+                  onClick={async () => {
+                    try {
+                      const response = await fetch(`/api/admin/orders/${order.id}/download-documents`)
+                      
+                      if (!response.ok) {
+                        const error = await response.json()
+                        throw new Error(error.error || 'Erreur lors du téléchargement')
+                      }
+
+                      const blob = await response.blob()
+                      const url = window.URL.createObjectURL(blob)
+                      const a = document.createElement('a')
+                      a.href = url
+                      a.download = `documents_${order.reference || order.id}_${Date.now()}.zip`
+                      document.body.appendChild(a)
+                      a.click()
+                      window.URL.revokeObjectURL(url)
+                      document.body.removeChild(a)
+                    } catch (error: any) {
+                      alert('Erreur lors du téléchargement: ' + (error.message || 'Une erreur est survenue'))
+                    }
+                  }}
+                  className="w-full inline-flex items-center justify-center gap-3 px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-all shadow-md hover:shadow-lg font-semibold"
+                >
+                  <Download className="w-5 h-5" />
+                  <span>Télécharger tous les documents (.zip)</span>
+                </button>
+              </div>
+              
               <div className="space-y-3">
                 {order.documents.map((doc) => (
                   <div
@@ -376,6 +411,18 @@ export default function AdminOrderDetailsPage() {
                     </div>
                   </div>
                 ))}
+              </div>
+            </div>
+          ) : (
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <FileText className="w-5 h-5 text-primary-600" />
+                Documents
+              </h2>
+              <div className="text-center py-8 text-gray-500">
+                <FileText className="w-12 h-12 mx-auto mb-3 text-gray-400" />
+                <p className="font-medium">Aucun document trouvé pour cette commande</p>
+                <p className="text-sm mt-1">Les documents peuvent être en cours d'upload ou n'ont pas encore été ajoutés.</p>
               </div>
             </div>
           )}

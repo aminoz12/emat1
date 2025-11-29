@@ -6,6 +6,8 @@ import { loadStripe } from '@stripe/stripe-js'
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js'
 import { motion } from 'framer-motion'
 import { CreditCard, Shield, CheckCircle, AlertCircle, ArrowRight } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
+import { useSupabaseSession } from '@/hooks/useSupabaseSession'
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 
@@ -13,6 +15,7 @@ const PaymentForm = () => {
   const stripe = useStripe()
   const elements = useElements()
   const router = useRouter()
+  const { user } = useSupabaseSession()
   const [isProcessing, setIsProcessing] = useState(false)
   const [error, setError] = useState('')
 
@@ -25,27 +28,32 @@ const PaymentForm = () => {
     setError('')
 
     try {
-      const orderId = localStorage.getItem('currentOrder')
+      const orderId = localStorage.getItem('currentOrderId')
+      const orderPrice = localStorage.getItem('currentOrderPrice')
+      
       if (!orderId) {
         throw new Error('Aucune commande trouvée')
       }
 
-      // Create payment intent
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/create-payment-intent`, {
+      const amount = parseFloat(orderPrice || '29.90')
+
+      // Create payment intent via our API
+      const response = await fetch('/api/payments/create-intent', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
         },
+        credentials: 'include',
         body: JSON.stringify({
           orderId,
-          amount: 29.90,
+          amount: amount * 100, // Convert to cents
           currency: 'eur',
         }),
       })
 
       if (!response.ok) {
-        throw new Error('Erreur lors de la création du paiement')
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Erreur lors de la création du paiement')
       }
 
       const { clientSecret } = await response.json()
@@ -60,11 +68,28 @@ const PaymentForm = () => {
       if (error) {
         setError(error.message || 'Erreur lors du paiement')
       } else if (paymentIntent.status === 'succeeded') {
-        // Payment successful
-        localStorage.removeItem('currentOrder')
-        localStorage.removeItem('vehicleData')
-        localStorage.removeItem('selectedService')
-        router.push('/confirmation')
+        // Payment successful - redirect based on user role
+        localStorage.removeItem('currentOrderId')
+        localStorage.removeItem('currentOrderRef')
+        localStorage.removeItem('currentOrderPrice')
+        
+        // Check user role and redirect accordingly
+        if (user) {
+          const supabase = createClient()
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .single()
+
+          if (profile?.role === 'ADMIN' || profile?.role === 'SUPER_ADMIN') {
+            router.push('/admin')
+          } else {
+            router.push('/dashboard')
+          }
+        } else {
+          router.push('/dashboard')
+        }
       }
     } catch (err: any) {
       setError(err?.message || 'Une erreur est survenue')
@@ -127,7 +152,7 @@ const PaymentForm = () => {
         ) : (
           <>
             <CreditCard className="w-5 h-5" />
-            <span>Payer 29,90€</span>
+            <span>Payer {localStorage.getItem('currentOrderPrice') || '29,90'}€</span>
           </>
         )}
       </button>
@@ -147,21 +172,25 @@ const PaymentPage = () => {
   const router = useRouter()
 
   useEffect(() => {
-    const orderId = localStorage.getItem('currentOrder')
+    const orderId = localStorage.getItem('currentOrderId')
     if (!orderId) {
-      router.push('/vin-search')
+      router.push('/')
       return
     }
 
-    // Fetch order data
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/orders/${orderId}`, {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-      },
+    // Fetch order data from our API
+    fetch(`/api/orders/${orderId}`, {
+      credentials: 'include',
     })
     .then(res => res.json())
-    .then(data => setOrderData(data))
-    .catch(() => router.push('/vin-search'))
+    .then(data => {
+      if (data.order) {
+        setOrderData(data.order)
+      } else {
+        router.push('/')
+      }
+    })
+    .catch(() => router.push('/'))
   }, [router])
 
   if (!orderData) {

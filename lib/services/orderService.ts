@@ -60,6 +60,7 @@ export async function createOrder(data: OrderData): Promise<CreateOrderResponse>
       headers: {
         'Content-Type': 'application/json',
       },
+      credentials: 'include', // Inclure les cookies dans la requête
       body: JSON.stringify(data),
     })
 
@@ -128,6 +129,17 @@ export async function uploadDocument(
   documentType: string
 ): Promise<{ success: boolean; document?: any; error?: string }> {
   try {
+    // Vérifier que le fichier est valide
+    if (!file || file.size === 0) {
+      console.error('Fichier invalide:', file)
+      return {
+        success: false,
+        error: 'Fichier invalide ou vide'
+      }
+    }
+
+    console.log(`Upload document: ${documentType}, taille: ${file.size} bytes, nom: ${file.name}`)
+
     const formData = new FormData()
     formData.append('file', file)
     formData.append('orderId', orderId)
@@ -135,18 +147,21 @@ export async function uploadDocument(
 
     const response = await fetch('/api/documents/upload', {
       method: 'POST',
+      credentials: 'include', // Important pour inclure les cookies de session
       body: formData,
     })
 
     const result = await response.json()
 
     if (!response.ok) {
+      console.error(`Erreur upload ${documentType}:`, result.error, 'Status:', response.status)
       return {
         success: false,
         error: result.error || 'Erreur lors de l\'upload du document'
       }
     }
 
+    console.log(`Document ${documentType} uploadé avec succès:`, result.document?.id)
     return {
       success: true,
       document: result.document
@@ -170,14 +185,27 @@ export async function uploadDocuments(
   const errors: string[] = []
   let uploaded = 0
 
+  console.log(`Début upload de ${files.length} documents pour la commande ${orderId}`)
+
   for (const { file, documentType } of files) {
-    const result = await uploadDocument(file, orderId, documentType)
-    if (result.success) {
-      uploaded++
-    } else {
-      errors.push(`${documentType}: ${result.error}`)
+    try {
+      const result = await uploadDocument(file, orderId, documentType)
+      if (result.success) {
+        uploaded++
+        console.log(`✓ ${documentType} uploadé avec succès`)
+      } else {
+        const errorMsg = `${documentType}: ${result.error}`
+        errors.push(errorMsg)
+        console.error(`✗ ${errorMsg}`)
+      }
+    } catch (error: any) {
+      const errorMsg = `${documentType}: ${error.message || 'Erreur inconnue'}`
+      errors.push(errorMsg)
+      console.error(`✗ ${errorMsg}`)
     }
   }
+
+  console.log(`Upload terminé: ${uploaded}/${files.length} documents uploadés`)
 
   return {
     success: errors.length === 0,

@@ -1,11 +1,13 @@
 'use client'
 
 import { useState, useEffect, startTransition } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import Image from 'next/image'
 import { FileText, Info, Shield, Clock, CheckCircle, Star, CreditCard, Upload, Users, Copy, Car, FileCheck, Home, Search, Building2, ChevronRight, Download, Pen, RotateCcw } from 'lucide-react'
 import { CAR_BRANDS } from '@/lib/data/carBrands'
+import { useSupabaseSession } from '@/hooks/useSupabaseSession'
+import { createOrder, uploadDocuments } from '@/lib/services/orderService'
 // Charger PDFViewer uniquement côté client (pas de SSR)
 // Utiliser useCanvas={false} pour désactiver le rendu canvas (plus rapide)
 const PDFViewer = dynamic(() => import('@/components/PDFViewer'), {
@@ -50,8 +52,61 @@ const STREET_TYPES = [
 
 export default function CarteGrisePage() {
   const searchParams = useSearchParams()
+  const router = useRouter()
+  const pathname = usePathname()
+  const { user, loading: sessionLoading } = useSupabaseSession()
   const [vin, setVin] = useState('')
   const [registrationNumber, setRegistrationNumber] = useState('')
+  const [registrationNumberError, setRegistrationNumberError] = useState('')
+  
+  // Format and validate French registration number (AA-123-AB format)
+  const formatRegistrationNumber = (value: string): string => {
+    // Remove all non-alphanumeric characters and convert to uppercase
+    const cleaned = value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, 7)
+    
+    // Format as AA-123-AB (2 letters, 3 digits, 2 letters)
+    if (cleaned.length <= 2) {
+      return cleaned
+    } else if (cleaned.length <= 5) {
+      return `${cleaned.slice(0, 2)}-${cleaned.slice(2)}`
+    } else {
+      return `${cleaned.slice(0, 2)}-${cleaned.slice(2, 5)}-${cleaned.slice(5, 7)}`
+    }
+  }
+  
+  // Validate registration number format
+  const validateRegistrationNumber = (value: string): boolean => {
+    // Remove dashes for validation
+    const cleaned = value.replace(/[^a-zA-Z0-9]/g, '')
+    
+    // Must be exactly 7 characters: 2 letters, 3 digits, 2 letters
+    if (cleaned.length !== 7) {
+      return false
+    }
+    
+    // Check format: AA-123-AB (2 letters, 3 digits, 2 letters)
+    const pattern = /^[A-Z]{2}[0-9]{3}[A-Z]{2}$/
+    return pattern.test(cleaned)
+  }
+  
+  const handleRegistrationNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    const formatted = formatRegistrationNumber(value)
+    setRegistrationNumber(formatted)
+    
+    // Validate format
+    if (formatted.replace(/[^a-zA-Z0-9]/g, '').length === 7) {
+      if (validateRegistrationNumber(formatted)) {
+        setRegistrationNumberError('')
+      } else {
+        setRegistrationNumberError('Format invalide. Utilisez le format AA-123-CD (2 lettres, 3 chiffres, 2 lettres)')
+      }
+    } else if (formatted.replace(/[^a-zA-Z0-9]/g, '').length > 0) {
+      setRegistrationNumberError('Le numéro doit contenir 7 caractères (2 lettres, 3 chiffres, 2 lettres)')
+    } else {
+      setRegistrationNumberError('')
+    }
+  }
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [email, setEmail] = useState('')
@@ -195,6 +250,12 @@ export default function CarteGrisePage() {
       alert('Le numéro d\'immatriculation est obligatoire.')
       return
     }
+    
+    // Vérifier le format du numéro d'immatriculation
+    if (!validateRegistrationNumber(registrationNumber)) {
+      alert('Le numéro d\'immatriculation doit être au format AA-123-CD (2 lettres, 3 chiffres, 2 lettres).')
+      return
+    }
 
     if (!acceptTerms) {
       alert('Veuillez accepter les conditions générales.')
@@ -239,90 +300,246 @@ export default function CarteGrisePage() {
         }
       }
 
-      // Import dynamically to avoid issues
-      const { createOrder, uploadDocuments } = await import('@/lib/services/orderService')
-      
-      // Create the order
-      const result = await createOrder(orderData)
-      
-      if (!result.success || !result.order) {
-        throw new Error(result.error || 'Erreur lors de la création de la commande')
+      // Store all form data temporarily in localStorage for checkout-signup page
+      // Convert files to base64 or store blob URLs for later upload
+      const formDataToStore = {
+        orderData,
+        finalPrice,
+        // Store file references (we'll convert them to files later)
+        documents: {
+          idFile: idFile ? { name: idFile.name, type: idFile.type, size: idFile.size } : null,
+          proofAddressFile: proofAddressFile ? { name: proofAddressFile.name, type: proofAddressFile.type, size: proofAddressFile.size } : null,
+          currentCardFile: currentCardFile ? { name: currentCardFile.name, type: currentCardFile.type, size: currentCardFile.size } : null,
+          certificatCessionFile: certificatCessionFile ? { name: certificatCessionFile.name, type: certificatCessionFile.type, size: certificatCessionFile.size } : null,
+          permisConduireFile: permisConduireFile ? { name: permisConduireFile.name, type: permisConduireFile.type, size: permisConduireFile.size } : null,
+          controleTechniqueFile: controleTechniqueFile ? { name: controleTechniqueFile.name, type: controleTechniqueFile.type, size: controleTechniqueFile.size } : null,
+          assuranceFile: assuranceFile ? { name: assuranceFile.name, type: assuranceFile.type, size: assuranceFile.size } : null,
+        },
+        mandatPreviewUrl,
+        mandatPreviewUrlWithSignature,
+        isSignatureValidated,
+        // Store file objects in a separate key (we'll handle them in checkout-signup)
+        files: {
+          idFile,
+          proofAddressFile,
+          currentCardFile,
+          certificatCessionFile,
+          permisConduireFile,
+          controleTechniqueFile,
+          assuranceFile,
+        }
       }
-
-      console.log('✅ Commande créée:', result.order)
-
-      // Upload documents if any
-      const documentsToUpload: Array<{ file: File; documentType: string }> = []
       
-      if (idFile) documentsToUpload.push({ file: idFile, documentType: 'carte_identite' })
-      if (proofAddressFile) documentsToUpload.push({ file: proofAddressFile, documentType: 'justificatif_domicile' })
-      if (currentCardFile) documentsToUpload.push({ file: currentCardFile, documentType: 'carte_grise_actuelle' })
-      if (certificatCessionFile) documentsToUpload.push({ file: certificatCessionFile, documentType: 'certificat_cession' })
-      if (permisConduireFile) documentsToUpload.push({ file: permisConduireFile, documentType: 'permis_conduire' })
-      if (controleTechniqueFile) documentsToUpload.push({ file: controleTechniqueFile, documentType: 'controle_technique' })
-      if (assuranceFile) documentsToUpload.push({ file: assuranceFile, documentType: 'assurance' })
-
-      // Upload mandat PDF signé if available
-      let mandatUrl = null
+      // Store in localStorage (files will be stored separately)
+      localStorage.setItem('pendingOrderData', JSON.stringify({
+        ...formDataToStore,
+        files: null // Don't store files in JSON
+      }))
+      
+      // Convert files to base64 and store in sessionStorage
+      const filesToStore: { [key: string]: { name: string; type: string; base64: string } } = {}
+      
+      const convertFileToBase64 = (file: File): Promise<string> => {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader()
+          reader.readAsDataURL(file)
+          reader.onload = () => {
+            const base64 = (reader.result as string).split(',')[1] // Remove data:type;base64, prefix
+            resolve(base64)
+          }
+          reader.onerror = reject
+        })
+      }
+      
+      // Convert all files to base64
+      const filePromises: Promise<void>[] = []
+      
+      if (idFile) {
+        filePromises.push(
+          convertFileToBase64(idFile).then(base64 => {
+            filesToStore.idFile = { name: idFile.name, type: idFile.type, base64 }
+          })
+        )
+      }
+      if (proofAddressFile) {
+        filePromises.push(
+          convertFileToBase64(proofAddressFile).then(base64 => {
+            filesToStore.proofAddressFile = { name: proofAddressFile.name, type: proofAddressFile.type, base64 }
+          })
+        )
+      }
+      if (currentCardFile) {
+        filePromises.push(
+          convertFileToBase64(currentCardFile).then(base64 => {
+            filesToStore.currentCardFile = { name: currentCardFile.name, type: currentCardFile.type, base64 }
+          })
+        )
+      }
+      if (certificatCessionFile) {
+        filePromises.push(
+          convertFileToBase64(certificatCessionFile).then(base64 => {
+            filesToStore.certificatCessionFile = { name: certificatCessionFile.name, type: certificatCessionFile.type, base64 }
+          })
+        )
+      }
+      if (permisConduireFile) {
+        filePromises.push(
+          convertFileToBase64(permisConduireFile).then(base64 => {
+            filesToStore.permisConduireFile = { name: permisConduireFile.name, type: permisConduireFile.type, base64 }
+          })
+        )
+      }
+      if (controleTechniqueFile) {
+        filePromises.push(
+          convertFileToBase64(controleTechniqueFile).then(base64 => {
+            filesToStore.controleTechniqueFile = { name: controleTechniqueFile.name, type: controleTechniqueFile.type, base64 }
+          })
+        )
+      }
+      if (assuranceFile) {
+        filePromises.push(
+          convertFileToBase64(assuranceFile).then(base64 => {
+            filesToStore.assuranceFile = { name: assuranceFile.name, type: assuranceFile.type, base64 }
+          })
+        )
+      }
+      
+      // Handle mandat files
       if (mandatPreviewUrlWithSignature && isSignatureValidated) {
         try {
-          // Convert blob URL to File
           const response = await fetch(mandatPreviewUrlWithSignature)
           const blob = await response.blob()
           const mandatFile = new File([blob], `mandat_${documentType}_${Date.now()}.pdf`, { type: 'application/pdf' })
-          documentsToUpload.push({ file: mandatFile, documentType: 'mandat_signe' })
-          mandatUrl = mandatPreviewUrlWithSignature
+          filePromises.push(
+            convertFileToBase64(mandatFile).then(base64 => {
+              filesToStore.mandatFile = { name: mandatFile.name, type: mandatFile.type, base64 }
+            })
+          )
         } catch (error) {
           console.error('Erreur conversion mandat:', error)
         }
       } else if (mandatPreviewUrl) {
-        // Upload mandat non signé if no signature
         try {
           const response = await fetch(mandatPreviewUrl)
           const blob = await response.blob()
           const mandatFile = new File([blob], `mandat_${documentType}_${Date.now()}.pdf`, { type: 'application/pdf' })
-          documentsToUpload.push({ file: mandatFile, documentType: 'mandat' })
-          mandatUrl = mandatPreviewUrl
+          filePromises.push(
+            convertFileToBase64(mandatFile).then(base64 => {
+              filesToStore.mandatFile = { name: mandatFile.name, type: mandatFile.type, base64 }
+            })
+          )
         } catch (error) {
           console.error('Erreur conversion mandat:', error)
         }
       }
 
-      if (documentsToUpload.length > 0) {
-        const uploadResult = await uploadDocuments(documentsToUpload, result.order.id)
-        console.log(`📄 Documents uploadés: ${uploadResult.uploaded}/${documentsToUpload.length}`)
-        if (uploadResult.errors.length > 0) {
-          console.warn('⚠️ Erreurs upload:', uploadResult.errors)
-        }
-        
-        // Update order metadata with mandat URL if uploaded
-        if (mandatUrl) {
-          try {
-            await fetch(`/api/orders/${result.order.id}`, {
-              method: 'PATCH',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                metadata: {
-                  ...orderData.metadata,
-                  mandatUrl: mandatUrl,
-                  mandatUploaded: true
-                }
-              })
-            })
-          } catch (error) {
-            console.error('Erreur mise à jour métadonnées mandat:', error)
+      // Wait for all files to be converted
+      await Promise.all(filePromises)
+      
+      console.log('Fichiers stockés dans sessionStorage:', Object.keys(filesToStore))
+      console.log('Nombre de fichiers:', Object.keys(filesToStore).length)
+      
+      // Check if user is already logged in
+      if (user && !sessionLoading) {
+        // User is logged in - create order directly and redirect to payment
+        try {
+          // Convert base64 files back to File objects for upload
+          const filesToUpload: Array<{ file: File; documentType: string }> = []
+          
+          const base64ToFile = (base64: string, filename: string, mimeType: string): File => {
+            const byteCharacters = atob(base64)
+            const byteNumbers = new Array(byteCharacters.length)
+            for (let i = 0; i < byteCharacters.length; i++) {
+              byteNumbers[i] = byteCharacters.charCodeAt(i)
+            }
+            const byteArray = new Uint8Array(byteNumbers)
+            return new File([byteArray], filename, { type: mimeType })
           }
-        }
-      }
-
-      // Store order reference for payment page
+          
+          if (filesToStore.idFile) {
+            filesToUpload.push({ 
+              file: base64ToFile(filesToStore.idFile.base64, filesToStore.idFile.name, filesToStore.idFile.type), 
+              documentType: 'carte_identite' 
+            })
+          }
+          if (filesToStore.proofAddressFile) {
+            filesToUpload.push({ 
+              file: base64ToFile(filesToStore.proofAddressFile.base64, filesToStore.proofAddressFile.name, filesToStore.proofAddressFile.type), 
+              documentType: 'justificatif_domicile' 
+            })
+          }
+          if (filesToStore.currentCardFile) {
+            filesToUpload.push({ 
+              file: base64ToFile(filesToStore.currentCardFile.base64, filesToStore.currentCardFile.name, filesToStore.currentCardFile.type), 
+              documentType: 'carte_grise_actuelle' 
+            })
+          }
+          if (filesToStore.certificatCessionFile) {
+            filesToUpload.push({ 
+              file: base64ToFile(filesToStore.certificatCessionFile.base64, filesToStore.certificatCessionFile.name, filesToStore.certificatCessionFile.type), 
+              documentType: 'certificat_cession' 
+            })
+          }
+          if (filesToStore.permisConduireFile) {
+            filesToUpload.push({ 
+              file: base64ToFile(filesToStore.permisConduireFile.base64, filesToStore.permisConduireFile.name, filesToStore.permisConduireFile.type), 
+              documentType: 'permis_conduire' 
+            })
+          }
+          if (filesToStore.controleTechniqueFile) {
+            filesToUpload.push({ 
+              file: base64ToFile(filesToStore.controleTechniqueFile.base64, filesToStore.controleTechniqueFile.name, filesToStore.controleTechniqueFile.type), 
+              documentType: 'controle_technique' 
+            })
+          }
+          if (filesToStore.assuranceFile) {
+            filesToUpload.push({ 
+              file: base64ToFile(filesToStore.assuranceFile.base64, filesToStore.assuranceFile.name, filesToStore.assuranceFile.type), 
+              documentType: 'assurance' 
+            })
+          }
+          if (filesToStore.mandatFile) {
+            filesToUpload.push({ 
+              file: base64ToFile(filesToStore.mandatFile.base64, filesToStore.mandatFile.name, filesToStore.mandatFile.type), 
+              documentType: isSignatureValidated ? 'mandat_signe' : 'mandat' 
+            })
+          }
+          
+          // Create order
+          const result = await createOrder(orderData)
+          
+          if (!result.success || !result.order) {
+            throw new Error(result.error || 'Erreur lors de la création de la commande')
+          }
+          
+          // Upload documents
+          if (filesToUpload.length > 0) {
+            await uploadDocuments(filesToUpload, result.order.id)
+          }
+          
+          // Store order references
       localStorage.setItem('currentOrderId', result.order.id)
       localStorage.setItem('currentOrderRef', result.order.reference)
-      localStorage.setItem('currentOrderPrice', String(finalPrice))
-
-      // Redirect to confirmation or payment
-      alert(`Commande créée avec succès ! Référence: ${result.order.reference}`)
-      window.location.href = '/dashboard'
+          localStorage.setItem('currentOrderPrice', String(orderData.price))
+          
+          // Clean up temporary data
+          localStorage.removeItem('pendingOrderData')
+          sessionStorage.removeItem('pendingOrderFiles')
+          
+          // Redirect to payment
+          router.push('/payment')
+          return
+        } catch (error: any) {
+          console.error('Erreur création commande:', error)
+          alert('Erreur lors de la création de la commande: ' + (error.message || 'Une erreur est survenue'))
+          setIsSubmitting(false)
+          return
+        }
+      }
+      
+      // User is not logged in - store data and redirect to checkout-signup
+      sessionStorage.setItem('pendingOrderFiles', JSON.stringify(filesToStore))
+      window.location.href = '/checkout-signup'
 
     } catch (error: any) {
       console.error('Erreur soumission:', error)
@@ -364,9 +581,16 @@ export default function CarteGrisePage() {
         return
       }
 
-      // Vérifier numéro d'immatriculation (obligatoire)
+      // Vérifier numéro d'immatriculation (obligatoire et format valide)
       if (!registrationNumber || registrationNumber.trim() === '') {
         alert('Le numéro d\'immatriculation est obligatoire. Veuillez le renseigner.')
+        setIsGeneratingMandat(false)
+        return
+      }
+      
+      // Vérifier le format du numéro d'immatriculation
+      if (!validateRegistrationNumber(registrationNumber)) {
+        alert('Le numéro d\'immatriculation doit être au format AA-123-CD (2 lettres, 3 chiffres, 2 lettres).')
         setIsGeneratingMandat(false)
         return
       }
@@ -719,8 +943,14 @@ export default function CarteGrisePage() {
     return () => clearTimeout(timeoutId)
   }, [postalCode, documentType])
 
-  // Update documentType when URL parameter changes
+  // Track if user has manually changed the document type
+  const [userChangedType, setUserChangedType] = useState(false)
+
+  // Update documentType when URL parameter changes (only on initial load, not if user changed it)
   useEffect(() => {
+    // Only update from URL if user hasn't manually changed the type
+    if (userChangedType) return
+    
     const typeParam = searchParams.get('type')
     if (typeParam) {
       const typeMap: Record<string, string> = {
@@ -744,7 +974,7 @@ export default function CarteGrisePage() {
         })
       }
     }
-  }, [searchParams, documentType])
+  }, [searchParams, documentType, userChangedType])
 
   const documentTypes = [
     { 
@@ -868,6 +1098,13 @@ export default function CarteGrisePage() {
                         onClick={() => {
                         startTransition(() => {
                           setDocumentType(doc.value)
+                          setUserChangedType(true) // Mark that user manually changed the type
+                          
+                          // Update URL to reflect the selected type
+                          const params = new URLSearchParams(searchParams.toString())
+                          params.set('type', doc.value)
+                          router.push(`${pathname}?${params.toString()}`, { scroll: false })
+                          
                           if (doc.value !== 'changement-titulaire') {
                             setClientType('normal')
                           }
@@ -982,9 +1219,9 @@ export default function CarteGrisePage() {
                   <button
                     type="button"
                     onClick={handleGenerateMandat}
-                    disabled={isGeneratingMandat || !firstName || !lastName || !email || !streetNumber || !streetType || !streetName || !postalCode || !city || !vin || vin.length !== 17 || !registrationNumber || !marque || (clientType === 'company' && !siret)}
+                    disabled={isGeneratingMandat || !firstName || !lastName || !email || !streetNumber || !streetType || !streetName || !postalCode || !city || !vin || vin.length !== 17 || !registrationNumber || !validateRegistrationNumber(registrationNumber) || !marque || (clientType === 'company' && !siret)}
                     className={`w-full mb-4 py-3 px-4 rounded-lg font-semibold transition-colors flex items-center justify-center space-x-2 ${
-                      !isGeneratingMandat && firstName && lastName && email && streetNumber && streetType && streetName && postalCode && city && vin && vin.length === 17 && registrationNumber && marque && (clientType !== 'company' || siret)
+                      !isGeneratingMandat && firstName && lastName && email && streetNumber && streetType && streetName && postalCode && city && vin && vin.length === 17 && registrationNumber && validateRegistrationNumber(registrationNumber) && marque && (clientType !== 'company' || siret)
                         ? 'bg-primary-600 text-white hover:bg-primary-700'
                         : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                     }`}
@@ -1213,11 +1450,26 @@ export default function CarteGrisePage() {
                         <input
                           type="text"
                           value={registrationNumber}
-                          onChange={(e) => setRegistrationNumber(e.target.value.toUpperCase())}
+                          onChange={handleRegistrationNumberChange}
                           required
-                          className="w-full px-4 py-2.5 border border-gray-300 rounded focus:ring-2 focus:ring-primary-600 focus:border-primary-600 outline-none"
+                          maxLength={9} // AA-123-CD = 9 characters with dashes
+                          className={`w-full px-4 py-2.5 border rounded focus:ring-2 focus:ring-primary-600 focus:border-primary-600 outline-none ${
+                            registrationNumberError 
+                              ? 'border-red-500 focus:border-red-500 focus:ring-red-500' 
+                              : 'border-gray-300'
+                          }`}
                           placeholder="Ex: AB-123-CD"
                         />
+                        {registrationNumberError && (
+                          <p className="text-xs text-red-600 mt-1">
+                            {registrationNumberError}
+                          </p>
+                        )}
+                        {registrationNumber && !registrationNumberError && validateRegistrationNumber(registrationNumber) && (
+                          <p className="text-xs text-green-600 mt-1">
+                            ✓ Format valide
+                          </p>
+                        )}
                       </div>
                     </div>
                     

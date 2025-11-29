@@ -71,7 +71,7 @@ export default function ConnexionPage() {
           return
         }
 
-        // Regular users go to dashboard
+        // Regular users - redirect to dashboard
         router.push('/dashboard')
         router.refresh()
       }
@@ -109,48 +109,66 @@ export default function ConnexionPage() {
     try {
       const supabase = createClient()
       
-      // Sign up user with Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: formData.emailSignup,
-        password: formData.passwordSignup,
-        options: {
-          data: {
-            first_name: formData.firstName,
-            last_name: formData.lastName,
-            phone: formData.phone,
-          },
+      // Créer le compte via l'API avec confirmation automatique de l'email
+      const createUserResponse = await fetch('/api/auth/create-user', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
+        body: JSON.stringify({
+          email: formData.emailSignup,
+          password: formData.passwordSignup,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          phone: formData.phone,
+        }),
       })
 
-      if (authError) {
-        throw new Error(authError.message || 'Erreur lors de la création du compte')
+      const createUserResult = await createUserResponse.json()
+
+      if (!createUserResponse.ok) {
+        throw new Error(createUserResult.error || 'Erreur lors de la création du compte')
       }
 
-      if (authData.user) {
-        // Create profile in profiles table
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert({
-            id: authData.user.id,
-            email: formData.emailSignup,
-            first_name: formData.firstName,
-            last_name: formData.lastName,
-            phone: formData.phone,
-            role: 'USER',
-          })
+      // Se connecter automatiquement après la création
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: formData.emailSignup,
+        password: formData.passwordSignup,
+      })
 
-        if (profileError) {
-          console.error('Profile creation error:', profileError)
-          // User is created but profile failed - they can still login
-        }
-
+      if (signInError) {
+        // Si la connexion échoue, on affiche juste un message de succès et on passe à l'onglet login
         setSuccess(true)
         setTimeout(() => {
           setActiveTab('login')
           setSuccess(false)
-          // Pre-fill email in login form
           setEmail(formData.emailSignup)
         }, 2000)
+      } else {
+        // Connexion réussie, vérifier le rôle et rediriger
+        const { data: { user: signedInUser } } = await supabase.auth.getUser()
+        
+        if (signedInUser) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', signedInUser.id)
+            .single()
+
+          setSuccess(true)
+          setTimeout(() => {
+            if (profile?.role === 'ADMIN' || profile?.role === 'SUPER_ADMIN') {
+              window.location.href = '/admin'
+            } else {
+              window.location.href = '/dashboard'
+            }
+          }, 1500)
+        } else {
+          setSuccess(true)
+          setTimeout(() => {
+            window.location.href = '/dashboard'
+          }, 1500)
+        }
       }
     } catch (error: any) {
       setErrorSignup(error.message || 'Une erreur est survenue')

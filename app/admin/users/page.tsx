@@ -257,9 +257,7 @@ export default function AdminUsersPage() {
                             </div>
                             <div>
                               <p className="font-medium text-gray-900">
-                                {user.first_name || user.last_name 
-                                  ? `${user.first_name || ''} ${user.last_name || ''}`.trim()
-                                  : 'Non renseigné'}
+                                {`${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Non renseigné'}
                               </p>
                               <p className="text-sm text-gray-500">{user.email}</p>
                             </div>
@@ -365,9 +363,7 @@ export default function AdminUsersPage() {
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900">
-                    {selectedUser.first_name || selectedUser.last_name 
-                      ? `${selectedUser.first_name || ''} ${selectedUser.last_name || ''}`.trim()
-                      : 'Non renseigné'}
+                    {`${selectedUser.first_name || ''} ${selectedUser.last_name || ''}`.trim() || 'Non renseigné'}
                   </h3>
                   <p className="text-gray-500">{selectedUser.email}</p>
                   {getRoleBadge(selectedUser.role)}

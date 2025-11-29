@@ -30,11 +30,16 @@ export interface MandatData {
  */
 export async function generateMandatPDF(formData: MandatData): Promise<Uint8Array> {
   try {
-    // Charger le PDF template depuis le dossier public
-    const templatePath = path.join(process.cwd(), 'public', 'mandat.pdf')
+    // Charger le PDF template depuis le dossier public (essayer les deux cas)
+    const publicDir = path.join(process.cwd(), 'public')
+    let templatePath = path.join(publicDir, 'Mandat.pdf')
     
     if (!fs.existsSync(templatePath)) {
-      throw new Error('Template PDF (mandat.pdf) non trouvé dans le dossier public')
+      // Essayer avec minuscules
+      templatePath = path.join(publicDir, 'mandat.pdf')
+      if (!fs.existsSync(templatePath)) {
+        throw new Error('Template PDF (Mandat.pdf ou mandat.pdf) non trouvé dans le dossier public')
+      }
     }
     
     const templateBytes = fs.readFileSync(templatePath)

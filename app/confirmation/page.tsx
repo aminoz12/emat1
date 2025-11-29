@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { CheckCircle, Mail, FileText, Clock, ArrowRight, Download } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
 
 interface OrderData {
   id: string
@@ -41,11 +42,30 @@ const ConfirmationPage = () => {
     })
   }, [router])
 
-  const handleNewOrder = () => {
+  const handleNewOrder = async () => {
     localStorage.removeItem('currentOrder')
     localStorage.removeItem('vehicleData')
     localStorage.removeItem('selectedService')
-    router.push('/vin-search')
+    
+    // Check user role and redirect accordingly
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    
+    if (user) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+
+      if (profile?.role === 'ADMIN' || profile?.role === 'SUPER_ADMIN') {
+        router.push('/admin')
+      } else {
+        router.push('/dashboard')
+      }
+    } else {
+      router.push('/dashboard')
+    }
   }
 
   if (isLoading) {

@@ -6,7 +6,7 @@ import JSZip from 'jszip'
 // GET - Download all documents for an order as ZIP
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
     const supabase = await createClient()
@@ -35,7 +35,7 @@ export async function GET(
       )
     }
 
-    const { id: orderId } = await params
+    const orderId = params.id
 
     // Use admin client to get documents
     const adminSupabase = createAdminClient()
@@ -68,11 +68,23 @@ export async function GET(
     for (const doc of documents) {
       if (doc.file_url) {
         try {
-          // Extract file path from URL
-          const urlParts = doc.file_url.split('/documents/')
-          if (urlParts.length > 1) {
-            const filePath = urlParts[1]
-            
+          // Try to extract file path from URL
+          let filePath: string | null = null
+          
+          // Method 1: Extract from Supabase Storage URL pattern
+          // URL format: https://[project].supabase.co/storage/v1/object/public/documents/[path]
+          const storageUrlMatch = doc.file_url.match(/\/storage\/v1\/object\/public\/documents\/(.+)$/)
+          if (storageUrlMatch) {
+            filePath = decodeURIComponent(storageUrlMatch[1])
+          } else {
+            // Method 2: Extract from /documents/ pattern
+            const urlParts = doc.file_url.split('/documents/')
+            if (urlParts.length > 1) {
+              filePath = decodeURIComponent(urlParts[1].split('?')[0]) // Remove query params
+            }
+          }
+          
+          if (filePath) {
             // Download file from Supabase Storage
             const { data: fileData, error: downloadError } = await adminSupabase.storage
               .from('documents')
@@ -80,8 +92,39 @@ export async function GET(
 
             if (!downloadError && fileData) {
               const arrayBuffer = await fileData.arrayBuffer()
-              const fileName = doc.name || `document_${doc.id}.${doc.file_type || 'pdf'}`
+              // Use document type as filename prefix for better organization
+              const fileExt = doc.file_type?.split('/').pop() || 'pdf'
+              const sanitizedName = (doc.name || `document_${doc.id}`).replace(/[^a-zA-Z0-9._-]/g, '_')
+              const fileName = `${sanitizedName}${!sanitizedName.includes('.') ? '.' + fileExt : ''}`
               zip.file(fileName, arrayBuffer)
+            } else {
+              // Fallback: Try to download directly from URL
+              try {
+                const response = await fetch(doc.file_url)
+                if (response.ok) {
+                  const arrayBuffer = await response.arrayBuffer()
+                  const fileExt = doc.file_type?.split('/').pop() || 'pdf'
+                  const sanitizedName = (doc.name || `document_${doc.id}`).replace(/[^a-zA-Z0-9._-]/g, '_')
+                  const fileName = `${sanitizedName}${!sanitizedName.includes('.') ? '.' + fileExt : ''}`
+                  zip.file(fileName, arrayBuffer)
+                }
+              } catch (fetchError) {
+                console.error(`Error fetching document ${doc.id} from URL:`, fetchError)
+              }
+            }
+          } else {
+            // Fallback: Try to download directly from URL
+            try {
+              const response = await fetch(doc.file_url)
+              if (response.ok) {
+                const arrayBuffer = await response.arrayBuffer()
+                const fileExt = doc.file_type?.split('/').pop() || 'pdf'
+                const sanitizedName = (doc.name || `document_${doc.id}`).replace(/[^a-zA-Z0-9._-]/g, '_')
+                const fileName = `${sanitizedName}${!sanitizedName.includes('.') ? '.' + fileExt : ''}`
+                zip.file(fileName, arrayBuffer)
+              }
+            } catch (fetchError) {
+              console.error(`Error fetching document ${doc.id} from URL:`, fetchError)
             }
           }
         } catch (error) {
@@ -101,7 +144,7 @@ export async function GET(
       .eq('id', orderId)
       .single()
 
-    const fileName = `documents_${order?.reference || orderId}_${Date.now()}.zip`
+    const fileName = `commande-${orderId}.zip`
 
     // Return ZIP file
     return new NextResponse(zipBuffer, {

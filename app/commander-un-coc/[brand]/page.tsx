@@ -1,10 +1,12 @@
 'use client'
 
 import { useState } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { Star, Info } from 'lucide-react'
 import Link from 'next/link'
+import { useSupabaseSession } from '@/hooks/useSupabaseSession'
+import { createOrder, uploadDocuments } from '@/lib/services/orderService'
 
 // Product data - matching the listing page
 const allProducts = [
@@ -282,6 +284,8 @@ const allProducts = [
 
 export default function ProductDetailPage() {
   const params = useParams()
+  const router = useRouter()
+  const { user, loading: sessionLoading } = useSupabaseSession()
   const brandSlug = params.brand as string
   
   const [selectedImage, setSelectedImage] = useState(0)
@@ -290,6 +294,19 @@ export default function ProductDetailPage() {
   const [tvaNumber, setTvaNumber] = useState('')
   const [rectoFile, setRectoFile] = useState<File | null>(null)
   const [versoFile, setVersoFile] = useState<File | null>(null)
+  
+  // Client information fields
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
+  const [email, setEmail] = useState('')
+  const [phone, setPhone] = useState('')
+  const [streetNumber, setStreetNumber] = useState('')
+  const [streetType, setStreetType] = useState('')
+  const [streetName, setStreetName] = useState('')
+  const [postalCode, setPostalCode] = useState('')
+  const [city, setCity] = useState('')
+  const [carteGriseFile, setCarteGriseFile] = useState<File | null>(null)
+  const [acceptResponsibility, setAcceptResponsibility] = useState(false)
 
   // Find product by brand slug (normalize for matching)
   const normalizeBrand = (brand: string) => brand.toLowerCase().replace(/\s+/g, '-').replace('ë', 'e').replace('é', 'e')
@@ -350,10 +367,169 @@ export default function ProductDetailPage() {
     }
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Handle form submission
-    console.log({ vin, country, tvaNumber, rectoFile, versoFile })
+    
+    // Validate required fields
+    if (!vin || vin.trim() === '' || vin.length !== 17) {
+      alert('Le numéro VIN doit contenir exactement 17 caractères.')
+      return
+    }
+
+    // Validate client information
+    if (!firstName || !lastName || !email || !phone || !streetNumber || !streetType || !streetName || !postalCode || !city) {
+      alert('Veuillez remplir tous les champs d\'information client.')
+      return
+    }
+
+    // Validate carte grise upload
+    if (!carteGriseFile) {
+      alert('Veuillez uploader votre carte grise pour confirmer que vous êtes le propriétaire du véhicule.')
+      return
+    }
+
+    // Validate responsibility checkbox
+    if (!acceptResponsibility) {
+      alert('Veuillez accepter la déclaration de responsabilité.')
+      return
+    }
+
+    try {
+      const price = parseFloat(product.price.replace(',', '.'))
+      const fullAddress = `${streetNumber} ${streetType} ${streetName}`.trim()
+
+      // Create order data
+      const orderData = {
+        type: 'coc' as const,
+        vehicleData: {
+          vin: vin.trim().toUpperCase(),
+          make: product.brand,
+        },
+        serviceType: 'coc',
+        price: price,
+        metadata: {
+          firstName,
+          lastName,
+          email,
+          phone,
+          streetNumber,
+          streetType,
+          streetName,
+          address: fullAddress,
+          postalCode,
+          city,
+          vin: vin.trim().toUpperCase(),
+          country,
+          tvaNumber,
+          brand: product.brand,
+          brandName: product.brandName,
+        }
+      }
+
+      // Store all form data temporarily in localStorage for checkout-signup page
+      const formDataToStore = {
+        orderData,
+        finalPrice: price,
+      }
+      
+      localStorage.setItem('pendingOrderData', JSON.stringify(formDataToStore))
+      
+      // Convert files to base64 and store in sessionStorage
+      const convertFileToBase64 = (file: File): Promise<string> => {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader()
+          reader.readAsDataURL(file)
+          reader.onload = () => {
+            const base64 = (reader.result as string).split(',')[1]
+            resolve(base64)
+          }
+          reader.onerror = reject
+        })
+      }
+      
+      const filesToStore: { [key: string]: { name: string; type: string; base64: string } } = {}
+      
+      if (carteGriseFile) {
+        const base64 = await convertFileToBase64(carteGriseFile)
+        filesToStore.carteGriseFile = { name: carteGriseFile.name, type: carteGriseFile.type, base64 }
+      }
+      if (rectoFile) {
+        const base64 = await convertFileToBase64(rectoFile)
+        filesToStore.rectoFile = { name: rectoFile.name, type: rectoFile.type, base64 }
+      }
+      if (versoFile) {
+        const base64 = await convertFileToBase64(versoFile)
+        filesToStore.versoFile = { name: versoFile.name, type: versoFile.type, base64 }
+      }
+      
+      // Check if user is already logged in
+      if (user && !sessionLoading) {
+        // User is logged in - create order directly and redirect to payment
+        try {
+          const base64ToFile = (base64: string, filename: string, mimeType: string): File => {
+            const byteCharacters = atob(base64)
+            const byteNumbers = new Array(byteCharacters.length)
+            for (let i = 0; i < byteCharacters.length; i++) {
+              byteNumbers[i] = byteCharacters.charCodeAt(i)
+            }
+            const byteArray = new Uint8Array(byteNumbers)
+            return new File([byteArray], filename, { type: mimeType })
+          }
+          
+          const filesToUpload: Array<{ file: File; documentType: string }> = []
+          if (filesToStore.carteGriseFile) {
+            filesToUpload.push({ 
+              file: base64ToFile(filesToStore.carteGriseFile.base64, filesToStore.carteGriseFile.name, filesToStore.carteGriseFile.type), 
+              documentType: 'carte_grise' 
+            })
+          }
+          if (filesToStore.rectoFile) {
+            filesToUpload.push({ 
+              file: base64ToFile(filesToStore.rectoFile.base64, filesToStore.rectoFile.name, filesToStore.rectoFile.type), 
+              documentType: 'carte_identite_recto' 
+            })
+          }
+          if (filesToStore.versoFile) {
+            filesToUpload.push({ 
+              file: base64ToFile(filesToStore.versoFile.base64, filesToStore.versoFile.name, filesToStore.versoFile.type), 
+              documentType: 'carte_identite_verso' 
+            })
+          }
+          
+          const result = await createOrder(orderData)
+          
+          if (!result.success || !result.order) {
+            throw new Error(result.error || 'Erreur lors de la création de la commande')
+          }
+          
+          if (filesToUpload.length > 0) {
+            await uploadDocuments(filesToUpload, result.order.id)
+          }
+          
+          localStorage.setItem('currentOrderId', result.order.id)
+          localStorage.setItem('currentOrderRef', result.order.reference)
+          localStorage.setItem('currentOrderPrice', String(orderData.price))
+          
+          localStorage.removeItem('pendingOrderData')
+          sessionStorage.removeItem('pendingOrderFiles')
+          
+          router.push('/payment')
+          return
+        } catch (error: any) {
+          console.error('Erreur création commande:', error)
+          alert('Erreur lors de la création de la commande: ' + (error.message || 'Une erreur est survenue'))
+          return
+        }
+      }
+      
+      // User is not logged in - store data and redirect to checkout-signup
+      sessionStorage.setItem('pendingOrderFiles', JSON.stringify(filesToStore))
+      window.location.href = '/checkout-signup'
+
+    } catch (error: any) {
+      console.error('Erreur soumission:', error)
+      alert(error.message || 'Une erreur est survenue. Veuillez réessayer.')
+    }
   }
 
   return (
@@ -536,6 +712,176 @@ export default function ProductDetailPage() {
                     <span className="text-sm text-gray-500">
                       {versoFile ? versoFile.name : 'Aucun fichier choisi'}
                     </span>
+                  </div>
+                </div>
+
+                {/* Client Information Section */}
+                <div className="border-t border-gray-200 pt-6 mt-6">
+                  <h3 className="text-lg font-bold text-gray-900 mb-4">Vos informations</h3>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Prénom *
+                      </label>
+                      <input
+                        type="text"
+                        value={firstName}
+                        onChange={(e) => setFirstName(e.target.value)}
+                        required
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded focus:ring-1 focus:ring-gray-900 focus:border-gray-900 outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Nom *
+                      </label>
+                      <input
+                        type="text"
+                        value={lastName}
+                        onChange={(e) => setLastName(e.target.value)}
+                        required
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded focus:ring-1 focus:ring-gray-900 focus:border-gray-900 outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Email *
+                      </label>
+                      <input
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded focus:ring-1 focus:ring-gray-900 focus:border-gray-900 outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Téléphone *
+                      </label>
+                      <input
+                        type="tel"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        required
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded focus:ring-1 focus:ring-gray-900 focus:border-gray-900 outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Adresse *
+                    </label>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <input
+                        type="text"
+                        value={streetNumber}
+                        onChange={(e) => setStreetNumber(e.target.value)}
+                        placeholder="N°"
+                        required
+                        className="px-4 py-2.5 border border-gray-300 rounded focus:ring-1 focus:ring-gray-900 focus:border-gray-900 outline-none"
+                      />
+                      <select
+                        value={streetType}
+                        onChange={(e) => setStreetType(e.target.value)}
+                        required
+                        className="px-4 py-2.5 border border-gray-300 rounded focus:ring-1 focus:ring-gray-900 focus:border-gray-900 outline-none"
+                      >
+                        <option value="">Type</option>
+                        <option value="Rue">Rue</option>
+                        <option value="Avenue">Avenue</option>
+                        <option value="Boulevard">Boulevard</option>
+                        <option value="Place">Place</option>
+                        <option value="Chemin">Chemin</option>
+                        <option value="Allée">Allée</option>
+                        <option value="Autre">Autre</option>
+                      </select>
+                      <input
+                        type="text"
+                        value={streetName}
+                        onChange={(e) => setStreetName(e.target.value)}
+                        placeholder="Nom de la rue"
+                        required
+                        className="px-4 py-2.5 border border-gray-300 rounded focus:ring-1 focus:ring-gray-900 focus:border-gray-900 outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Code postal *
+                      </label>
+                      <input
+                        type="text"
+                        value={postalCode}
+                        onChange={(e) => setPostalCode(e.target.value)}
+                        required
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded focus:ring-1 focus:ring-gray-900 focus:border-gray-900 outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Ville *
+                      </label>
+                      <input
+                        type="text"
+                        value={city}
+                        onChange={(e) => setCity(e.target.value)}
+                        required
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded focus:ring-1 focus:ring-gray-900 focus:border-gray-900 outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Carte Grise Upload */}
+                  <div className="mb-6">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Carte grise du véhicule *
+                    </label>
+                    <p className="text-xs text-gray-500 mb-3">
+                      Veuillez uploader votre carte grise pour confirmer que vous êtes le propriétaire du véhicule.
+                    </p>
+                    <div className="flex items-center space-x-3">
+                      <label className="cursor-pointer">
+                        <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors">
+                          Choisir un fichier
+                        </span>
+                        <input
+                          type="file"
+                          onChange={handleFileChange(setCarteGriseFile)}
+                          className="hidden"
+                          accept="image/*,.pdf"
+                          required
+                        />
+                      </label>
+                      <span className="text-sm text-gray-500">
+                        {carteGriseFile ? carteGriseFile.name : 'Aucun fichier choisi'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Responsibility Checkbox */}
+                  <div className="mb-6">
+                    <label className="flex items-start space-x-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={acceptResponsibility}
+                        onChange={(e) => setAcceptResponsibility(e.target.checked)}
+                        required
+                        className="mt-1 w-4 h-4 text-gray-900 border-gray-300 rounded focus:ring-gray-900"
+                      />
+                      <span className="text-sm text-gray-700">
+                        J'assume la responsabilité totale de cette commande de document COC. 
+                        Je certifie être le propriétaire légitime du véhicule identifié par le VIN <strong>{vin.toUpperCase() || 'XXXXX'}</strong> et que toutes les informations fournies sont exactes. Je comprends que ce document est soumis 
+                        aux réglementations en vigueur et que toute utilisation frauduleuse est passible de sanctions pénales. *
+                      </span>
+                    </label>
                   </div>
                 </div>
 

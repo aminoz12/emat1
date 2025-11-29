@@ -49,7 +49,7 @@ const OrderFormPage = () => {
     const service = localStorage.getItem('selectedService')
     
     if (!vehicle || !service) {
-      router.push('/vin-search')
+      router.push('/')
       return
     }
 
