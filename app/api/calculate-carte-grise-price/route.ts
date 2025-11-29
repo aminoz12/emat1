@@ -54,15 +54,17 @@ export async function GET(request: NextRequest) {
     // L'API peut retourner différentes structures, on essaie plusieurs formats
     let departmentData: any = null
     
-    if (Array.isArray(departments)) {
-      departmentData = departments.find((d: any) => {
-        const code = String(d.code || d.numero || d.departement || '').padStart(2, '0')
-        const deptStr = String(dept).padStart(2, '0')
-        return code === deptStr || code === dept
-      })
-    } else if (departments !== null && typeof departments === 'object') {
-      // Si c'est un objet, chercher directement par clé
-      departmentData = departments[dept] || departments[String(dept).padStart(2, '0')]
+    if (dept) {
+      if (Array.isArray(departments)) {
+        departmentData = departments.find((d: any) => {
+          const code = String(d.code || d.numero || d.departement || '').padStart(2, '0')
+          const deptStr = String(dept).padStart(2, '0')
+          return code === deptStr || code === dept
+        })
+      } else if (departments !== null && typeof departments === 'object') {
+        // Si c'est un objet, chercher directement par clé
+        departmentData = departments[dept] || departments[String(dept).padStart(2, '0')]
+      }
     }
 
     // Si le département n'est pas trouvé, utiliser des valeurs par défaut
