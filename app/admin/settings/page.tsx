@@ -18,7 +18,7 @@ export default function AdminSettingsPage() {
   const [settings, setSettings] = useState({
     siteName: 'EMatricule',
     siteEmail: 'contact@ematricule.fr',
-    sitePhone: '01 84 80 28 27',
+    sitePhone: '01 47 85 10 00',
     notifyNewOrders: true,
     notifyStatusChange: true,
     autoProcessOrders: false,

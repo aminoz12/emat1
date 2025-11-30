@@ -78,12 +78,12 @@ export async function GET(
             filePath = decodeURIComponent(storageUrlMatch[1])
           } else {
             // Method 2: Extract from /documents/ pattern
-            const urlParts = doc.file_url.split('/documents/')
-            if (urlParts.length > 1) {
+          const urlParts = doc.file_url.split('/documents/')
+          if (urlParts.length > 1) {
               filePath = decodeURIComponent(urlParts[1].split('?')[0]) // Remove query params
             }
           }
-          
+            
           if (filePath) {
             // Download file from Supabase Storage
             const { data: fileData, error: downloadError } = await adminSupabase.storage

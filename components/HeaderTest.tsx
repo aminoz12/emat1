@@ -176,10 +176,10 @@ const HeaderTest = () => {
 
           {/* Right side - Phone and CTA */}
           <div className="flex items-center space-x-4">
-            <a href="tel:0184802827" className="flex items-center space-x-2 text-gray-700 hover:text-primary-600 transition-colors">
+            <a href="tel:0147851000" className="flex items-center space-x-2 text-gray-700 hover:text-primary-600 transition-colors">
               <Phone className="w-4 h-4" />
               <div className="text-right">
-                <div className="text-sm font-semibold">01 84 80 28 27</div>
+                <div className="text-sm font-semibold">01 47 85 10 00</div>
                 <div className="text-xs text-gray-500">Appel gratuit</div>
               </div>
             </a>

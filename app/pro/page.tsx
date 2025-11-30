@@ -704,9 +704,9 @@ const ProPage = () => {
           <div className="text-center">
             <h3 className="text-lg font-bold text-gray-900 mb-6">Besoin d'aide ?</h3>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <a href="tel:0184802827" className="flex items-center space-x-2 text-gray-700 hover:text-[#0d6962] transition-colors">
+              <a href="tel:0147851000" className="flex items-center space-x-2 text-gray-700 hover:text-[#0d6962] transition-colors">
                 <Phone className="w-4 h-4" />
-                <span className="font-semibold text-sm">01 84 80 28 27</span>
+                <span className="font-semibold text-sm">01 47 85 10 00</span>
               </a>
               <a href="mailto:contact@ematricule.fr" className="flex items-center space-x-2 text-gray-700 hover:text-[#0d6962] transition-colors">
                 <Mail className="w-4 h-4" />

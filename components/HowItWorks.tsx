@@ -48,7 +48,7 @@ const HowItWorks = () => {
     {
       number: 1,
       title: 'Commandez en 2 minutes',
-      description: 'Remplissez le formulaire en quelques clics et commandez votre carte grise en 2 minutes seulement',
+      description: 'Complétez votre demande en ligne rapidement grâce à un formulaire simple et intuitif.',
       icon: '/time.png',
       color: 'from-blue-500 to-blue-600',
       bgColor: 'bg-blue-50',
@@ -57,7 +57,7 @@ const HowItWorks = () => {
     {
       number: 2,
       title: 'Paiement en 3X CB',
-      description: 'Payez en ligne de manière sécurisée avec possibilité de paiement en 3 fois sans frais',
+      description: 'Réglez votre commande en toute sécurité, avec la possibilité de payer en 3 fois sans frais par Carte bancaire.',
       icon: '/payment.png',
       color: 'from-emerald-500 to-emerald-600',
       bgColor: 'bg-emerald-50',
@@ -66,7 +66,7 @@ const HowItWorks = () => {
     {
       number: 3,
       title: 'Livraison en 24/48h',
-      description: 'Votre carte grise vous est livrée rapidement par l\'Imprimerie Nationale en recommandé',
+      description: 'Votre carte grise est produite puis envoyée en recommandé par l\'Imprimerie Nationale dans des délais très courts.',
       icon: '/truck.png',
       color: 'from-violet-500 to-violet-600',
       bgColor: 'bg-violet-50',
@@ -74,8 +74,8 @@ const HowItWorks = () => {
     },
     {
       number: 4,
-      title: 'Habilitation du Ministère',
-      description: 'Service officiel habilité par le Ministère de l\'Intérieur pour une sécurité garantie',
+      title: 'Service habilité par l\'État',
+      description: 'Nous disposons de l\'habilitation officielle du Ministère de l\'Intérieur pour traiter vos démarches en toute conformité.',
       icon: '/ministre.png',
       color: 'from-amber-500 to-amber-600',
       bgColor: 'bg-amber-50',

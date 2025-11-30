@@ -12,7 +12,6 @@ const Hero = () => {
   const waveGradientTopId = useMemo(() => `waveGradientTop-${Date.now()}`, [])
   
   const carouselImages = [
-    '/hero1.png',
     '/hero2.png', 
     '/hero3.png'
   ]
@@ -148,14 +147,18 @@ const Hero = () => {
                 </span>
                 {' '}et vos{' '}
                 <span className="relative inline-block">
-                  <span className="relative z-10 text-primary-600">plaques</span>
+                  <span className="relative z-10 text-primary-600">plaques d’immatriculation</span>
                   <span className="absolute bottom-2 left-0 right-0 h-3 bg-primary-200/40 -z-0 transform -skew-x-12"></span>
                 </span>
-                {' '}en 2 min
+                {' '} en quelques minutes
               </h1>
               
               <p className="text-lg lg:text-xl text-gray-600 max-w-2xl leading-relaxed">
-                1ère plateforme d'immatriculation depuis 2009. Nous avons reçu une double habilitation de l'Etat 🇫🇷 pour vous proposer un service d'immatriculation simplifié en ligne.
+              Nous accompagnons des milliers d’automobilistes avec une solution simple, rapide et
+sécurisée.
+Habilités par l’État Français, nous prenons en charge toutes vos démarches
+d’immatriculation en ligne, sans déplacement ni paperasse inutile.
+
               </p>
             </div>
 
@@ -166,7 +169,7 @@ const Hero = () => {
                 className="group relative bg-gradient-to-r from-primary-600 to-primary-700 text-white px-8 py-4 text-base font-bold rounded-3xl text-center shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300 hover:from-primary-700 hover:to-primary-800 overflow-hidden"
               >
                 <span className="relative z-10 flex items-center justify-center space-x-2">
-                  <span>Commander carte grise</span>
+                  <span>Commander une carte grise</span>
                   <span className="group-hover:translate-x-2 transition-transform duration-300">→</span>
                 </span>
                 <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 transform -skew-x-12 group-hover:translate-x-full group-hover:translate-x-0"></div>
@@ -178,7 +181,7 @@ const Hero = () => {
                 className="group relative bg-white text-primary-600 px-8 py-4 text-base font-bold rounded-3xl text-center shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 border-2 border-primary-200 hover:border-primary-300 hover:bg-primary-50/80 overflow-hidden backdrop-blur-sm"
               >
                 <span className="relative z-10 flex items-center justify-center space-x-2">
-                  <span>Commander plaques</span>
+                  <span>Commander des plaques d’immatriculation</span>
                   <span className="group-hover:translate-x-2 transition-transform duration-300">→</span>
                 </span>
                 <div className="absolute inset-0 bg-gradient-to-r from-primary-50/0 via-primary-100/50 to-primary-50/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 transform -skew-x-12 group-hover:translate-x-full group-hover:translate-x-0"></div>
@@ -202,27 +205,6 @@ const Hero = () => {
                   }`}
                 />
               ))}
-              
-              {/* Dot Indicators */}
-              <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex space-x-3 z-20">
-                {carouselImages.map((_, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setCurrentImageIndex(index)}
-                    className={`relative transition-all duration-300 ${
-                      index === currentImageIndex 
-                        ? 'w-10 h-4' 
-                        : 'w-4 h-4'
-                    }`}
-                  >
-                    <div className={`w-full h-full rounded-full transition-all duration-300 ${
-                      index === currentImageIndex 
-                        ? 'bg-primary-600 shadow-lg shadow-primary-600/50' 
-                        : 'bg-white/60 hover:bg-white/80 backdrop-blur-sm'
-                    }`}></div>
-                  </button>
-                ))}
-              </div>
             </div>
           </div>
         </div>

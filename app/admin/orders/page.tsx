@@ -575,13 +575,13 @@ export default function AdminOrdersPage() {
                         </td>
                         <td className="py-5 px-6">
                           <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => fetchOrderDetails(order.id)}
-                              className="inline-flex items-center gap-1.5 px-3 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-all shadow-sm hover:shadow-md"
-                              title="Voir les détails"
-                            >
-                              <Eye className="w-4 h-4" />
-                            </button>
+                          <button
+                            onClick={() => fetchOrderDetails(order.id)}
+                            className="inline-flex items-center gap-1.5 px-3 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-all shadow-sm hover:shadow-md"
+                            title="Voir les détails"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
                             <button
                               onClick={() => downloadAllDocuments(order.id)}
                               disabled={downloadingOrders.has(order.id)}

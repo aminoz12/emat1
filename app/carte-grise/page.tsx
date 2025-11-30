@@ -980,7 +980,7 @@ export default function CarteGrisePage() {
     { 
       value: 'changement-titulaire', 
       label: 'Changement de titulaire', 
-      description: 'Vous avez acheté un véhicule neuf ou d\'occasion en France ou à l\'étranger.',
+      description: 'Vous avez acheté un véhicule neuf ou d\'occasion, en France ou à l\'étranger.',
       price: '29,90€',
       icon: Users,
       iconImage: '/g1.png'
@@ -988,14 +988,14 @@ export default function CarteGrisePage() {
     {
       value: 'duplicata', 
       label: 'Demande de duplicata', 
-      description: 'Votre carte grise a été perdue, volée ou abîmée.',
+      description: 'Votre carte grise est perdue, volée ou détériorée.',
       price: '29,90€',
       icon: Copy,
       iconImage: '/g2.png'
     },
     {
       value: 'immatriculation-provisoire-ww', 
-      label: 'Demande d\'immatriculation provisoire WW', 
+      label: 'Immatriculation provisoire WW', 
       description: 'Vous avez acheté un véhicule à l\'étranger et souhaitez obtenir une immatriculation provisoire WW valable 4 mois.',
       price: '39,90€',
       icon: Car,
@@ -1004,7 +1004,7 @@ export default function CarteGrisePage() {
     {
       value: 'enregistrement-cession', 
       label: 'Enregistrement de cession', 
-      description: 'Vous avez vendu un véhicule et souhaitez ne plus être responsable en cas d\'amende ou d\'accident.',
+      description: 'Vous avez vendu votre véhicule et souhaitez ne plus être tenu responsable en cas d\'amende ou d\'accident.',
       price: '29,90€',
       icon: FileCheck,
       iconImage: '/g4.png'
@@ -1012,15 +1012,15 @@ export default function CarteGrisePage() {
     { 
       value: 'changement-adresse', 
       label: 'Changement d\'adresse', 
-      description: 'Vous avez changé d\'adresse ou de nom de rue.',
+      description: 'Vous avez changé d\'adresse ou votre rue a été renommée : mettez à jour votre carte grise.',
       price: '29,90€',
       icon: Home,
       iconImage: '/g5.png'
     },
     {
       value: 'fiche-identification', 
-      label: 'Fiche d\'identification d\'un véhicule', 
-      description: 'Vous avez perdu la carte grise et souhaitez un document pour passer un contrôle technique.',
+      label: 'Fiche d\'identification du véhicule', 
+      description: 'Vous avez perdu votre carte grise et avez besoin d\'un document officiel pour réaliser un contrôle technique.',
       price: '19,90€',
       icon: Search,
       iconImage: '/g6.png'
@@ -1035,8 +1035,8 @@ export default function CarteGrisePage() {
     },
     {
       value: 'w-garage', 
-      label: 'W garage', 
-      description: 'Vous êtes un professionnel de l\'automobile et souhaitez obtenir ou renouveler un W garage.',
+      label: 'W Garage', 
+      description: 'Vous êtes un professionnel de l\'automobile et souhaitez obtenir ou renouveler un certificat W Garage.',
       price: 'Sur devis',
       icon: Building2,
       iconImage: '/g8.png'
@@ -1057,23 +1057,26 @@ export default function CarteGrisePage() {
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
               Carte Grise en ligne
             </h1>
-            <p className="text-base sm:text-lg lg:text-xl text-gray-600 max-w-2xl mx-auto px-4">
-              Faites votre carte grise en 2 minutes. Service d'immatriculation simplifié en ligne avec habilitation du Ministère de l'Intérieur.
+            <p className="text-base sm:text-lg lg:text-xl text-gray-600 max-w-2xl mx-auto px-4 mb-4">
+              Obtenez votre carte grise en seulement 2 minutes.
+            </p>
+            <p className="text-base sm:text-lg text-gray-600 max-w-2xl mx-auto px-4 mb-6">
+              Un service d'immatriculation en ligne simple, rapide et officiellement habilité par le Ministère de l'Intérieur.
             </p>
             
             {/* Features */}
             <div className="flex flex-col sm:flex-row flex-wrap justify-center gap-4 sm:gap-6 mt-6 sm:mt-8 px-4">
               <div className="flex items-center space-x-2 text-gray-600 text-sm sm:text-base">
                 <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-primary-600 flex-shrink-0" />
-                <span className="font-medium">Habilitation Ministère de l'Intérieur</span>
+                <span className="font-medium">● Habilitation du Ministère de l'Intérieur</span>
               </div>
               <div className="flex items-center space-x-2 text-gray-600 text-sm sm:text-base">
                 <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-primary-600 flex-shrink-0" />
-                <span className="font-medium">Traitement express en 24h</span>
+                <span className="font-medium">● Traitement express sous 24h</span>
               </div>
               <div className="flex items-center space-x-2 text-gray-600 text-sm sm:text-base">
                 <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-primary-600 flex-shrink-0" />
-                <span className="font-medium">Livraison par l'Imprimerie Nationale</span>
+                <span className="font-medium">● Livraison sécurisée par l'Imprimerie Nationale</span>
               </div>
             </div>
           </div>
@@ -1085,7 +1088,7 @@ export default function CarteGrisePage() {
               {/* Document Type Selection */}
               <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6 mb-6 shadow-sm">
                 <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-4 sm:mb-6">
-                  Type de démarche
+                  Types de démarches
                 </h2>
                 <div className="space-y-2 sm:space-y-3">
                   {documentTypes.map((doc) => {
@@ -1209,10 +1212,10 @@ export default function CarteGrisePage() {
               <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
                 <div className="mb-4">
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    Aperçu du Mandat
+                    Aperçu du mandat
                 </h3>
                   <p className="text-sm text-gray-600 mb-4">
-                    Le mandat sera prérempli avec vos informations. Prière de le télécharger, le signer, et l'insérer avec les documents nécessaires.
+                    Le mandat sera prérempli automatiquement avec vos informations. Merci de le télécharger, le signer, puis de l'ajouter avec les documents requis.
                   </p>
                   
                   {/* Button to generate mandat */}
@@ -1261,7 +1264,7 @@ export default function CarteGrisePage() {
                   <div className="absolute inset-0 flex items-center justify-center">
                     <div className="text-center text-gray-400">
                       <FileText className="w-16 h-16 mx-auto mb-3 opacity-50" />
-                          <p className="text-sm">Aperçu du Mandat</p>
+                          <p className="text-sm">Aperçu du mandat</p>
                           <p className="text-xs mt-2">Le mandat sera généré avec vos informations</p>
               </div>
               </div>
@@ -1286,7 +1289,7 @@ export default function CarteGrisePage() {
                   <p className="text-xs text-gray-600 mb-4">
                     {isSignatureValidated 
                       ? 'Signature validée et intégrée dans le mandat.' 
-                      : 'Signez ci-dessous avec votre souris ou votre doigt. La signature sera placée dans le champ prévu du mandat.'}
+                      : 'Signez ci-dessous avec votre souris ou votre doigt. Votre signature sera automatiquement intégrée à l\'emplacement prévu sur le mandat.'}
                   </p>
                   
                   {!isSignatureValidated ? (
@@ -3633,7 +3636,7 @@ export default function CarteGrisePage() {
           {/* Additional Information Section */}
           <div className="mt-12 bg-gray-50 rounded-lg p-8">
             <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">
-              Pourquoi choisir EMatricule ?
+              Pourquoi choisir E-Matricule ?
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
               <div className="text-center flex flex-col items-center">
@@ -3648,7 +3651,7 @@ export default function CarteGrisePage() {
                 </div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">Rapide</h3>
                 <p className="text-gray-600 text-sm">
-                  Traitement de votre dossier en 24 heures maximum
+                  Votre dossier est traité en moins de 24 heures.
                 </p>
               </div>
               <div className="text-center flex flex-col items-center">
@@ -3663,7 +3666,7 @@ export default function CarteGrisePage() {
                 </div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">Sécurisé</h3>
                 <p className="text-gray-600 text-sm">
-                  Service habilité par le Ministère de l'Intérieur
+                  Service officiel habilité par le Ministère de l'Intérieur.
                 </p>
               </div>
               <div className="text-center flex flex-col items-center">
@@ -3678,7 +3681,7 @@ export default function CarteGrisePage() {
                 </div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">Fiable</h3>
                 <p className="text-gray-600 text-sm">
-                  Plus de 10 000 cartes grises délivrées chaque mois
+                  Plus de 10 000 cartes grises sont délivrées chaque mois.
                 </p>
               </div>
             </div>

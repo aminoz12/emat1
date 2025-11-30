@@ -23,8 +23,8 @@ export default function CommanderPage() {
   const products = [
     {
       id: 'carte-grise',
-      title: 'Carte Grise',
-      description: 'Effectuez toutes vos démarches de carte grise en ligne rapidement et en toute sécurité.',
+      title: 'Carte grise',
+      description: 'Réalisez toutes vos démarches de carte grise en ligne, rapidement et en toute sécurité.',
       icon: FileText,
       href: '/carte-grise',
       gradient: 'from-primary-50 to-primary-100',
@@ -44,8 +44,8 @@ export default function CommanderPage() {
     },
     {
       id: 'plaque',
-      title: 'Plaque Immatriculation',
-      description: 'Personnalisez votre plaque d\'immatriculation avec votre numéro de département préféré.',
+      title: 'Plaques d\'immatriculation',
+      description: 'Personnalisez votre plaque avec le département de votre choix.',
       icon: Car,
       href: '/plaque-immatriculation',
       gradient: 'from-blue-50 to-blue-100',
@@ -65,8 +65,8 @@ export default function CommanderPage() {
     },
     {
       id: 'coc',
-      title: 'COC',
-      description: 'Obtenez votre Certificat de Conformité pour votre véhicule rapidement et en toute simplicité.',
+      title: 'COC (Certificat de Conformité)',
+      description: 'Obtenez votre Certificat de Conformité officiel simplement et rapidement.',
       icon: FileCheck,
       href: '/notre-mission',
       gradient: 'from-purple-50 to-purple-100',
@@ -108,7 +108,7 @@ export default function CommanderPage() {
               Choisissez votre service
             </h1>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Sélectionnez le service dont vous avez besoin et commandez en quelques clics
+              Sélectionnez le service souhaité et passez votre commande en quelques clics.
             </p>
           </motion.div>
         </div>
@@ -172,16 +172,15 @@ export default function CommanderPage() {
                   </ul>
 
                   {/* Benefits */}
-                  <div className="flex items-center gap-4 pt-6 border-t border-gray-200 mb-6">
-                    {product.benefits.map((benefit, idx) => {
-                      const BenefitIcon = benefit.icon
-                      return (
-                        <div key={idx} className="flex items-center gap-2 text-sm text-gray-600">
-                          <BenefitIcon className={`w-4 h-4 ${benefit.color}`} />
-                          <span>{benefit.text}</span>
-                        </div>
-                      )
-                    })}
+                  <div className="flex items-center gap-2 pt-6 border-t border-gray-200 mb-6">
+                    <span className="text-sm text-gray-600">
+                      {product.benefits.map((benefit, idx) => (
+                        <span key={idx}>
+                          {benefit.text}
+                          {idx < product.benefits.length - 1 && <span className="mx-2">•</span>}
+                        </span>
+                      ))}
+                    </span>
                   </div>
 
                   {/* CTA Button */}
@@ -220,7 +219,7 @@ export default function CommanderPage() {
               Besoin d'aide pour choisir ?
             </h3>
             <p className="text-gray-600 mb-6">
-              Notre équipe est là pour vous accompagner dans vos démarches
+              Notre équipe vous accompagne dans toutes vos démarches.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link

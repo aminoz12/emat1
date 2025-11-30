@@ -9,28 +9,28 @@ const ProcessSection = () => {
     {
       number: 1,
       title: 'Commandez en 2 minutes',
-      description: 'Remplissez le formulaire en quelques clics et commandez votre carte grise en 2 minutes seulement',
+      description: 'Complétez votre demande en ligne rapidement grâce à un formulaire simple et intuitif.',
       icon: '/time.png',
       color: 'bg-blue-500',
     },
     {
       number: 2,
       title: 'Paiement en 3X CB',
-      description: 'Payez en ligne de manière sécurisée avec possibilité de paiement en 3 fois sans frais',
+      description: 'Réglez votre commande en toute sécurité, avec la possibilité de payer en 3 fois sans frais par Carte bancaire.',
       icon: '/payment.png',
       color: 'bg-purple-500',
     },
     {
       number: 3,
       title: 'Livraison en 24/48h',
-      description: 'Votre carte grise vous est livrée rapidement par l\'Imprimerie Nationale en recommandé',
+      description: 'Votre carte grise est produite puis envoyée en recommandé par l\'Imprimerie Nationale dans des délais très courts.',
       icon: '/truck.png',
       color: 'bg-green-500',
     },
     {
       number: 4,
-      title: 'Habilitation du Ministère',
-      description: 'Service officiel habilité par le Ministère de l\'Intérieur pour une sécurité garantie',
+      title: 'Service habilité par l\'État',
+      description: 'Nous disposons de l\'habilitation officielle du Ministère de l\'Intérieur pour traiter vos démarches en toute conformité.',
       icon: '/ministre.png',
       color: 'bg-red-500',
     },
@@ -42,10 +42,14 @@ const ProcessSection = () => {
         {/* Header */}
         <div className="text-center mb-16">
           <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
-            Nous nous occupons de tout
+          On s’occupe de vos démarches
+
           </h2>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            1ère plateforme d'immatriculation en ligne, nous avons essayé de penser à tout pour simplifier vos démarches d'immatriculation
+          Pionniers de l’immatriculation en ligne, nous avons conçu un service pensé pour vous :
+rapide, simple et parfaitement guidé à chaque étape. Notre objectif : rendre vos démarches
+d’immatriculation plus faciles que jamais.
+
           </p>
         </div>
 
@@ -97,16 +101,17 @@ const ProcessSection = () => {
                 
                 {/* Main Heading */}
                 <h3 className="text-3xl lg:text-4xl font-bold leading-tight">
-                  <span className="text-gray-900">Pourquoi faire sa demande</span>
+                  <span className="text-gray-900">Pourquoi choisir </span>
                   <br />
                   <span className="bg-gradient-to-r from-primary-600 to-primary-700 bg-clip-text text-transparent">
-                    avec nous ?
+                  notre service ?
                   </span>
             </h3>
                 
                 {/* Description */}
                 <p className="text-base md:text-lg text-gray-600 leading-relaxed max-w-lg">
-                  Révolutionnons les démarches d'immatriculation — simplifiez, économisez, faites confiance à une plateforme officielle depuis 2009.
+                Nous simplifions totalement vos démarches d’immatriculation. Gagnez du temps, faites des
+économies et bénéficiez de l’expertise d’une plateforme officielle habilitée.
             </p>
           </div>
 
@@ -132,7 +137,8 @@ const ProcessSection = () => {
                         </div>
                       </div>
                       <p className="text-sm text-gray-700 leading-relaxed">
-                        Traitement express en 24h avec livraison rapide de votre carte grise.
+                      Traitement express de votre dossier sous 24h, avec une livraison accélérée de votre carte
+                      grise.
                       </p>
                     </div>
                   </div>
@@ -158,7 +164,8 @@ const ProcessSection = () => {
                         </div>
                       </div>
                       <p className="text-sm text-gray-700 leading-relaxed">
-                        Réduisez les coûts avec nos tarifs transparents à partir de 29,90€.
+                      Profitez de tarifs clairs et accessibles, dès 29,90€ sans frais cachés.
+
                       </p>
                     </div>
                   </div>
@@ -184,7 +191,9 @@ const ProcessSection = () => {
                         </div>
                       </div>
                       <p className="text-sm text-gray-700 leading-relaxed">
-                        Service habilité par le Ministère et paiement 100% sécurisé.
+                      Plateforme habilitée par le Ministère de l’Intérieur, avec un paiement en ligne 100 %
+sécurisé.
+
                       </p>
                     </div>
                   </div>
@@ -210,7 +219,9 @@ const ProcessSection = () => {
                         </div>
                       </div>
                       <p className="text-sm text-gray-700 leading-relaxed">
-                        Nos experts vous accompagnent depuis 2009 pour tous vos véhicules.
+                      Des spécialistes de l’immatriculation à votre service depuis 2009, pour tous types de
+véhicules.
+
                       </p>
                     </div>
                   </div>
@@ -225,7 +236,7 @@ const ProcessSection = () => {
           {/* Header */}
           <div className="text-center mb-12">
             <h3 className="text-3xl lg:text-4xl font-bold text-gray-900">
-              +3300 Clients ont donné leur avis
+            Plus de 3 000 clients nous ont fait confiance
             </h3>
           </div>
 
@@ -330,8 +341,8 @@ const ProcessSection = () => {
                         Paiement sécurisé
                       </h4>
                       <p className="text-gray-600 leading-relaxed text-base">
-                        Effectuez votre paiement en ligne de manière sécurisée avec possibilité de paiement en 3 fois sans frais. Toutes les transactions sont protégées.
-                      </p>
+                      Procédez au paiement en ligne en toute sérénité, avec la possibilité de régler en 3 fois
+sans frais. Toutes les transactions sont entièrement sécurisées.  </p>
                     </div>
                   </div>
                 </div>
@@ -353,7 +364,8 @@ const ProcessSection = () => {
                         Réception de votre carte grise
                       </h4>
                       <p className="text-gray-600 leading-relaxed text-base">
-                        Votre nouvelle carte grise vous est livrée par l'Imprimerie Nationale en recommandé directement à votre adresse. C'est ici que vous recevez votre document officiel.
+                      Votre carte grise officielle est éditée puis envoyée en recommandé par l’Imprimerie
+                      Nationale, directement à votre adresse.
                       </p>
                     </div>
                   </div>
@@ -381,7 +393,8 @@ const ProcessSection = () => {
                         Commande en ligne
                       </h4>
                       <p className="text-gray-600 leading-relaxed text-base">
-                        Remplissez notre formulaire simple en quelques clics, indiquez les informations de votre véhicule et obtenez un devis immédiat en moins d'une minute.
+                      Complétez le formulaire en quelques instants : saisissez les informations de votre
+véhicule et recevez votre devis immédiatement.
                       </p>
                     </div>
                   </div>
@@ -401,10 +414,12 @@ const ProcessSection = () => {
                         <Truck className="w-9 h-9 text-primary-300 group-hover:text-primary-400 transition-colors duration-300" strokeWidth={1.5} />
                       </div>
                       <h4 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-primary-600 transition-colors duration-300">
-                        Traitement et préparation
+                      Traitement de votre dossier
                       </h4>
                       <p className="text-gray-600 leading-relaxed text-base">
-                        Nos experts traitent votre dossier en 24h maximum. Nous vérifions tous les documents, préparons votre demande et validons toutes les démarches administratives pour vous.
+                      Nos experts prennent en charge votre demande sous 24h. Nous contrôlons vos
+documents, finalisons les démarches administratives et validons votre
+immatriculation.
                       </p>
                     </div>
                   </div>
@@ -427,7 +442,8 @@ const ProcessSection = () => {
                         C'est terminé !
                       </h4>
                       <p className="text-gray-600 leading-relaxed text-base">
-                        Votre véhicule est maintenant immatriculé. Vous pouvez circuler en toute sérénité avec votre nouvelle carte grise officielle.
+                      Votre véhicule est immatriculé. Il ne vous reste plus qu’à profiter de votre nouvelle
+                      carte grise en toute tranquillité.
                       </p>
                     </div>
                   </div>
@@ -553,13 +569,13 @@ const FAQSection = () => {
       },
       {
         question: 'Que faire si je ne reçois pas ma carte grise ?',
-        answer: 'Si vous ne recevez pas votre carte grise dans les délais, contactez notre service client au 01 84 80 28 27. Nous pourrons vérifier le statut de votre envoi et procéder à un nouvel envoi si nécessaire.',
+        answer: 'Si vous ne recevez pas votre carte grise dans les délais, contactez notre service client au 01 47 85 10 00. Nous pourrons vérifier le statut de votre envoi et procéder à un nouvel envoi si nécessaire.',
       },
     ],
     Retours: [
       {
         question: 'Comment effectuer un retour ?',
-        answer: 'Pour effectuer un retour, contactez notre service client au 01 84 80 28 27 ou par email à contact@ematricule.fr. Notre équipe vous guidera dans la procédure de retour.',
+        answer: 'Pour effectuer un retour, contactez notre service client au 01 47 85 10 00 ou par email à contact@ematricule.fr. Notre équipe vous guidera dans la procédure de retour.',
       },
       {
         question: 'Quand serai-je remboursé après un retour ?',
@@ -567,7 +583,7 @@ const FAQSection = () => {
       },
       {
         question: 'Puis-je annuler ma commande ?',
-        answer: 'Oui, vous pouvez annuler votre commande tant que le dossier n\'a pas été traité. Contactez-nous rapidement au 01 84 80 28 27 pour annuler votre commande.',
+        answer: 'Oui, vous pouvez annuler votre commande tant que le dossier n\'a pas été traité. Contactez-nous rapidement au 01 47 85 10 00 pour annuler votre commande.',
       },
       {
         question: 'Quelle est votre politique de remboursement ?',

@@ -231,7 +231,7 @@ const ConfirmationPage = () => {
                 </div>
                 <div className="flex items-center space-x-2 text-gray-600">
                   <span className="w-4 h-4">📞</span>
-                  <span>01 84 80 28 27</span>
+                  <span>01 47 85 10 00</span>
                 </div>
               </div>
             </div>

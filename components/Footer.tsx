@@ -5,23 +5,6 @@ import { Car, Mail, Phone, MapPin, Facebook, Twitter, Instagram, Linkedin } from
 const Footer = () => {
   const currentYear = new Date().getFullYear()
 
-  const services = [
-    { name: 'Changement de titulaire', href: '/services/changement-titulaire' },
-    { name: 'Duplicata carte grise', href: '/services/duplicata' },
-    { name: 'Immatriculation provisoire', href: '/services/immatriculation-provisoire' },
-    { name: 'Enregistrement de cession', href: '/services/cession' },
-    { name: 'Changement d\'adresse', href: '/services/changement-adresse' },
-    { name: 'Fiche d\'identification', href: '/services/fiche-identification' },
-  ]
-
-  const plates = [
-    { name: 'Plaque auto plexiglass', href: '/plaques/auto-plexiglass' },
-    { name: 'Plaque auto luxe', href: '/plaques/auto-luxe' },
-    { name: 'Plaque auto aluminium', href: '/plaques/auto-aluminium' },
-    { name: 'Plaque collection', href: '/plaques/collection' },
-    { name: 'Plaque noire non homologuée', href: '/plaques/noire' },
-  ]
-
   const about = [
     { name: 'Qui sommes-nous ?', href: '/about' },
     { name: 'Conditions générales', href: '/cgv' },
@@ -41,7 +24,7 @@ const Footer = () => {
   return (
     <footer className="bg-white text-gray-900">
       <div className="container py-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 pl-0 lg:pl-0">
           {/* Company Info */}
           <div className="space-y-4">
             <div className="flex items-center">
@@ -54,7 +37,11 @@ const Footer = () => {
               />
             </div>
             <p className="text-gray-600 text-sm">
-              Faites votre carte grise et vos plaques en 2 min. Service d'immatriculation simplifié en ligne avec habilitation du Ministère de l'Intérieur.
+              Faites votre carte grise et vos plaques en 2 minutes.
+              <br />
+              Service d'immatriculation simplifié en ligne,
+              <br />
+              habilité par le Ministère de l'Intérieur.
             </p>
             <div className="flex space-x-4">
               <a href="#" className="text-gray-500 hover:text-primary-600 transition-colors">
@@ -72,67 +59,68 @@ const Footer = () => {
             </div>
           </div>
 
-          {/* Services */}
-          <div>
-            <h3 className="font-semibold text-lg mb-4 text-gray-900">Cartes Grises</h3>
-            <ul className="space-y-2">
-              {services.map((service) => (
-                <li key={service.name}>
+          {/* Services, Contact & About - All titles in one line */}
+          <div className="grid grid-cols-3 gap-12 lg:gap-20 xl:gap-24 justify-start" style={{ marginLeft: '-8rem' }}>
+            {/* Nos Services */}
+            <div className="text-left">
+              <h3 className="font-semibold text-lg mb-4 text-gray-900 whitespace-nowrap text-left">Nos Services</h3>
+              <ul className="space-y-2">
+                <li>
                   <Link
-                    href={service.href}
+                    href="/carte-grise"
                     className="text-gray-600 hover:text-primary-600 transition-colors text-sm"
                   >
-                    {service.name}
+                    Carte Grise
                   </Link>
                 </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Plaques */}
-          <div>
-            <h3 className="font-semibold text-lg mb-4 text-gray-900">Plaques</h3>
-            <ul className="space-y-2">
-              {plates.map((plate) => (
-                <li key={plate.name}>
+                <li>
                   <Link
-                    href={plate.href}
+                    href="/commander-plaques"
                     className="text-gray-600 hover:text-primary-600 transition-colors text-sm"
                   >
-                    {plate.name}
+                    Plaques d'immatriculation
                   </Link>
                 </li>
-              ))}
-            </ul>
-          </div>
+                <li>
+                  <Link
+                    href="/commander-un-coc"
+                    className="text-gray-600 hover:text-primary-600 transition-colors text-sm"
+                  >
+                    COC
+                  </Link>
+                </li>
+              </ul>
+            </div>
 
-          {/* Contact & Info */}
-          <div>
-            <h3 className="font-semibold text-lg mb-4 text-gray-900">Contact</h3>
-            <div className="space-y-3">
-              <div className="flex items-center space-x-2">
-                <Phone className="w-4 h-4 text-primary-600" />
-                <a href="tel:0184802827" className="text-gray-600 hover:text-primary-600 transition-colors text-sm">
-                  01 84 80 28 27
+            {/* Contact */}
+            <div className="text-left">
+              <h3 className="font-semibold text-lg mb-4 text-gray-900 whitespace-nowrap text-left">Contact</h3>
+              <div className="space-y-3">
+                <div className="flex items-center space-x-2">
+                  <Phone className="w-4 h-4 text-primary-600" />
+                <a href="tel:0147851000" className="text-gray-600 hover:text-primary-600 transition-colors text-sm">
+                  01 47 85 10 00
                 </a>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Mail className="w-4 h-4 text-primary-600" />
-                <a href="mailto:contact@ematricule.fr" className="text-gray-600 hover:text-primary-600 transition-colors text-sm">
-                  contact@ematricule.fr
-                </a>
-              </div>
-              <div className="flex items-start space-x-2">
-                <MapPin className="w-4 h-4 text-primary-600 mt-0.5" />
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Mail className="w-4 h-4 text-primary-600" />
+                  <a href="mailto:contact@ematricule.fr" className="text-gray-600 hover:text-primary-600 transition-colors text-sm">
+                    contact@ematricule.fr
+                  </a>
+                </div>
+                <div className="flex items-start space-x-2">
+                  <MapPin className="w-4 h-4 text-primary-600 mt-0.5" />
                 <span className="text-gray-600 text-sm">
-                  123 Avenue des Champs-Élysées<br />
-                  75008 Paris, France
+                  426 Av. de la République<br />
+                  92000 Nanterre, France
                 </span>
+                </div>
               </div>
             </div>
 
-            <div className="mt-6">
-              <h4 className="font-semibold mb-2 text-gray-900">À propos</h4>
+            {/* À propos */}
+            <div className="text-left">
+              <h3 className="font-semibold text-lg mb-4 text-gray-900 whitespace-nowrap text-left">À propos</h3>
               <ul className="space-y-1">
                 {about.map((item) => (
                   <li key={item.name}>

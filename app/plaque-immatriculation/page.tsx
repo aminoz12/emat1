@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { CheckCircle, Flag, Percent, Truck, Star, Camera } from 'lucide-react'
+import { CheckCircle, Flag, Percent, Truck, Star } from 'lucide-react'
 import Image from 'next/image'
 import { useSupabaseSession } from '@/hooks/useSupabaseSession'
 import { createOrder, uploadDocuments } from '@/lib/services/orderService'
@@ -272,7 +272,7 @@ export default function PlaqueImmatriculationPage() {
 
     // Validate carte grise upload
     if (!carteGriseFile) {
-      alert('Veuillez uploader votre carte grise pour confirmer que vous êtes le propriétaire du véhicule.')
+      alert('Veuillez télécharger la carte grise afin de confirmer que vous êtes le propriétaire du véhicule.')
       return
     }
 
@@ -302,7 +302,7 @@ export default function PlaqueImmatriculationPage() {
       totalPrice *= quantity
 
       const fullAddress = `${streetNumber} ${streetType} ${streetName}`.trim()
-
+      
       // Create order data with all metadata
       const orderData = {
         type: 'plaque' as const,
@@ -382,20 +382,20 @@ export default function PlaqueImmatriculationPage() {
               file: base64ToFile(filesToStore.carteGriseFile.base64, filesToStore.carteGriseFile.name, filesToStore.carteGriseFile.type), 
               documentType: 'carte_grise' 
             })
-          }
-          
-          const result = await createOrder(orderData)
-          
-          if (!result.success || !result.order) {
-            throw new Error(result.error || 'Erreur lors de la création de la commande')
-          }
-          
+      }
+
+      const result = await createOrder(orderData)
+      
+      if (!result.success || !result.order) {
+        throw new Error(result.error || 'Erreur lors de la création de la commande')
+      }
+
           if (filesToUpload.length > 0) {
             await uploadDocuments(filesToUpload, result.order.id)
           }
           
-          localStorage.setItem('currentOrderId', result.order.id)
-          localStorage.setItem('currentOrderRef', result.order.reference)
+      localStorage.setItem('currentOrderId', result.order.id)
+      localStorage.setItem('currentOrderRef', result.order.reference)
           localStorage.setItem('currentOrderPrice', String(orderData.price))
           
           localStorage.removeItem('pendingOrderData')
@@ -476,10 +476,13 @@ export default function PlaqueImmatriculationPage() {
           {/* Title and Description */}
           <div className="text-center mb-10">
             <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-3">
-              Quelles plaques souhaitez-vous commander?
+              Quelles plaques souhaitez-vous commander ?
             </h1>
             <p className="text-base text-gray-600 max-w-3xl mx-auto leading-relaxed">
-              Toutes nos plaques d'immatriculation sont fabriquées en France <span className="font-semibold">Fr</span> dans les meilleurs matériaux. La fabrication et l'expédition sont effectuées sous 24h.
+              Toutes nos plaques d'immatriculation sont fabriquées en France avec des matériaux de haute qualité.
+            </p>
+            <p className="text-base text-gray-600 max-w-3xl mx-auto leading-relaxed mt-2">
+              La production et l'expédition sont réalisées sous 24h.
             </p>
           </div>
 
@@ -633,11 +636,6 @@ export default function PlaqueImmatriculationPage() {
                       {/* License Plate Image */}
                       <div className="mb-3 mt-1">
                         <div className="relative bg-gray-50 rounded-lg aspect-[520/110] overflow-hidden border border-gray-100">
-                          {/* Camera icon on image */}
-                          <div className="absolute top-2 right-2 z-10 bg-white rounded-full p-1.5 shadow-sm">
-                            <Camera className="w-3.5 h-3.5 text-gray-500" />
-                          </div>
-                          
                           {/* License Plate Image */}
                           <Image
                             src="/p.png"
@@ -1193,7 +1191,7 @@ export default function PlaqueImmatriculationPage() {
                   Carte grise du véhicule *
                 </label>
                 <p className="text-xs text-gray-500 mb-3">
-                  Veuillez uploader votre carte grise pour confirmer que vous êtes le propriétaire du véhicule.
+                  Veuillez télécharger la carte grise afin de confirmer que vous êtes le propriétaire du véhicule.
                 </p>
                 <div className="flex items-center space-x-3">
                   <label className="cursor-pointer">

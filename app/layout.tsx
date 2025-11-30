@@ -8,7 +8,7 @@ const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'EMatricule - Cartes Grises et Plaques d\'Immatriculation',
-  description: 'Faites votre carte grise et vos plaques en 2 min. Service d\'immatriculation simplifié en ligne avec habilitation du Ministère de l\'Intérieur.',
+  description: 'Votre carte grise & vos plaques d\'immatriculation en 2 minutes. Service d\'immatriculation simplifié en ligne avec habilitation du Ministère de l\'Intérieur.',
   keywords: 'carte grise, plaque immatriculation, immatriculation, véhicule, auto, moto, camion',
 }
 

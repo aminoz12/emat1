@@ -32,9 +32,9 @@ export default function Contact() {
     {
       icon: Phone,
       title: 'Téléphone',
-      content: '01 84 80 28 27',
+      content: '01 47 85 10 00',
       subtitle: 'Appel gratuit',
-      href: 'tel:0184802827',
+      href: 'tel:0147851000',
     },
     {
       icon: Mail,
@@ -46,8 +46,8 @@ export default function Contact() {
     {
       icon: MapPin,
       title: 'Adresse',
-      content: '123 Avenue des Champs-Élysées',
-      subtitle: '75008 Paris, France',
+      content: '426 Av. de la République',
+      subtitle: '92000 Nanterre, France',
       href: '#',
     },
     {

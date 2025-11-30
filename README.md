@@ -264,7 +264,7 @@ Ce projet est sous licence MIT. Voir le fichier `LICENSE` pour plus de détails.
 ## 🆘 Support
 
 - **Email** : support@emattricule.com
-- **Téléphone** : 01 84 80 28 27
+- **Téléphone** : 01 47 85 10 00
 - **Documentation** : [docs.emattricule.com](https://docs.emattricule.com)
 - **Issues** : [GitHub Issues](https://github.com/your-username/emattricule/issues)
 
