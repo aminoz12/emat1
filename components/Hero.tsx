@@ -24,17 +24,17 @@ const Hero = () => {
     return () => clearInterval(interval)
   }, [carouselImages.length])
   return (
-    <section className="relative bg-gradient-to-br from-white via-primary-50/40 via-white to-primary-100/30 py-6 lg:py-10 overflow-hidden">
+    <section className="relative bg-gradient-to-br from-white via-primary-50/40 via-white to-primary-100/30 py-6 lg:py-10 overflow-hidden w-full max-w-full" style={{ zIndex: 1 }}>
       {/* Advanced Decorative Background Elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      <div className="absolute inset-0 overflow-hidden pointer-events-none w-full max-w-full">
         {/* Base Gradient Layer */}
         <div className="absolute inset-0 bg-gradient-to-br from-white via-primary-50/30 to-primary-100/20"></div>
         
         {/* Animated Gradient Orbs - Multiple Layers */}
-        <div className="absolute top-0 right-0 w-[700px] h-[700px] bg-gradient-to-br from-primary-400/35 via-primary-500/25 to-primary-600/15 rounded-full blur-3xl transform translate-x-1/4 -translate-y-1/4 animate-pulse"></div>
-        <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-gradient-to-tr from-primary-300/30 via-primary-400/20 to-primary-500/15 rounded-full blur-3xl transform -translate-x-1/4 translate-y-1/4 animate-pulse" style={{ animationDuration: '4s' }}></div>
-        <div className="absolute top-1/2 left-1/2 w-[500px] h-[500px] bg-gradient-to-r from-primary-200/25 via-primary-300/15 to-primary-400/10 rounded-full blur-3xl transform -translate-x-1/2 -translate-y-1/2 animate-pulse" style={{ animationDuration: '5s' }}></div>
-        <div className="absolute top-1/4 right-1/4 w-[350px] h-[350px] bg-gradient-to-bl from-purple-300/20 via-primary-400/15 to-blue-400/10 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '6s' }}></div>
+        <div className="absolute top-0 right-0 w-[700px] h-[700px] max-w-[100vw] bg-gradient-to-br from-primary-400/35 via-primary-500/25 to-primary-600/15 rounded-full blur-3xl transform translate-x-1/4 -translate-y-1/4 animate-pulse"></div>
+        <div className="absolute bottom-0 left-0 w-[600px] h-[600px] max-w-[100vw] bg-gradient-to-tr from-primary-300/30 via-primary-400/20 to-primary-500/15 rounded-full blur-3xl transform -translate-x-1/4 translate-y-1/4 animate-pulse" style={{ animationDuration: '4s' }}></div>
+        <div className="absolute top-1/2 left-1/2 w-[500px] h-[500px] max-w-[100vw] bg-gradient-to-r from-primary-200/25 via-primary-300/15 to-primary-400/10 rounded-full blur-3xl transform -translate-x-1/2 -translate-y-1/2 animate-pulse" style={{ animationDuration: '5s' }}></div>
+        <div className="absolute top-1/4 right-1/4 w-[350px] h-[350px] max-w-[100vw] bg-gradient-to-bl from-purple-300/20 via-primary-400/15 to-blue-400/10 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '6s' }}></div>
         
         {/* Floating Particles / Animated Dots */}
         {[...Array(12)].map((_, i) => (

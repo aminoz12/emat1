@@ -979,29 +979,29 @@ export default function PlaqueImmatriculationPage() {
                   
                   {/* License Plate Preview */}
                   <div className="mb-4 flex justify-center">
-                    <div className="relative bg-white border-2 border-gray-400 rounded-md overflow-hidden shadow-xl" style={{ aspectRatio: '520/110', maxWidth: '520px', width: '100%' }}>
+                    <div className="relative border-2 border-gray-400 rounded-md overflow-hidden shadow-xl" style={{ aspectRatio: '520/110', maxWidth: '520px', width: '100%' }}>
                       {/* Left EU band with f.jpg */}
-                      <div className="absolute left-[-2px] top-0 bottom-[-4px] w-16 bg-gradient-to-b from-blue-600 via-blue-500 to-blue-600 flex items-center justify-center">
+                      <div className="absolute left-0 top-0 bottom-0 md:left-[-2px] md:bottom-[-4px] w-16 bg-gradient-to-b from-blue-600 via-blue-500 to-blue-600 flex items-center justify-center">
                         {!euFlagError ? (
                         <Image
                             src="/f.jpg"
                           alt="EU band with F"
                             width={64}
                           height={110}
-                          className="w-full h-full object-cover"
+                          className="w-full h-[60%] object-contain md:h-full"
                             style={{ filter: 'brightness(1.15) contrast(1.1)' }}
                             onError={() => setEuFlagError(true)}
                           />
                         ) : (
                           <div className="flex flex-col items-center justify-center h-full w-full">
-                            <div className="flex items-center justify-center mb-1">
+                            <div className="flex items-center justify-center mb-0.5 scale-75 md:scale-100">
                               <div className="grid grid-cols-3 gap-0.5">
                                 {[...Array(12)].map((_, i) => (
                                   <div key={i} className="w-1.5 h-1.5 bg-yellow-200 rounded-sm shadow-sm" style={{ filter: 'brightness(1.3)' }}></div>
                                 ))}
                               </div>
                             </div>
-                            <div className="text-white font-bold text-lg leading-none mt-0.5 drop-shadow-lg" style={{ filter: 'brightness(1.2)', textShadow: '0 0 2px rgba(255,255,255,0.8)' }}>F</div>
+                            <div className="text-white font-bold text-sm md:text-lg leading-none mt-0.5 drop-shadow-lg" style={{ filter: 'brightness(1.2)', textShadow: '0 0 2px rgba(255,255,255,0.8)' }}>F</div>
                           </div>
                         )}
                       </div>

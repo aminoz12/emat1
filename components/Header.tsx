@@ -61,10 +61,10 @@ const Header = () => {
   }, [])
 
   return (
-    <header className="bg-white shadow-sm border-b">
+    <header className="bg-white shadow-sm border-b w-full max-w-full overflow-x-hidden overflow-y-visible relative" style={{ zIndex: 9999 }}>
       {/* Main navigation */}
-      <div className="container">
-        <div className="flex items-center justify-between py-6">
+      <div className="container overflow-visible">
+        <div className="flex items-center justify-between py-6 overflow-visible">
           {/* Logo */}
           <Link href="/" className="flex items-center">
             <Image
@@ -77,131 +77,15 @@ const Header = () => {
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center space-x-6">
-            {/* Carte grise dropdown */}
-            <div className="relative group">
-              <div 
-                className="flex items-center"
-                onMouseEnter={() => handleMouseEnter('carte-grise')}
-                onMouseLeave={handleMouseLeave}
-              >
-                <Link 
-                  href="/carte-grise"
-                  className="flex items-center space-x-1.5 transition-colors text-sm font-medium text-gray-700 hover:text-primary-600"
-                >
-                  <FileText className="w-4 h-4" />
-                  <span>Carte grise</span>
-                </Link>
-                <button 
-                  className={`ml-1 transition-colors text-sm cursor-pointer ${activeDropdown === 'carte-grise' ? 'text-primary-600' : 'text-gray-700 hover:text-primary-600'}`}
-                  onClick={(e) => {
-                    e.preventDefault()
-                    setActiveDropdown(activeDropdown === 'carte-grise' ? null : 'carte-grise')
-                  }}
-                  onMouseEnter={() => handleMouseEnter('carte-grise')}
-                  onMouseLeave={handleMouseLeave}
-                >
-                  <ChevronDown className={`w-4 h-4 transition-transform ${activeDropdown === 'carte-grise' ? 'rotate-180' : ''}`} />
-                </button>
-              </div>
-              
-              {activeDropdown === 'carte-grise' && (
-                <div 
-                  className="absolute top-full left-0 mt-2 w-[400px] bg-white rounded-lg shadow-xl border border-gray-200 py-4 z-50"
-                  onMouseEnter={() => handleMouseEnter('carte-grise')}
-                  onMouseLeave={handleMouseLeave}
-                  style={{ zIndex: 9999 }}
-                >
-                  <div className="px-6">
-                    <div>
-                      {/* Les plus populaires */}
-                      <div>
-                        <h3 className="text-xs font-semibold text-gray-900 mb-3 flex items-center">
-                          <Star className="w-3 h-3 text-yellow-500 mr-1" />
-                          Les plus populaires (6)
-                        </h3>
-                        <div className="space-y-1">
-                          <Link 
-                            href="/carte-grise?type=changement-titulaire" 
-                            prefetch={true}
-                            className="block text-xs text-gray-700 hover:text-primary-600 hover:bg-gray-50 px-2 py-1.5 rounded-lg transition-colors"
-                            onMouseEnter={() => router.prefetch('/carte-grise?type=changement-titulaire')}
-                          >
-                            Changement de titulaire
-                          </Link>
-                          <Link 
-                            href="/carte-grise?type=duplicata" 
-                            prefetch={true}
-                            className="block text-xs text-gray-700 hover:text-primary-600 hover:bg-gray-50 px-2 py-1.5 rounded-lg transition-colors"
-                            onMouseEnter={() => router.prefetch('/carte-grise?type=duplicata')}
-                          >
-                            Duplicata carte grise
-                          </Link>
-                          <Link 
-                            href="/carte-grise?type=immatriculation-provisoire-ww" 
-                            prefetch={true}
-                            className="block text-xs text-gray-700 hover:text-primary-600 hover:bg-gray-50 px-2 py-1.5 rounded-lg transition-colors"
-                            onMouseEnter={() => router.prefetch('/carte-grise?type=immatriculation-provisoire-ww')}
-                          >
-                            Immatriculation provisoire WW
-                          </Link>
-                          <Link 
-                            href="/carte-grise?type=enregistrement-cession" 
-                            prefetch={true}
-                            className="block text-xs text-gray-700 hover:text-primary-600 hover:bg-gray-50 px-2 py-1.5 rounded-lg transition-colors"
-                            onMouseEnter={() => router.prefetch('/carte-grise?type=enregistrement-cession')}
-                          >
-                            Enregistrement de cession
-                          </Link>
-                          <Link 
-                            href="/carte-grise?type=changement-adresse" 
-                            prefetch={true}
-                            className="block text-xs text-gray-700 hover:text-primary-600 hover:bg-gray-50 px-2 py-1.5 rounded-lg transition-colors"
-                            onMouseEnter={() => router.prefetch('/carte-grise?type=changement-adresse')}
-                          >
-                            Changement d'adresse carte grise
-                          </Link>
-                          <Link 
-                            href="/carte-grise?type=fiche-identification" 
-                            prefetch={true}
-                            className="block text-xs text-gray-700 hover:text-primary-600 hover:bg-gray-50 px-2 py-1.5 rounded-lg transition-colors"
-                            onMouseEnter={() => router.prefetch('/carte-grise?type=fiche-identification')}
-                          >
-                            Fiche d'identification d'un véhicule
-                          </Link>
-                        </div>
-
-                        {/* Pour les pros de l'auto */}
-                        <div className="mt-6">
-                          <h3 className="text-xs font-semibold text-gray-900 mb-3 flex items-center">
-                            <Shield className="w-3 h-3 text-blue-500 mr-1" />
-                            Pour les pros de l'auto (2)
-                          </h3>
-                          <div className="space-y-1">
-                            <Link 
-                              href="/carte-grise?type=declaration-achat" 
-                              prefetch={true}
-                              className="block text-xs text-gray-700 hover:text-primary-600 hover:bg-gray-50 px-2 py-1.5 rounded-lg transition-colors"
-                              onMouseEnter={() => router.prefetch('/carte-grise?type=declaration-achat')}
-                            >
-                              Déclaration d'achat
-                            </Link>
-                            <Link 
-                              href="/carte-grise?type=w-garage" 
-                              prefetch={true}
-                              className="block text-xs text-gray-700 hover:text-primary-600 hover:bg-gray-50 px-2 py-1.5 rounded-lg transition-colors"
-                              onMouseEnter={() => router.prefetch('/carte-grise?type=w-garage')}
-                            >
-                              W garage
-                            </Link>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
+          <nav className="hidden lg:flex items-center space-x-6 overflow-visible">
+            {/* Carte grise */}
+            <Link 
+              href="/carte-grise"
+              className="flex items-center space-x-1.5 transition-colors text-sm font-medium text-gray-700 hover:text-primary-600"
+            >
+              <FileText className="w-4 h-4" />
+              <span>Carte grise</span>
+            </Link>
             
             {/* Plaque immatriculation */}
             <Link href="/plaque-immatriculation" className="flex items-center space-x-1.5 text-gray-700 hover:text-primary-600 transition-colors text-sm font-medium">

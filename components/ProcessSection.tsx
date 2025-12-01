@@ -1,7 +1,7 @@
 'use client'
 
 import Image from 'next/image'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Globe, TrendingUp, Shield, Clock, Star, FileText, CreditCard, Truck, CheckCircle, FileCheck, Search, Plus, X, MessageCircle, HelpCircle } from 'lucide-react'
 
 const ProcessSection = () => {
@@ -37,7 +37,7 @@ const ProcessSection = () => {
   ]
 
   return (
-    <section className="py-8 lg:py-12 bg-gray-50">
+    <section className="py-8 lg:py-12 bg-gray-50 w-full max-w-full overflow-x-hidden">
       <div className="container">
         {/* Header */}
         <div className="text-center mb-16">
@@ -121,20 +121,18 @@ d’immatriculation plus faciles que jamais.
                 <div className="group relative bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-2xl p-6 shadow-lg hover:shadow-xl border border-blue-200/50 hover:border-blue-300 transition-all duration-300 hover:-translate-y-1">
                   <div className="absolute top-0 right-0 w-20 h-20 bg-blue-200/20 rounded-full blur-2xl"></div>
                   <div className="relative">
-                    <div className="mb-4">
-                      <div className="mb-3 flex items-start gap-4">
-                        <div className="flex-shrink-0">
+                    <div className="mb-4 text-center">
+                      <div className="mb-3 flex flex-col items-center">
+                        <div className="flex-shrink-0 mb-3">
                           <Image
                             src="/rapid.png"
                             alt="Rapide"
                             width={112}
                             height={112}
-                            className="w-28 h-28 object-contain"
+                            className="w-24 h-24 sm:w-28 sm:h-28 object-contain"
                           />
                         </div>
-                        <div className="flex-1 pt-16">
-                          <h4 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-blue-700 transition-colors">Rapide</h4>
-                        </div>
+                        <h4 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-blue-700 transition-colors">Rapide</h4>
                       </div>
                       <p className="text-sm text-gray-700 leading-relaxed">
                       Traitement express de votre dossier sous 24h, avec une livraison accélérée de votre carte
@@ -148,20 +146,18 @@ d’immatriculation plus faciles que jamais.
                 <div className="group relative bg-gradient-to-br from-green-50 to-green-100/50 rounded-2xl p-6 shadow-lg hover:shadow-xl border border-green-200/50 hover:border-green-300 transition-all duration-300 hover:-translate-y-1">
                   <div className="absolute top-0 right-0 w-20 h-20 bg-green-200/20 rounded-full blur-2xl"></div>
                   <div className="relative">
-                    <div className="mb-4">
-                      <div className="mb-3 flex items-start gap-4">
-                        <div className="flex-shrink-0">
+                    <div className="mb-4 text-center">
+                      <div className="mb-3 flex flex-col items-center">
+                        <div className="flex-shrink-0 mb-3">
                           <Image
                             src="/eco.png"
                             alt="Économique"
                             width={112}
                             height={112}
-                            className="w-28 h-28 object-contain"
+                            className="w-24 h-24 sm:w-28 sm:h-28 object-contain"
                           />
                         </div>
-                        <div className="flex-1 pt-16">
-                          <h4 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-green-700 transition-colors">Économique</h4>
-                        </div>
+                        <h4 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-green-700 transition-colors">Économique</h4>
                       </div>
                       <p className="text-sm text-gray-700 leading-relaxed">
                       Profitez de tarifs clairs et accessibles, dès 29,90€ sans frais cachés.
@@ -175,23 +171,21 @@ d’immatriculation plus faciles que jamais.
                 <div className="group relative bg-gradient-to-br from-purple-50 to-purple-100/50 rounded-2xl p-6 shadow-lg hover:shadow-xl border border-purple-200/50 hover:border-purple-300 transition-all duration-300 hover:-translate-y-1">
                   <div className="absolute top-0 right-0 w-20 h-20 bg-purple-200/20 rounded-full blur-2xl"></div>
                   <div className="relative">
-                    <div className="mb-4">
-                      <div className="mb-3 flex items-start gap-4">
-                        <div className="flex-shrink-0">
+                    <div className="mb-4 text-center">
+                      <div className="mb-3 flex flex-col items-center">
+                        <div className="flex-shrink-0 mb-3">
                           <Image
                             src="/securise.png"
                             alt="Sécurisé"
                             width={112}
                             height={112}
-                            className="w-28 h-28 object-contain"
+                            className="w-24 h-24 sm:w-28 sm:h-28 object-contain"
                           />
                         </div>
-                        <div className="flex-1 pt-16">
-                          <h4 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-purple-700 transition-colors">Sécurisé</h4>
-                        </div>
+                        <h4 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-purple-700 transition-colors">Sécurisé</h4>
                       </div>
                       <p className="text-sm text-gray-700 leading-relaxed">
-                      Plateforme habilitée par le Ministère de l’Intérieur, avec un paiement en ligne 100 %
+                      Plateforme habilitée par le Ministère de l'Intérieur, avec un paiement en ligne 100 %
 sécurisé.
 
                       </p>
@@ -203,23 +197,21 @@ sécurisé.
                 <div className="group relative bg-gradient-to-br from-orange-50 to-orange-100/50 rounded-2xl p-6 shadow-lg hover:shadow-xl border border-orange-200/50 hover:border-orange-300 transition-all duration-300 hover:-translate-y-1">
                   <div className="absolute top-0 right-0 w-20 h-20 bg-orange-200/20 rounded-full blur-2xl"></div>
                   <div className="relative">
-                    <div className="mb-4">
-                      <div className="mb-3 flex items-start gap-4">
-                        <div className="flex-shrink-0">
+                    <div className="mb-4 text-center">
+                      <div className="mb-3 flex flex-col items-center">
+                        <div className="flex-shrink-0 mb-3">
                           <Image
                             src="/expert.png"
                             alt="Expert"
                             width={112}
                             height={112}
-                            className="w-28 h-28 object-contain"
+                            className="w-24 h-24 sm:w-28 sm:h-28 object-contain"
                           />
                         </div>
-                        <div className="flex-1 pt-16">
-                          <h4 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-orange-700 transition-colors">Expert</h4>
-                        </div>
+                        <h4 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-orange-700 transition-colors">Expert</h4>
                       </div>
                       <p className="text-sm text-gray-700 leading-relaxed">
-                      Des spécialistes de l’immatriculation à votre service depuis 2009, pour tous types de
+                      Des spécialistes de l'immatriculation à votre service depuis 2009, pour tous types de
 véhicules.
 
                       </p>
@@ -318,65 +310,13 @@ véhicules.
               <div className="w-24 h-1 bg-gradient-to-r from-primary-600 to-primary-700 mx-auto rounded-full"></div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-20 relative">
-              {/* Vertical Divider with gradient */}
-              <div className="hidden lg:block absolute left-1/2 top-0 bottom-0 w-0.5 bg-gradient-to-b from-transparent via-gray-200 to-transparent transform -translate-x-1/2"></div>
-
-              {/* Left Column - Steps 2 and 4 */}
-              <div className="space-y-20 lg:pt-24">
-                {/* Step 2 */}
-                <div className="group relative">
-                  <div className="flex items-start gap-6 w-full transition-all duration-300 hover:translate-x-2">
-                    <div className="flex-shrink-0 relative">
-                      <div className="absolute inset-0 bg-primary-400 rounded-full blur-lg opacity-20 group-hover:opacity-40 transition-opacity duration-300"></div>
-                      <div className="relative w-14 h-14 bg-gradient-to-br from-primary-500 to-primary-700 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-xl shadow-primary-500/30 group-hover:scale-110 transition-transform duration-300">
-                        2
-                      </div>
-                    </div>
-                    <div className="flex-1 pt-1">
-                      <div className="mb-4 transform transition-transform duration-300 group-hover:translate-y-[-2px]">
-                        <Shield className="w-9 h-9 text-primary-300 group-hover:text-primary-400 transition-colors duration-300" strokeWidth={1.5} />
-                      </div>
-                      <h4 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-primary-600 transition-colors duration-300">
-                        Paiement sécurisé
-                      </h4>
-                      <p className="text-gray-600 leading-relaxed text-base">
-                      Procédez au paiement en ligne en toute sérénité, avec la possibilité de régler en 3 fois
-sans frais. Toutes les transactions sont entièrement sécurisées.  </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Step 4 */}
-                <div className="group relative">
-                  <div className="flex items-start gap-6 w-full transition-all duration-300 hover:translate-x-2">
-                    <div className="flex-shrink-0 relative">
-                      <div className="absolute inset-0 bg-primary-400 rounded-full blur-lg opacity-20 group-hover:opacity-40 transition-opacity duration-300"></div>
-                      <div className="relative w-14 h-14 bg-gradient-to-br from-primary-500 to-primary-700 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-xl shadow-primary-500/30 group-hover:scale-110 transition-transform duration-300">
-                        4
-                      </div>
-                    </div>
-                    <div className="flex-1 pt-1">
-                      <div className="mb-4 transform transition-transform duration-300 group-hover:translate-y-[-2px]">
-                        <FileCheck className="w-9 h-9 text-primary-300 group-hover:text-primary-400 transition-colors duration-300" strokeWidth={1.5} />
-                      </div>
-                      <h4 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-primary-600 transition-colors duration-300">
-                        Réception de votre carte grise
-                      </h4>
-                      <p className="text-gray-600 leading-relaxed text-base">
-                      Votre carte grise officielle est éditée puis envoyée en recommandé par l’Imprimerie
-                      Nationale, directement à votre adresse.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Right Column - Steps 1, 3, and 5 */}
-              <div className="space-y-20">
+            {/* Mobile: Sequential order 1-5, Desktop: Two columns with alternated layout */}
+            <div className="space-y-12 lg:space-y-0">
+              {/* Mobile View - Sequential order */}
+              <div className="lg:hidden space-y-12">
                 {/* Step 1 */}
                 <div className="group relative">
-                  <div className="flex items-start gap-6 w-full transition-all duration-300 hover:translate-x-[-8px]">
+                  <div className="flex items-start gap-6 w-full transition-all duration-300 hover:translate-x-2">
                     <div className="flex-shrink-0 relative">
                       <div className="absolute inset-0 bg-primary-400 rounded-full blur-lg opacity-30 group-hover:opacity-50 transition-opacity duration-300"></div>
                       <div className="relative w-14 h-14 bg-gradient-to-br from-primary-500 to-primary-700 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-xl shadow-primary-500/30 group-hover:scale-110 transition-transform duration-300">
@@ -400,9 +340,32 @@ véhicule et recevez votre devis immédiatement.
                   </div>
                 </div>
 
+                {/* Step 2 */}
+                <div className="group relative">
+                  <div className="flex items-start gap-6 w-full transition-all duration-300 hover:translate-x-2">
+                    <div className="flex-shrink-0 relative">
+                      <div className="absolute inset-0 bg-primary-400 rounded-full blur-lg opacity-20 group-hover:opacity-40 transition-opacity duration-300"></div>
+                      <div className="relative w-14 h-14 bg-gradient-to-br from-primary-500 to-primary-700 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-xl shadow-primary-500/30 group-hover:scale-110 transition-transform duration-300">
+                        2
+                      </div>
+                    </div>
+                    <div className="flex-1 pt-1">
+                      <div className="mb-4 transform transition-transform duration-300 group-hover:translate-y-[-2px]">
+                        <Shield className="w-9 h-9 text-primary-300 group-hover:text-primary-400 transition-colors duration-300" strokeWidth={1.5} />
+                      </div>
+                      <h4 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-primary-600 transition-colors duration-300">
+                        Paiement sécurisé
+                      </h4>
+                      <p className="text-gray-600 leading-relaxed text-base">
+                      Procédez au paiement en ligne en toute sérénité, avec la possibilité de régler en 3 fois
+sans frais. Toutes les transactions sont entièrement sécurisées.  </p>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Step 3 */}
                 <div className="group relative">
-                  <div className="flex items-start gap-6 w-full transition-all duration-300 hover:translate-x-[-8px]">
+                  <div className="flex items-start gap-6 w-full transition-all duration-300 hover:translate-x-2">
                     <div className="flex-shrink-0 relative">
                       <div className="absolute inset-0 bg-primary-400 rounded-full blur-lg opacity-20 group-hover:opacity-40 transition-opacity duration-300"></div>
                       <div className="relative w-14 h-14 bg-gradient-to-br from-primary-500 to-primary-700 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-xl shadow-primary-500/30 group-hover:scale-110 transition-transform duration-300">
@@ -425,9 +388,33 @@ immatriculation.
                   </div>
                 </div>
 
+                {/* Step 4 */}
+                <div className="group relative">
+                  <div className="flex items-start gap-6 w-full transition-all duration-300 hover:translate-x-2">
+                    <div className="flex-shrink-0 relative">
+                      <div className="absolute inset-0 bg-primary-400 rounded-full blur-lg opacity-20 group-hover:opacity-40 transition-opacity duration-300"></div>
+                      <div className="relative w-14 h-14 bg-gradient-to-br from-primary-500 to-primary-700 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-xl shadow-primary-500/30 group-hover:scale-110 transition-transform duration-300">
+                        4
+                      </div>
+                    </div>
+                    <div className="flex-1 pt-1">
+                      <div className="mb-4 transform transition-transform duration-300 group-hover:translate-y-[-2px]">
+                        <FileCheck className="w-9 h-9 text-primary-300 group-hover:text-primary-400 transition-colors duration-300" strokeWidth={1.5} />
+                      </div>
+                      <h4 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-primary-600 transition-colors duration-300">
+                        Réception de votre carte grise
+                      </h4>
+                      <p className="text-gray-600 leading-relaxed text-base">
+                      Votre carte grise officielle est éditée puis envoyée en recommandé par l'Imprimerie
+                      Nationale, directement à votre adresse.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Step 5 */}
                 <div className="group relative">
-                  <div className="flex items-start gap-6 w-full transition-all duration-300 hover:translate-x-[-8px]">
+                  <div className="flex items-start gap-6 w-full transition-all duration-300 hover:translate-x-2">
                     <div className="flex-shrink-0 relative">
                       <div className="absolute inset-0 bg-primary-400 rounded-full blur-lg opacity-20 group-hover:opacity-40 transition-opacity duration-300"></div>
                       <div className="relative w-14 h-14 bg-gradient-to-br from-primary-500 to-primary-700 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-xl shadow-primary-500/30 group-hover:scale-110 transition-transform duration-300">
@@ -442,9 +429,143 @@ immatriculation.
                         C'est terminé !
                       </h4>
                       <p className="text-gray-600 leading-relaxed text-base">
-                      Votre véhicule est immatriculé. Il ne vous reste plus qu’à profiter de votre nouvelle
+                      Votre véhicule est immatriculé. Il ne vous reste plus qu'à profiter de votre nouvelle
                       carte grise en toute tranquillité.
                       </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Desktop View - Two columns with alternated layout */}
+              <div className="hidden lg:grid lg:grid-cols-2 gap-8 lg:gap-20 relative">
+                {/* Vertical Divider with gradient */}
+                <div className="hidden lg:block absolute left-1/2 top-0 bottom-0 w-0.5 bg-gradient-to-b from-transparent via-gray-200 to-transparent transform -translate-x-1/2"></div>
+
+                {/* Left Column - Steps 2 and 4 */}
+                <div className="space-y-20 lg:pt-24">
+                  {/* Step 2 */}
+                  <div className="group relative">
+                    <div className="flex items-start gap-6 w-full transition-all duration-300 hover:translate-x-2">
+                      <div className="flex-shrink-0 relative">
+                        <div className="absolute inset-0 bg-primary-400 rounded-full blur-lg opacity-20 group-hover:opacity-40 transition-opacity duration-300"></div>
+                        <div className="relative w-14 h-14 bg-gradient-to-br from-primary-500 to-primary-700 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-xl shadow-primary-500/30 group-hover:scale-110 transition-transform duration-300">
+                          2
+                        </div>
+                      </div>
+                      <div className="flex-1 pt-1">
+                        <div className="mb-4 transform transition-transform duration-300 group-hover:translate-y-[-2px]">
+                          <Shield className="w-9 h-9 text-primary-300 group-hover:text-primary-400 transition-colors duration-300" strokeWidth={1.5} />
+                        </div>
+                        <h4 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-primary-600 transition-colors duration-300">
+                          Paiement sécurisé
+                        </h4>
+                        <p className="text-gray-600 leading-relaxed text-base">
+                        Procédez au paiement en ligne en toute sérénité, avec la possibilité de régler en 3 fois
+sans frais. Toutes les transactions sont entièrement sécurisées.  </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Step 4 */}
+                  <div className="group relative">
+                    <div className="flex items-start gap-6 w-full transition-all duration-300 hover:translate-x-2">
+                      <div className="flex-shrink-0 relative">
+                        <div className="absolute inset-0 bg-primary-400 rounded-full blur-lg opacity-20 group-hover:opacity-40 transition-opacity duration-300"></div>
+                        <div className="relative w-14 h-14 bg-gradient-to-br from-primary-500 to-primary-700 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-xl shadow-primary-500/30 group-hover:scale-110 transition-transform duration-300">
+                          4
+                        </div>
+                      </div>
+                      <div className="flex-1 pt-1">
+                        <div className="mb-4 transform transition-transform duration-300 group-hover:translate-y-[-2px]">
+                          <FileCheck className="w-9 h-9 text-primary-300 group-hover:text-primary-400 transition-colors duration-300" strokeWidth={1.5} />
+                        </div>
+                        <h4 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-primary-600 transition-colors duration-300">
+                          Réception de votre carte grise
+                        </h4>
+                        <p className="text-gray-600 leading-relaxed text-base">
+                        Votre carte grise officielle est éditée puis envoyée en recommandé par l'Imprimerie
+                        Nationale, directement à votre adresse.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right Column - Steps 1, 3, and 5 */}
+                <div className="space-y-20">
+                  {/* Step 1 */}
+                  <div className="group relative">
+                    <div className="flex items-start gap-6 w-full transition-all duration-300 hover:translate-x-[-8px]">
+                      <div className="flex-shrink-0 relative">
+                        <div className="absolute inset-0 bg-primary-400 rounded-full blur-lg opacity-30 group-hover:opacity-50 transition-opacity duration-300"></div>
+                        <div className="relative w-14 h-14 bg-gradient-to-br from-primary-500 to-primary-700 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-xl shadow-primary-500/30 group-hover:scale-110 transition-transform duration-300">
+                          1
+                        </div>
+                      </div>
+                      <div className="flex-1 pt-1">
+                        <div className="mb-4 flex items-center gap-2 transform transition-transform duration-300 group-hover:translate-y-[-2px]">
+                          <FileText className="w-9 h-9 text-primary-600 group-hover:text-primary-700 transition-colors duration-300" strokeWidth={1.5} />
+                          <CheckCircle className="w-5 h-5 text-primary-600 group-hover:scale-110 transition-transform duration-300" strokeWidth={2.5} />
+                          <CheckCircle className="w-5 h-5 text-primary-600 group-hover:scale-110 transition-transform duration-300" strokeWidth={2.5} />
+                        </div>
+                        <h4 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-primary-600 transition-colors duration-300">
+                          Commande en ligne
+                        </h4>
+                        <p className="text-gray-600 leading-relaxed text-base">
+                        Complétez le formulaire en quelques instants : saisissez les informations de votre
+véhicule et recevez votre devis immédiatement.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Step 3 */}
+                  <div className="group relative">
+                    <div className="flex items-start gap-6 w-full transition-all duration-300 hover:translate-x-[-8px]">
+                      <div className="flex-shrink-0 relative">
+                        <div className="absolute inset-0 bg-primary-400 rounded-full blur-lg opacity-20 group-hover:opacity-40 transition-opacity duration-300"></div>
+                        <div className="relative w-14 h-14 bg-gradient-to-br from-primary-500 to-primary-700 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-xl shadow-primary-500/30 group-hover:scale-110 transition-transform duration-300">
+                          3
+                        </div>
+                      </div>
+                      <div className="flex-1 pt-1">
+                        <div className="mb-4 transform transition-transform duration-300 group-hover:translate-y-[-2px]">
+                          <Truck className="w-9 h-9 text-primary-300 group-hover:text-primary-400 transition-colors duration-300" strokeWidth={1.5} />
+                        </div>
+                        <h4 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-primary-600 transition-colors duration-300">
+                        Traitement de votre dossier
+                        </h4>
+                        <p className="text-gray-600 leading-relaxed text-base">
+                        Nos experts prennent en charge votre demande sous 24h. Nous contrôlons vos
+documents, finalisons les démarches administratives et validons votre
+immatriculation.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Step 5 */}
+                  <div className="group relative">
+                    <div className="flex items-start gap-6 w-full transition-all duration-300 hover:translate-x-[-8px]">
+                      <div className="flex-shrink-0 relative">
+                        <div className="absolute inset-0 bg-primary-400 rounded-full blur-lg opacity-20 group-hover:opacity-40 transition-opacity duration-300"></div>
+                        <div className="relative w-14 h-14 bg-gradient-to-br from-primary-500 to-primary-700 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-xl shadow-primary-500/30 group-hover:scale-110 transition-transform duration-300">
+                          5
+                        </div>
+                      </div>
+                      <div className="flex-1 pt-1">
+                        <div className="mb-4 transform transition-transform duration-300 group-hover:translate-y-[-2px]">
+                          <CheckCircle className="w-9 h-9 text-primary-300 group-hover:text-primary-400 transition-colors duration-300" strokeWidth={1.5} />
+                        </div>
+                        <h4 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-primary-600 transition-colors duration-300">
+                          C'est terminé !
+                        </h4>
+                        <p className="text-gray-600 leading-relaxed text-base">
+                        Votre véhicule est immatriculé. Il ne vous reste plus qu'à profiter de votre nouvelle
+                        carte grise en toute tranquillité.
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -454,79 +575,112 @@ immatriculation.
         </div>
 
         {/* Partners Section */}
-        <div className="mt-20 lg:mt-24">
-          <div className="max-w-7xl mx-auto px-4">
-            {/* Title */}
-            <div className="text-center mb-12 lg:mb-16">
-              <h3 className="text-3xl lg:text-4xl font-bold text-gray-900">
-                Nos partenaires
-              </h3>
-            </div>
-
-            {/* Partners Logos */}
-            <div className="flex flex-nowrap items-center justify-center gap-8 lg:gap-12 overflow-x-auto pb-4">
-              {/* Partner 1 - Federation Professionnelle */}
-              <div className="flex items-center justify-center p-6 hover:opacity-80 transition-opacity duration-300">
-                <Image
-                  src="/fed.png"
-                  alt="Federation Professionnelle Carte Grise En Ligne"
-                  width={200}
-                  height={120}
-                  className="h-20 w-auto object-contain"
-                />
-              </div>
-
-              {/* Partner 2 - MACIF */}
-              <div className="flex items-center justify-center p-6 hover:opacity-80 transition-opacity duration-300">
-                <Image
-                  src="/macif.png"
-                  alt="MACIF"
-                  width={200}
-                  height={120}
-                  className="h-20 w-auto object-contain"
-                />
-              </div>
-
-              {/* Partner 3 - 50 Partners */}
-              <div className="flex items-center justify-center p-6 hover:opacity-80 transition-opacity duration-300">
-                <Image
-                  src="/50partners.png"
-                  alt="50 Partners"
-                  width={200}
-                  height={120}
-                  className="h-20 w-auto object-contain"
-                />
-            </div>
-
-              {/* Partner 4 - MAIF */}
-              <div className="flex items-center justify-center p-6 hover:opacity-80 transition-opacity duration-300">
-                <Image
-                  src="/maif.png"
-                  alt="MAIF"
-                  width={200}
-                  height={120}
-                  className="h-20 w-auto object-contain"
-                />
-            </div>
-
-              {/* Partner 5 - La French Tech */}
-              <div className="flex items-center justify-center p-6 hover:opacity-80 transition-opacity duration-300">
-                <Image
-                  src="/tech.png"
-                  alt="La French Tech"
-                  width={200}
-                  height={120}
-                  className="h-20 w-auto object-contain"
-                />
-            </div>
-          </div>
-        </div>
-        </div>
+        <PartnersCarousel />
 
         {/* FAQ Section */}
         <FAQSection />
       </div>
     </section>
+  )
+}
+
+const PartnersCarousel = () => {
+  const [currentIndex, setCurrentIndex] = useState(0)
+  
+  const partners = [
+    { src: '/fed.png', alt: 'Federation Professionnelle Carte Grise En Ligne' },
+    { src: '/macif.png', alt: 'MACIF' },
+    { src: '/50partners.png', alt: '50 Partners' },
+    { src: '/maif.png', alt: 'MAIF' },
+    { src: '/tech.png', alt: 'La French Tech' },
+  ]
+
+  // Calculate how many pairs we can show (2 partners per slide on mobile)
+  const totalPairs = Math.ceil(partners.length / 2)
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentIndex((prevIndex) => (prevIndex + 1) % totalPairs)
+    }, 2000) // Change every 2 seconds
+
+    return () => clearInterval(interval)
+  }, [totalPairs])
+
+  // Get the two partners to display for current index
+  const getVisiblePartners = () => {
+    const startIndex = currentIndex * 2
+    return partners.slice(startIndex, startIndex + 2)
+  }
+
+  return (
+    <div className="mt-20 lg:mt-24">
+      <div className="max-w-7xl mx-auto px-4">
+        {/* Title */}
+        <div className="text-center mb-12 lg:mb-16">
+          <h3 className="text-3xl lg:text-4xl font-bold text-gray-900">
+            Nos partenaires
+          </h3>
+        </div>
+
+        {/* Partners Logos - Mobile: 2 at a time with carousel, Desktop: all visible */}
+        <div className="relative">
+          {/* Mobile View - Carousel showing 2 partners */}
+          <div className="lg:hidden">
+            <div className="flex items-center justify-center gap-6 overflow-hidden">
+              {getVisiblePartners().map((partner, index) => (
+                <div
+                  key={`${currentIndex}-${index}`}
+                  className="flex items-center justify-center p-4 hover:opacity-80 transition-opacity duration-300 flex-shrink-0"
+                  style={{
+                    width: 'calc(50% - 0.75rem)',
+                    animation: 'fadeIn 0.5s ease-in-out'
+                  }}
+                >
+                  <Image
+                    src={partner.src}
+                    alt={partner.alt}
+                    width={200}
+                    height={120}
+                    className="h-16 w-auto object-contain"
+                  />
+                </div>
+              ))}
+            </div>
+            {/* Dots indicator */}
+            <div className="flex justify-center gap-2 mt-6">
+              {Array.from({ length: totalPairs }).map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => setCurrentIndex(index)}
+                  className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                    index === currentIndex ? 'bg-primary-600 w-6' : 'bg-gray-300'
+                  }`}
+                  aria-label={`Go to slide ${index + 1}`}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Desktop View - All partners visible */}
+          <div className="hidden lg:flex flex-nowrap items-center justify-center gap-8 lg:gap-12 pb-4">
+            {partners.map((partner, index) => (
+              <div
+                key={index}
+                className="flex items-center justify-center p-6 hover:opacity-80 transition-opacity duration-300"
+              >
+                <Image
+                  src={partner.src}
+                  alt={partner.alt}
+                  width={200}
+                  height={120}
+                  className="h-20 w-auto object-contain"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
   )
 }
 
@@ -820,7 +974,7 @@ const FAQSection = () => {
             </h3>
 
             {/* Navigation Tabs */}
-            <div className="grid grid-cols-5 gap-2 mb-6 border-b border-gray-200 pb-4">
+            <div className="flex flex-wrap sm:grid sm:grid-cols-5 gap-2 mb-6 border-b border-gray-200 pb-4 overflow-x-auto">
               {['Commandes', 'Livraison', 'Retours', 'Carte grise', 'Matricule'].map((tab) => (
                 <button
                   key={tab}
@@ -829,7 +983,7 @@ const FAQSection = () => {
                     setSearchQuery('')
                     setExpandedItems(new Set())
                   }}
-                  className={`px-2 py-2 text-xs lg:text-sm font-semibold transition-colors text-center ${
+                  className={`flex-shrink-0 px-3 py-2 text-xs sm:text-sm font-semibold transition-colors text-center whitespace-nowrap min-w-fit ${
                     activeTab === tab
                       ? 'text-primary-600 border-b-2 border-primary-600'
                       : 'text-gray-600 hover:text-gray-900'

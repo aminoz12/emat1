@@ -22,7 +22,7 @@ const Footer = () => {
   ]
 
   return (
-    <footer className="bg-white text-gray-900">
+    <footer className="bg-white text-gray-900 w-full max-w-full overflow-x-hidden">
       <div className="container py-12">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 pl-0 lg:pl-0">
           {/* Company Info */}
@@ -60,7 +60,7 @@ const Footer = () => {
           </div>
 
           {/* Services, Contact & About - All titles in one line */}
-          <div className="grid grid-cols-3 gap-12 lg:gap-20 xl:gap-24 justify-start" style={{ marginLeft: '-8rem' }}>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 sm:gap-12 lg:gap-16 xl:gap-20 justify-start sm:justify-items-start">
             {/* Nos Services */}
             <div className="text-left">
               <h3 className="font-semibold text-lg mb-4 text-gray-900 whitespace-nowrap text-left">Nos Services</h3>

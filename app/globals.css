@@ -8,8 +8,15 @@
   * {
     @apply border-gray-200;
   }
+  html {
+    @apply overflow-x-hidden;
+    width: 100%;
+    max-width: 100vw;
+  }
   body {
-    @apply bg-white text-gray-900;
+    @apply bg-white text-gray-900 overflow-x-hidden;
+    width: 100%;
+    max-width: 100vw;
   }
 }
 
@@ -256,6 +263,23 @@
   50% {
     opacity: 0.6;
     transform: scale(1.1) translateZ(10px);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@media (max-width: 768px) {
+  .h-\[60\%\] {
+    height: 103% !important;
   }
 }
 

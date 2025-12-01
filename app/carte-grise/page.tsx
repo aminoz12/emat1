@@ -265,6 +265,19 @@ export default function CarteGrisePage() {
     setIsSubmitting(true)
     
     try {
+      // Vérifier que le mandat est généré et signé avant de continuer
+      if (!mandatPreviewUrl) {
+        alert('Veuillez d\'abord générer le mandat avant de continuer.')
+        setIsSubmitting(false)
+        return
+      }
+      
+      if (!mandatPreviewUrlWithSignature || !isSignatureValidated) {
+        alert('Veuillez d\'abord signer et valider le mandat avant de continuer.')
+        setIsSubmitting(false)
+        return
+      }
+      
       // Calculate price
       const finalPrice = calculatedPrice?.totalPrice || parseFloat(selectedDocument?.price?.replace('€', '').replace(',', '.') || '29.90')
       
@@ -335,7 +348,7 @@ export default function CarteGrisePage() {
         ...formDataToStore,
         files: null // Don't store files in JSON
       }))
-      
+
       // Convert files to base64 and store in sessionStorage
       const filesToStore: { [key: string]: { name: string; type: string; base64: string } } = {}
       
@@ -473,7 +486,7 @@ export default function CarteGrisePage() {
               file: base64ToFile(filesToStore.currentCardFile.base64, filesToStore.currentCardFile.name, filesToStore.currentCardFile.type), 
               documentType: 'carte_grise_actuelle' 
             })
-          }
+        }
           if (filesToStore.certificatCessionFile) {
             filesToUpload.push({ 
               file: base64ToFile(filesToStore.certificatCessionFile.base64, filesToStore.certificatCessionFile.name, filesToStore.certificatCessionFile.type), 
@@ -502,7 +515,7 @@ export default function CarteGrisePage() {
             filesToUpload.push({ 
               file: base64ToFile(filesToStore.mandatFile.base64, filesToStore.mandatFile.name, filesToStore.mandatFile.type), 
               documentType: isSignatureValidated ? 'mandat_signe' : 'mandat' 
-            })
+              })
           }
           
           // Create order
@@ -515,13 +528,13 @@ export default function CarteGrisePage() {
           // Upload documents
           if (filesToUpload.length > 0) {
             await uploadDocuments(filesToUpload, result.order.id)
-          }
-          
+      }
+
           // Store order references
       localStorage.setItem('currentOrderId', result.order.id)
       localStorage.setItem('currentOrderRef', result.order.reference)
           localStorage.setItem('currentOrderPrice', String(orderData.price))
-          
+
           // Clean up temporary data
           localStorage.removeItem('pendingOrderData')
           sessionStorage.removeItem('pendingOrderFiles')
@@ -3601,9 +3614,9 @@ export default function CarteGrisePage() {
                   {/* Submit Button */}
                   <button
                     type="submit"
-                    disabled={!acceptTerms || isSubmitting}
+                    disabled={!acceptTerms || isSubmitting || !mandatPreviewUrl || !mandatPreviewUrlWithSignature || !isSignatureValidated}
                     className={`w-full py-3.5 px-6 rounded font-semibold text-base transition-colors flex items-center justify-center space-x-2 ${
-                      acceptTerms && !isSubmitting
+                      acceptTerms && !isSubmitting && mandatPreviewUrl && mandatPreviewUrlWithSignature && isSignatureValidated
                         ? 'bg-primary-600 text-white hover:bg-primary-700'
                         : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                     }`}

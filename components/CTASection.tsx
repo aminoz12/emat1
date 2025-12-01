@@ -2,12 +2,12 @@ import Link from 'next/link'
 
 const CTASection = () => {
   return (
-    <section className="py-24 lg:py-32 bg-gradient-to-br from-primary-700 via-primary-800 to-primary-900 text-white">
+    <section className="py-24 lg:py-32 bg-gradient-to-br from-primary-700 via-primary-800 to-primary-900 text-white w-full max-w-full overflow-x-hidden">
       <div className="container">
         <div className="max-w-5xl mx-auto text-center">
           {/* Main Text */}
-          <h2 className="text-3xl lg:text-4xl font-bold mb-12 leading-tight">
-            <span className="whitespace-nowrap block">Votre carte grise & vos plaques d'immatriculation en 2 minutes</span>
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-12 leading-tight px-4">
+            Votre carte grise & vos plaques<br className="hidden sm:block" /> d'immatriculation en 2 minutes
           </h2>
 
           {/* CTA Buttons */}
