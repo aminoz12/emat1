@@ -64,7 +64,7 @@ const Footer = () => {
             {/* Nos Services */}
             <div className="text-left">
               <h3 className="font-semibold text-lg mb-4 text-gray-900 whitespace-nowrap text-left">Nos Services</h3>
-              <ul className="space-y-2">
+            <ul className="space-y-2">
                 <li>
                   <Link
                     href="/carte-grise"
@@ -89,27 +89,27 @@ const Footer = () => {
                     COC
                   </Link>
                 </li>
-              </ul>
-            </div>
+            </ul>
+          </div>
 
             {/* Contact */}
             <div className="text-left">
               <h3 className="font-semibold text-lg mb-4 text-gray-900 whitespace-nowrap text-left">Contact</h3>
-              <div className="space-y-3">
-                <div className="flex items-center space-x-2">
-                  <Phone className="w-4 h-4 text-primary-600" />
+            <div className="space-y-3">
+              <div className="flex items-center space-x-2">
+                <Phone className="w-4 h-4 text-primary-600" />
                 <a href="tel:0147851000" className="text-gray-600 hover:text-primary-600 transition-colors text-sm">
                   01 47 85 10 00
                 </a>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Mail className="w-4 h-4 text-primary-600" />
-                  <a href="mailto:contact@ematricule.fr" className="text-gray-600 hover:text-primary-600 transition-colors text-sm">
-                    contact@ematricule.fr
-                  </a>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <MapPin className="w-4 h-4 text-primary-600 mt-0.5" />
+              </div>
+              <div className="flex items-center space-x-2">
+                <Mail className="w-4 h-4 text-primary-600" />
+                <a href="mailto:contact@ematricule.fr" className="text-gray-600 hover:text-primary-600 transition-colors text-sm">
+                  contact@ematricule.fr
+                </a>
+              </div>
+              <div className="flex items-start space-x-2">
+                <MapPin className="w-4 h-4 text-primary-600 mt-0.5" />
                 <span className="text-gray-600 text-sm">
                   426 Av. de la République<br />
                   92000 Nanterre, France

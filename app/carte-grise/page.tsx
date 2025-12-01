@@ -1256,7 +1256,7 @@ export default function CarteGrisePage() {
                 </div>
                 
                 {/* PDF Preview - Full space without controls - Responsive height */}
-                <div className="relative w-full bg-white border border-gray-300 rounded overflow-hidden h-[400px] sm:h-[500px] md:h-[calc(100vh-350px)] lg:h-[calc(100vh-300px)] min-h-[350px] sm:min-h-[450px] md:min-h-[500px] max-h-[600px] md:max-h-[800px]">
+                <div className="relative w-full bg-white border border-gray-300 rounded overflow-auto h-[600px] sm:h-[700px] md:h-[calc(100vh-200px)] lg:h-[calc(100vh-150px)] min-h-[500px] sm:min-h-[600px] md:min-h-[700px] max-h-[900px] md:max-h-[1200px]">
                   {mandatPreviewUrl ? (
                     <PDFViewer url={mandatPreviewUrlWithSignature || mandatPreviewUrl} useCanvas={false} />
                   ) : (
