@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 export async function POST(request: NextRequest) {
   try {
@@ -66,12 +67,13 @@ export async function POST(request: NextRequest) {
 
     // Convert file to buffer
     const arrayBuffer = await file.arrayBuffer()
-    const buffer = new Uint8Array(arrayBuffer)
+
+    const adminSupabase = createAdminClient()
 
     // Upload to Supabase Storage
-    const { data: uploadData, error: uploadError } = await supabase.storage
+    const { data: uploadData, error: uploadError } = await adminSupabase.storage
       .from('documents')
-      .upload(fileName, buffer, {
+      .upload(fileName, arrayBuffer, {
         contentType: file.type,
         upsert: false
       })
@@ -85,7 +87,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get public URL
-    const { data: { publicUrl } } = supabase.storage
+    const { data: { publicUrl } } = adminSupabase.storage
       .from('documents')
       .getPublicUrl(fileName)
 

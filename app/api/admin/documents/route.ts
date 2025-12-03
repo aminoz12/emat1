@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 // GET - Get documents (all or by order)
 export async function GET(request: NextRequest) {
@@ -30,6 +31,8 @@ export async function GET(request: NextRequest) {
       )
     }
 
+    const adminSupabase = createAdminClient()
+
     // Get query params
     const searchParams = request.nextUrl.searchParams
     const orderId = searchParams.get('orderId')
@@ -38,7 +41,7 @@ export async function GET(request: NextRequest) {
     const offset = (page - 1) * limit
 
     // Build query
-    let query = supabase
+    let query = adminSupabase
       .from('documents')
       .select(`
         *,
@@ -130,8 +133,11 @@ export async function DELETE(request: NextRequest) {
       )
     }
 
+    // Use admin client to bypass RLS for admin operations
+    const adminSupabase = createAdminClient()
+
     // Get document to find file path
-    const { data: doc } = await supabase
+    const { data: doc } = await adminSupabase
       .from('documents')
       .select('file_url')
       .eq('id', documentId)
@@ -141,12 +147,12 @@ export async function DELETE(request: NextRequest) {
     if (doc?.file_url) {
       const urlParts = doc.file_url.split('/documents/')
       if (urlParts[1]) {
-        await supabase.storage.from('documents').remove([urlParts[1]])
+        await adminSupabase.storage.from('documents').remove([urlParts[1]])
       }
     }
 
     // Delete from database
-    const { error: deleteError } = await supabase
+    const { error: deleteError } = await adminSupabase
       .from('documents')
       .delete()
       .eq('id', documentId)
