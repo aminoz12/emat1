@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Headers, RawBody, UseGuards, Request } from '@nestjs/common';
+import { Controller, Post, Body, Headers, RawBody, UseGuards, Request, Query, Req } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { PaymentsService } from './payments.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -17,8 +17,9 @@ export class PaymentsController {
     @Body('orderId') orderId: string,
     @Body('amount') amount: number,
     @Body('currency') currency: string,
+    @Body('provider') provider: 'stripe' | 'sumup' = 'stripe',
   ) {
-    return this.paymentsService.createPaymentIntent(orderId, amount, currency);
+    return this.paymentsService.createPaymentIntent(orderId, amount, currency, provider);
   }
 
   @Post('confirm-payment')
@@ -31,12 +32,30 @@ export class PaymentsController {
   }
 
   @Post('webhook')
-  @ApiOperation({ summary: 'Stripe webhook handler' })
+  @ApiOperation({ summary: 'Payment webhook handler' })
   @ApiResponse({ status: 200, description: 'Webhook processed' })
   async handleWebhook(
     @RawBody() payload: Buffer,
     @Headers('stripe-signature') signature: string,
+    @Headers('sumup-signature') sumupSignature: string,
+    @Query('provider') provider: 'stripe' | 'sumup' = 'stripe',
   ) {
-    return this.paymentsService.handleWebhook(payload.toString(), signature);
+    if (provider === 'sumup') {
+      return this.paymentsService.handleWebhook(payload.toString(), '', 'sumup');
+    }
+    
+    return this.paymentsService.handleWebhook(payload.toString(), signature, 'stripe');
+  }
+
+  @Post('webhook/sumup')
+  @ApiOperation({ summary: 'SumUp webhook handler' })
+  @ApiResponse({ status: 200, description: 'SumUp webhook processed' })
+  async handleSumUpWebhook(
+    @Req() req: Request,
+    @RawBody() payload: Buffer,
+    @Headers('sumup-signature') sumupSignature: string,
+  ) {
+    // Forward to the payments service
+    return this.paymentsService.handleWebhook(payload.toString(), '', 'sumup');
   }
 }

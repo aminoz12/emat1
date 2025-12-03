@@ -90,6 +90,7 @@ CREATE TABLE IF NOT EXISTS public.payments (
   amount DECIMAL(10, 2) NOT NULL,
   currency TEXT DEFAULT 'EUR',
   stripe_payment_intent_id TEXT,
+  sumup_checkout_id TEXT,  -- New field for SumUp checkout ID
   status TEXT DEFAULT 'pending',
   created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()) NOT NULL,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()) NOT NULL

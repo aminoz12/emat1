@@ -4,6 +4,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { OrdersService } from '../orders/orders.service';
 import Stripe from 'stripe';
 import { PaymentStatus } from '@prisma/client';
+import { SumUpService } from './sumup.service';
 
 @Injectable()
 export class PaymentsService {
@@ -13,13 +14,19 @@ export class PaymentsService {
     private configService: ConfigService,
     private prisma: PrismaService,
     private ordersService: OrdersService,
+    private sumUpService: SumUpService,
   ) {
     this.stripe = new Stripe(this.configService.get('STRIPE_SECRET_KEY'), {
       apiVersion: '2023-10-16',
     });
   }
 
-  async createPaymentIntent(orderId: string, amount: number, currency = 'eur') {
+  async createPaymentIntent(orderId: string, amount: number, currency = 'eur', provider: 'stripe' | 'sumup' = 'stripe') {
+    if (provider === 'sumup') {
+      return this.createSumUpCheckout(orderId, amount, currency);
+    }
+    
+    // Existing Stripe implementation
     const order = await this.ordersService.findOne(orderId);
     
     if (!order) {
@@ -46,6 +53,18 @@ export class PaymentsService {
     return {
       clientSecret: paymentIntent.client_secret,
       paymentIntentId: paymentIntent.id,
+      provider: 'stripe',
+    };
+  }
+
+  private async createSumUpCheckout(orderId: string, amount: number, currency = 'eur') {
+    // Create SumUp checkout
+    const checkout = await this.sumUpService.createCheckout(orderId, amount, currency.toUpperCase());
+    
+    return {
+      checkoutId: checkout.checkoutId,
+      checkoutUrl: checkout.checkoutUrl,
+      provider: 'sumup',
     };
   }
 
@@ -67,7 +86,13 @@ export class PaymentsService {
     return { success: false };
   }
 
-  async handleWebhook(payload: string, signature: string) {
+  async handleWebhook(payload: string, signature: string, provider: 'stripe' | 'sumup' = 'stripe') {
+    if (provider === 'sumup') {
+      // Handle SumUp webhook
+      return this.sumUpService.handleWebhook(JSON.parse(payload));
+    }
+    
+    // Existing Stripe webhook handling
     const webhookSecret = this.configService.get('STRIPE_WEBHOOK_SECRET');
     
     try {
