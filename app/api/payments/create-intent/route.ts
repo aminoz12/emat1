@@ -1,10 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import Stripe from 'stripe'
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2023-10-16',
-})
 
 export async function POST(request: NextRequest) {
   try {
@@ -45,33 +40,29 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Create payment intent with Stripe
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(amount), // Amount is already in cents
-      currency: currency.toLowerCase(),
-      metadata: {
-        orderId: order.id,
-        userId: user.id,
+    // Call backend API to create SumUp checkout
+    const backendUrl = process.env.BACKEND_URL || 'http://localhost:3001';
+    const response = await fetch(`${backendUrl}/payments/create-payment-intent`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${await getToken(supabase)}`
       },
-    })
-
-    // Update order with payment intent ID
-    const { error: updateError } = await supabase
-      .from('orders')
-      .update({
-        payment_intent_id: paymentIntent.id,
-        status: 'pending',
+      body: JSON.stringify({
+        orderId,
+        amount,
+        currency
       })
-      .eq('id', orderId)
+    });
 
-    if (updateError) {
-      console.error('Erreur mise à jour commande:', updateError)
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Erreur lors de la création du checkout');
     }
 
-    return NextResponse.json({
-      clientSecret: paymentIntent.client_secret,
-      paymentIntentId: paymentIntent.id,
-    })
+    const checkoutData = await response.json();
+
+    return NextResponse.json(checkoutData);
 
   } catch (error: any) {
     console.error('Erreur API create-intent:', error)
@@ -82,3 +73,8 @@ export async function POST(request: NextRequest) {
   }
 }
 
+// Helper function to get user token
+async function getToken(supabase: any) {
+  const { data } = await supabase.auth.getSession();
+  return data.session?.access_token;
+}
