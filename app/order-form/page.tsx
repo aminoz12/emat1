@@ -110,9 +110,14 @@ const OrderFormPage = () => {
         }
       }
 
-      // Store order ID and redirect to payment
+      // Store order ID and create checkout, redirect directly to SumUp widget
       localStorage.setItem('currentOrder', order.id)
-      router.push('/payment')
+      localStorage.setItem('currentOrderId', order.id)
+      localStorage.setItem('currentOrderPrice', String(order.price || order.totalPrice || 29.90))
+      
+      // Create checkout and redirect directly to SumUp widget
+      const { createCheckoutAndRedirect } = await import('@/lib/services/orderService')
+      await createCheckoutAndRedirect(order.id, order.price || order.totalPrice || 29.90)
       
     } catch (error) {
       console.error('Error creating order:', error)

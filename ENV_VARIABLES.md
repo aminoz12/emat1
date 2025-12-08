@@ -19,7 +19,17 @@ SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-here
 
 ## 🔧 Variables optionnelles
 
-### Stripe (si vous utilisez les paiements)
+### SumUp (paiements)
+```env
+SUMUP_API_KEY=your_sumup_api_key_here
+```
+
+**Où les trouver** :
+- Connectez-vous à votre compte SumUp
+- Allez dans Settings > API
+- Générez ou copiez votre API Key
+
+### Stripe (si vous utilisez les paiements - optionnel)
 ```env
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_your_key_here
 STRIPE_SECRET_KEY=sk_live_your_key_here

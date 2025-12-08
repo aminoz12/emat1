@@ -1,6 +1,5 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { PrismaService } from '../prisma/prisma.service';
 import { OrdersService } from '../orders/orders.service';
 import { SumUpService } from './sumup.service';
 
@@ -8,28 +7,25 @@ import { SumUpService } from './sumup.service';
 export class PaymentsService {
   constructor(
     private configService: ConfigService,
-    private prisma: PrismaService,
     private ordersService: OrdersService,
     private sumUpService: SumUpService,
   ) {}
 
   async createPaymentIntent(orderId: string, amount: number, currency = 'eur') {
     // Create SumUp checkout
-    return this.createSumUpCheckout(orderId, amount, currency);
+    return this.sumUpService.createCheckout(
+      orderId, 
+      amount, 
+      currency.toUpperCase(),
+      `${this.configService.get('FRONTEND_URL')}/payment/return?orderId=${orderId}`
+    );
   }
 
-  private async createSumUpCheckout(orderId: string, amount: number, currency = 'eur') {
-    // Create SumUp checkout
-    const checkout = await this.sumUpService.createCheckout(orderId, amount, currency.toUpperCase());
-    
-    return {
-      checkoutId: checkout.checkoutId,
-      checkoutUrl: checkout.checkoutUrl,
-    };
+  async verifyPayment(checkoutId: string) {
+    return this.sumUpService.verifyPayment(checkoutId);
   }
 
-  async handleWebhook(payload: string) {
-    // Handle SumUp webhook
-    return this.sumUpService.handleWebhook(JSON.parse(payload));
+  async handleWebhook(body: any, signature: string) {
+    return this.sumUpService.handleWebhook(body, signature);
   }
 }

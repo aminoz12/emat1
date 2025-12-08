@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { CheckCircle, Flag, Percent, Truck, Star } from 'lucide-react'
 import Image from 'next/image'
 import { useSupabaseSession } from '@/hooks/useSupabaseSession'
-import { createOrder, uploadDocuments } from '@/lib/services/orderService'
+import { createOrder, uploadDocuments, createCheckoutAndRedirect } from '@/lib/services/orderService'
 
 export default function PlaqueImmatriculationPage() {
   const router = useRouter()
@@ -401,7 +401,8 @@ export default function PlaqueImmatriculationPage() {
           localStorage.removeItem('pendingOrderData')
           sessionStorage.removeItem('pendingOrderFiles')
           
-          router.push('/payment')
+          // Create checkout and redirect directly to SumUp widget
+          await createCheckoutAndRedirect(result.order.id, orderData.price)
           return
         } catch (error: any) {
           console.error('Erreur création commande:', error)

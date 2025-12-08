@@ -87,6 +87,74 @@ export async function createOrder(data: OrderData): Promise<CreateOrderResponse>
 }
 
 /**
+ * Create checkout and redirect to SumUp widget
+ */
+export async function createCheckoutAndRedirect(orderId: string, amount: number): Promise<void> {
+  try {
+    console.log('Creating checkout for order:', orderId, 'amount:', amount)
+    
+    const response = await fetch('/api/payments/create-checkout', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify({
+        orderId,
+        amount: amount,
+        currency: 'eur'
+      }),
+    })
+
+    let errorData: any = {};
+    try {
+      const text = await response.text();
+      errorData = text ? JSON.parse(text) : {};
+    } catch (e) {
+      console.error('Failed to parse error response:', e);
+    }
+
+    if (!response.ok) {
+      console.error('Checkout creation failed:', {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorData
+      });
+      throw new Error(errorData.error || errorData.message || `Erreur ${response.status}: ${response.statusText}`)
+    }
+
+    const responseText = await response.text();
+    let responseData: any = {};
+    try {
+      responseData = responseText ? JSON.parse(responseText) : {};
+    } catch (e) {
+      console.error('Failed to parse success response:', e);
+      throw new Error('Réponse invalide du serveur');
+    }
+
+    const { checkoutUrl } = responseData;
+    
+    if (!checkoutUrl) {
+      console.error('No checkoutUrl in response:', responseData);
+      throw new Error('URL de paiement non reçue du serveur');
+    }
+    
+    console.log('Redirecting to SumUp widget:', checkoutUrl);
+    // Redirect directly to SumUp widget
+    window.location.href = checkoutUrl
+  } catch (error: any) {
+    console.error('Erreur création checkout:', error)
+    console.error('Error details:', {
+      message: error.message,
+      stack: error.stack,
+      orderId,
+      amount
+    });
+    throw error
+  }
+}
+
+/**
  * Récupérer toutes les commandes de l'utilisateur
  */
 export async function getOrders(): Promise<GetOrdersResponse> {

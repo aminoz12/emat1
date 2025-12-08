@@ -1,7 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateDocumentDto } from './dto/create-document.dto';
-import { DocumentType } from '@prisma/client';
+import { DocumentType } from './dto/create-document.dto';
+import { Express } from 'express';
+import 'multer';
 
 @Injectable()
 export class DocumentsService {

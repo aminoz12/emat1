@@ -7,7 +7,7 @@ import Image from 'next/image'
 import { FileText, Info, Shield, Clock, CheckCircle, Star, CreditCard, Upload, Users, Copy, Car, FileCheck, Home, Search, Building2, ChevronRight, Download, Pen, RotateCcw } from 'lucide-react'
 import { CAR_BRANDS } from '@/lib/data/carBrands'
 import { useSupabaseSession } from '@/hooks/useSupabaseSession'
-import { createOrder, uploadDocuments } from '@/lib/services/orderService'
+import { createOrder, uploadDocuments, createCheckoutAndRedirect } from '@/lib/services/orderService'
 // Charger PDFViewer uniquement côté client (pas de SSR)
 // Utiliser useCanvas={false} pour désactiver le rendu canvas (plus rapide)
 const PDFViewer = dynamic(() => import('@/components/PDFViewer'), {
@@ -539,12 +539,12 @@ export default function CarteGrisePage() {
           localStorage.removeItem('pendingOrderData')
           sessionStorage.removeItem('pendingOrderFiles')
           
-          // Redirect to payment
-          router.push('/payment')
+          // Create checkout and redirect directly to SumUp widget
+          await createCheckoutAndRedirect(result.order.id, orderData.price)
           return
         } catch (error: any) {
           console.error('Erreur création commande:', error)
-          alert('Erreur lors de la création de la commande: ' + (error.message || 'Une erreur est survenue'))
+          setSubmitError(error.message || 'Une erreur est survenue lors de la création de la commande')
           setIsSubmitting(false)
           return
         }

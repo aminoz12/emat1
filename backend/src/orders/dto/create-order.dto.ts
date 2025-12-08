@@ -1,6 +1,11 @@
 import { IsString, IsInt, IsNumber, IsOptional, IsEnum } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { ServiceType } from '@prisma/client';
+
+export enum ServiceType {
+  CARTE_GRISE = 'carte-grise',
+  PLAQUE = 'plaque',
+  COC = 'coc'
+}
 
 export class CreateOrderDto {
   @ApiProperty({ example: 'clh123456789' })

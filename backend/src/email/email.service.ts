@@ -5,7 +5,11 @@ import * as nodemailer from 'nodemailer';
 import * as handlebars from 'handlebars';
 import * as fs from 'fs';
 import * as path from 'path';
-import { EmailStatus } from '@prisma/client';
+
+enum EmailStatus {
+  SENT = 'sent',
+  FAILED = 'failed'
+}
 
 @Injectable()
 export class EmailService {
@@ -15,7 +19,7 @@ export class EmailService {
     private configService: ConfigService,
     private prisma: PrismaService,
   ) {
-    this.transporter = nodemailer.createTransporter({
+    this.transporter = nodemailer.createTransport({
       host: this.configService.get('SMTP_HOST'),
       port: this.configService.get('SMTP_PORT'),
       secure: false,

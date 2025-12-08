@@ -3,6 +3,17 @@ import { ConfigService } from '@nestjs/config';
 import SumUp from '@sumup/sdk';
 import { createClient } from '@supabase/supabase-js';
 
+type CheckoutResponse = {
+  id: string;
+  pay_to_email: string;
+  amount: number;
+  currency: string;
+  checkout_reference: string;
+  status: string;
+  return_url: string;
+  links: Array<{ href: string; rel: string; method: string }>;
+};
+
 @Injectable()
 export class SumUpService {
   private sumup: any;
@@ -11,13 +22,31 @@ export class SumUpService {
   constructor(
     private configService: ConfigService,
   ) {
+    const sumupApiKey = this.configService.get('SUMUP_API_KEY');
+    
+    if (!sumupApiKey) {
+      console.error('⚠️ SUMUP_API_KEY is not set in environment variables');
+      throw new Error('SUMUP_API_KEY is required but not configured');
+    }
+
+    // Log key type for debugging (without exposing the full key)
+    const keyType = sumupApiKey.startsWith('sup_pk_') ? 'Public Key' : 
+                   sumupApiKey.startsWith('sup_sk_') ? 'Secret Key' : 'Unknown';
+    console.log(`✅ SumUp API Key loaded (Type: ${keyType})`);
+
     this.sumup = new SumUp({
-      apiKey: this.configService.get('SUMUP_API_KEY'),
+      apiKey: sumupApiKey,
     });
     
     // Initialize Supabase client
     const supabaseUrl = this.configService.get('SUPABASE_URL');
-    const supabaseKey = this.configService.get('SUPABASE_SERVICE_KEY');
+    const supabaseKey = this.configService.get('SUPABASE_SERVICE_ROLE_KEY');
+    
+    if (!supabaseUrl || !supabaseKey) {
+      console.error('⚠️ Supabase credentials are not set');
+      throw new Error('Supabase credentials are required');
+    }
+    
     this.supabase = createClient(supabaseUrl, supabaseKey);
   }
 
@@ -30,19 +59,17 @@ export class SumUpService {
       .single();
 
     if (orderError || !order) {
-      throw new Error('Order not found');
+      throw new Error(`Order not found: ${orderId}`);
     }
 
     try {
       // Create a checkout with SumUp
       const checkout = await this.sumup.checkouts.create({
-        amount,
-        currency,
-        merchant_code: this.configService.get('SUMUP_MERCHANT_CODE'),
-        redirect_url: redirectUrl || `${this.configService.get('FRONTEND_URL')}/payment-success`,
+        checkout_reference: orderId,
+        amount: amount.toFixed(2), // Fix: Properly format amount as decimal string
+        currency: currency.toUpperCase(),
         description: `Payment for order ${order.id}`,
-        reference: order.id,
-        payment_type: 'card', // Default to card payment
+        return_url: redirectUrl || `${this.configService.get('FRONTEND_URL')}/payment-callback`,
       });
 
       // Update payment record with SumUp checkout ID
@@ -59,18 +86,13 @@ export class SumUpService {
         });
 
       if (paymentError) {
-        throw new Error(`Failed to update payment record: ${paymentError.message}`);
+        console.error('Error saving payment:', paymentError);
+        throw new Error('Failed to save payment record');
       }
 
-      // Update order status to pending
-      await this.supabase
-        .from('orders')
-        .update({ status: 'pending' })
-        .eq('id', orderId);
-
       return {
-        checkoutId: checkout.id,
-        checkoutUrl: checkout.pay_to_url,
+        checkoutUrl: this.getCheckoutWidgetUrl(checkout),
+        checkoutId: checkout.id,  // Added: Make sure we return the checkoutId as expected by frontend
       };
     } catch (error) {
       console.error('SumUp checkout creation error:', error);
@@ -78,36 +100,30 @@ export class SumUpService {
     }
   }
 
-  async getCheckoutStatus(checkoutId: string) {
+  private getCheckoutWidgetUrl(checkout: CheckoutResponse): string {
+    // This URL will be used to load the SumUp widget
+    return `https://checkout.sumup.com/b/${checkout.id}`;
+  }
+
+  async verifyPayment(checkoutId: string): Promise<{ status: string }> {
     try {
-      return await this.sumup.checkouts.get(checkoutId);
+      const checkout = await this.sumup.checkouts.get(checkoutId);
+      
+      // Update payment status in the database
+      if (checkout.status === 'PAID') {
+        await this.updatePaymentStatus(checkoutId, 'succeeded');
+      } else if (['FAILED', 'EXPIRED', 'CANCELLED'].includes(checkout.status)) {
+        await this.updatePaymentStatus(checkoutId, 'failed');
+      }
+      
+      return { status: checkout.status };
     } catch (error) {
-      console.error('SumUp checkout status error:', error);
-      throw new Error(`Failed to get SumUp checkout status: ${error.message}`);
+      console.error('Error verifying payment:', error);
+      throw new Error('Failed to verify payment status');
     }
   }
 
-  async handleWebhook(payload: any) {
-    // Handle SumUp webhook notifications
-    // This would process payment status updates from SumUp
-    const { event_type, data } = payload;
-    
-    switch (event_type) {
-      case 'CHECKOUT.SUCCEEDED':
-        await this.processSuccessfulPayment(data.id);
-        break;
-      case 'CHECKOUT.FAILED':
-        await this.processFailedPayment(data.id);
-        break;
-      default:
-        console.log(`Unhandled SumUp event type: ${event_type}`);
-    }
-    
-    return { received: true };
-  }
-
-  private async processSuccessfulPayment(checkoutId: string) {
-    // Find payment by checkout ID
+  private async updatePaymentStatus(checkoutId: string, status: 'succeeded' | 'failed') {
     const { data: payment, error: paymentError } = await this.supabase
       .from('payments')
       .select('*')
@@ -115,46 +131,60 @@ export class SumUpService {
       .single();
 
     if (!paymentError && payment) {
-      // Update payment status to succeeded
       await this.supabase
         .from('payments')
         .update({ 
-          status: 'succeeded',
-          sumup_checkout_id: checkoutId,
+          status: status,
+          updated_at: new Date().toISOString()
         })
         .eq('id', payment.id);
-        
-      // Update order status to completed
-      await this.supabase
-        .from('orders')
-        .update({ status: 'completed' })
-        .eq('id', payment.order_id);
+
+      // Update order status when payment succeeds
+      if (status === 'succeeded') {
+        await this.supabase
+          .from('orders')
+          .update({ 
+            status: 'paid',
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', payment.order_id);
+      }
     }
   }
 
-  private async processFailedPayment(checkoutId: string) {
-    // Find payment by checkout ID
-    const { data: payment, error: paymentError } = await this.supabase
-      .from('payments')
-      .select('*')
-      .eq('sumup_checkout_id', checkoutId)
-      .single();
+  async handleWebhook(body: any, signature: string) {
+    try {
+      // Verify webhook signature if SumUp provides one
+      // Note: SumUp webhook signature verification should be implemented based on their documentation
+      // For now, we'll process the webhook and log the signature for verification
 
-    if (!paymentError && payment) {
-      // Update payment status to failed
-      await this.supabase
-        .from('payments')
-        .update({ 
-          status: 'failed',
-          sumup_checkout_id: checkoutId,
-        })
-        .eq('id', payment.id);
-        
-      // Update order status to cancelled
-      await this.supabase
-        .from('orders')
-        .update({ status: 'cancelled' })
-        .eq('id', payment.order_id);
+      const eventType = body.type || body.event_type;
+      const checkoutId = body.checkout_id || body.id;
+      const checkoutReference = body.checkout_reference;
+
+      console.log('SumUp webhook received:', { eventType, checkoutId, checkoutReference, signature });
+
+      if (!checkoutId) {
+        console.error('Webhook missing checkout_id');
+        return { received: true };
+      }
+
+      // Verify payment status
+      const checkout = await this.sumup.checkouts.get(checkoutId);
+      
+      if (checkout.status === 'PAID') {
+        await this.updatePaymentStatus(checkoutId, 'succeeded');
+        console.log(`Payment succeeded for checkout ${checkoutId}`);
+      } else if (['FAILED', 'EXPIRED', 'CANCELLED'].includes(checkout.status)) {
+        await this.updatePaymentStatus(checkoutId, 'failed');
+        console.log(`Payment failed for checkout ${checkoutId}`);
+      }
+
+      return { received: true, processed: true };
+    } catch (error) {
+      console.error('Error processing SumUp webhook:', error);
+      // Return success to prevent SumUp from retrying
+      return { received: true, error: error.message };
     }
   }
 }

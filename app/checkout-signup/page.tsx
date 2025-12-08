@@ -280,8 +280,9 @@ export default function CheckoutSignupPage() {
       localStorage.setItem('currentOrderRef', result.order.reference)
       localStorage.setItem('currentOrderPrice', String(orderData.price))
 
-      // Rediriger vers la page de paiement
-      router.push('/payment')
+      // Create checkout and redirect directly to SumUp widget
+      const { createCheckoutAndRedirect } = await import('@/lib/services/orderService')
+      await createCheckoutAndRedirect(result.order.id, orderData.price)
     } catch (error: any) {
       console.error('Erreur:', error)
       setError(error.message || 'Une erreur est survenue')

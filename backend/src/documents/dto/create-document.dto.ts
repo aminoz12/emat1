@@ -1,6 +1,16 @@
 import { IsString, IsInt, IsEnum } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { DocumentType } from '@prisma/client';
+
+export enum DocumentType {
+  CHANGEMENT_TITULAIRE = 'changement-titulaire',
+  DUPLICATA = 'duplicata',
+  IMMATRICULATION_PROVISOIRE_WW = 'immatriculation-provisoire-ww',
+  ENREGISTREMENT_CESSION = 'enregistrement-cession',
+  CHANGEMENT_ADRESSE = 'changement-adresse',
+  FICHE_IDENTIFICATION = 'fiche-identification',
+  DECLARATION_ACHAT = 'declaration-achat',
+  W_GARAGE = 'w-garage'
+}
 
 export class CreateDocumentDto {
   @ApiProperty({ example: 'clh123456789' })

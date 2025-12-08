@@ -4,7 +4,8 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiConsumes } from '
 import { DocumentsService } from './documents.service';
 import { CreateDocumentDto } from './dto/create-document.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { DocumentType } from '@prisma/client';
+import { DocumentType } from './dto/create-document.dto';
+import 'multer';
 
 @ApiTags('Documents')
 @Controller('documents')
