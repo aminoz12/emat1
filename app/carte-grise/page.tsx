@@ -640,15 +640,25 @@ export default function CarteGrisePage() {
         body: JSON.stringify(mandatData),
       })
 
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || 'Erreur lors de la génération du mandat')
-      }
-
       // Vérifier que la réponse est bien un PDF
       const contentType = response.headers.get('content-type')
-      if (!contentType || !contentType.includes('application/pdf')) {
+      
+      if (!response.ok) {
+        // Read response once for error
         const errorText = await response.text()
+        let error: any = {}
+        try {
+          error = errorText ? JSON.parse(errorText) : {}
+        } catch (e) {
+          console.error('Failed to parse error response:', e)
+        }
+        throw new Error(error.error || errorText || 'Erreur lors de la génération du mandat')
+      }
+
+      if (!contentType || !contentType.includes('application/pdf')) {
+        // Clone response to read text without consuming the blob
+        const clonedResponse = response.clone()
+        const errorText = await clonedResponse.text()
         console.error('Réponse non-PDF reçue:', errorText)
         throw new Error('Le serveur n\'a pas retourné un PDF valide. Vérifiez les logs du serveur.')
       }

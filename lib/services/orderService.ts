@@ -106,30 +106,23 @@ export async function createCheckoutAndRedirect(orderId: string, amount: number)
       }),
     })
 
-    let errorData: any = {};
+    // Read the response body only once
+    let responseData: any = {};
     try {
       const text = await response.text();
-      errorData = text ? JSON.parse(text) : {};
+      responseData = text ? JSON.parse(text) : {};
     } catch (e) {
-      console.error('Failed to parse error response:', e);
+      console.error('Failed to parse response:', e);
+      throw new Error('Réponse invalide du serveur');
     }
 
     if (!response.ok) {
       console.error('Checkout creation failed:', {
         status: response.status,
         statusText: response.statusText,
-        error: errorData
+        error: responseData
       });
-      throw new Error(errorData.error || errorData.message || `Erreur ${response.status}: ${response.statusText}`)
-    }
-
-    const responseText = await response.text();
-    let responseData: any = {};
-    try {
-      responseData = responseText ? JSON.parse(responseText) : {};
-    } catch (e) {
-      console.error('Failed to parse success response:', e);
-      throw new Error('Réponse invalide du serveur');
+      throw new Error(responseData.error || responseData.message || `Erreur ${response.status}: ${response.statusText}`)
     }
 
     const { checkoutUrl } = responseData;
