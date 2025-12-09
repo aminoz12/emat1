@@ -310,14 +310,39 @@ export class SumUpService {
       }
       
       if (checkoutLink && checkoutLink.href) {
-        console.log('✅ Using checkout URL from SumUp links:', checkoutLink.href);
+        // Validate that the URL is public (not an API endpoint or login page)
+        const href = checkoutLink.href;
+        
+        // Check if URL looks like a public checkout/payment page
+        const isPublicUrl = !href.includes('/api/') && 
+                           !href.includes('/login') && 
+                           !href.includes('/auth') &&
+                           (href.includes('checkout') || href.includes('pay') || href.includes('me.sumup.com') || href.includes('pay.sumup.com'));
+        
+        if (!isPublicUrl) {
+          console.warn('⚠️ WARNING: The checkout link might not be a public URL:', href);
+          console.warn('⚠️ This might redirect to a login page. Check SumUp documentation.');
+        }
+        
+        console.log('✅ Using checkout URL from SumUp links:', href);
         console.log('Link details:', {
-          href: checkoutLink.href,
+          href: href,
           rel: checkoutLink.rel,
-          method: checkoutLink.method
+          method: checkoutLink.method,
+          isPublicUrl: isPublicUrl
         });
-        return checkoutLink.href;
+        return href;
       }
+      
+      // Log all available links for debugging
+      console.error('❌ Could not find a valid checkout link. All available links:');
+      checkout.links.forEach((link, index) => {
+        console.error(`  Link ${index + 1}:`, {
+          href: link.href,
+          rel: link.rel,
+          method: link.method
+        });
+      });
     }
     
     // If no links found, this is an error - SumUp should always return links
@@ -325,17 +350,29 @@ export class SumUpService {
     console.error('Checkout response:', JSON.stringify(checkout, null, 2));
     console.error('Available links:', checkout.links);
     
-    // Last resort fallbacks (these might not work, but we try)
+    // IMPORTANT: SumUp checkouts should have a public payment URL
+    // If we reach here, it means the links structure might be different
+    // Try to construct URL based on common SumUp patterns
+    
+    // Check if checkout has a direct payment URL property
+    if ((checkout as any).payment_url || (checkout as any).url) {
+      const directUrl = (checkout as any).payment_url || (checkout as any).url;
+      console.log('✅ Using direct payment URL from checkout:', directUrl);
+      return directUrl;
+    }
+    
+    // Last resort: Try common SumUp checkout URL patterns
+    // NOTE: These might not work - SumUp should provide the correct URL in links
     const fallbackUrls = [
-      `https://me.sumup.com/checkout/${checkout.id}`,  // Alternative format 1
-      `https://pay.sumup.com/checkout/${checkout.id}`,  // Alternative format 2
-      `https://checkout.sumup.com/checkout/${checkout.id}`,  // Alternative format 3
-      `https://checkout.sumup.com/b/${checkout.id}`,  // Original format (doesn't work)
+      `https://me.sumup.com/checkout/${checkout.id}`,  // Most common format
+      `https://pay.sumup.com/checkout/${checkout.id}`,  // Alternative format
+      `https://checkout.sumup.com/checkout/${checkout.id}`,  // Alternative format 2
     ];
     
     const fallbackUrl = fallbackUrls[0];
-    console.warn('⚠️ WARNING: Using fallback URL (might not work):', fallbackUrl);
-    console.warn('⚠️ Please check SumUp API documentation or contact support for the correct URL format');
+    console.warn('⚠️ WARNING: Using fallback URL (MIGHT NOT WORK):', fallbackUrl);
+    console.warn('⚠️ This URL might redirect to login page. Check SumUp API response for correct URL.');
+    console.warn('⚠️ Action required: Check logs above for actual links returned by SumUp');
     
     return fallbackUrl;
   }
