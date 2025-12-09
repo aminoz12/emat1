@@ -80,6 +80,21 @@ export class SumUpService {
       // But based on the SDK types, it accepts decimal numbers
       const checkoutAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
       
+      // Validate amount
+      if (isNaN(checkoutAmount) || checkoutAmount <= 0) {
+        throw new Error(`Invalid amount: ${amount}. Amount must be a positive number.`);
+      }
+
+      const returnUrl = redirectUrl || `${this.configService.get('FRONTEND_URL')}/payment/return?orderId=${orderId}`;
+      
+      console.log('Creating SumUp checkout with:', {
+        orderId,
+        amount: checkoutAmount,
+        currency: currency.toUpperCase(),
+        merchantCode,
+        returnUrl
+      });
+      
       // Create a checkout with SumUp
       const checkout = await this.sumup.checkouts.create({
         checkout_reference: orderId,
@@ -87,7 +102,7 @@ export class SumUpService {
         currency: currency.toUpperCase() as any,
         merchant_code: merchantCode, // Required field
         description: `Payment for order ${order.id}`,
-        return_url: redirectUrl || `${this.configService.get('FRONTEND_URL')}/payment-callback`,
+        return_url: returnUrl,
       });
 
       // Log the full checkout response for debugging
@@ -227,18 +242,32 @@ export class SumUpService {
 
   private getCheckoutWidgetUrl(checkout: CheckoutResponse): string {
     // SumUp widget URL format - try multiple possible formats
-    // Format 1: https://checkout.sumup.com/b/{checkout_id}
-    // Format 2: https://checkout.sumup.com/checkout/{checkout_id}
+    // Format 1: https://checkout.sumup.com/b/{checkout_id} (standard widget)
+    // Format 2: https://me.sumup.com/checkout/{checkout_id} (alternative)
     // Format 3: Use the link from the response if available
     
-    // First, try to get URL from links array
+    // First, try to get URL from links array (most reliable)
     if (checkout.links && checkout.links.length > 0) {
-      const checkoutLink = checkout.links.find(link => 
-        link.rel === 'checkout' || 
-        link.href.includes('checkout') || 
-        link.href.includes('/b/') ||
-        link.method === 'GET'
+      console.log('Available links from SumUp:', checkout.links);
+      
+      // Try to find checkout link by rel
+      let checkoutLink = checkout.links.find(link => 
+        link.rel === 'checkout' || link.rel === 'self'
       );
+      
+      // If not found by rel, try by href pattern
+      if (!checkoutLink) {
+        checkoutLink = checkout.links.find(link => 
+          link.href.includes('checkout') || 
+          link.href.includes('/b/') ||
+          link.href.includes('sumup.com')
+        );
+      }
+      
+      // If still not found, use first GET link
+      if (!checkoutLink) {
+        checkoutLink = checkout.links.find(link => link.method === 'GET');
+      }
       
       if (checkoutLink && checkoutLink.href) {
         console.log('Using checkout URL from links:', checkoutLink.href);
@@ -247,40 +276,81 @@ export class SumUpService {
     }
     
     // Fallback: construct URL manually
-    // Try the standard widget format
-    const widgetUrl = `https://checkout.sumup.com/b/${checkout.id}`;
-    console.log('Using constructed checkout URL:', widgetUrl);
+    // Try multiple possible formats
+    const possibleUrls = [
+      `https://checkout.sumup.com/b/${checkout.id}`,  // Standard widget format
+      `https://me.sumup.com/checkout/${checkout.id}`,  // Alternative format
+      `https://checkout.sumup.com/checkout/${checkout.id}`,  // Alternative format 2
+    ];
+    
+    // Use the first format (most common)
+    const widgetUrl = possibleUrls[0];
+    console.log('Using constructed checkout URL (fallback):', widgetUrl);
+    console.warn('⚠️ No checkout URL found in links array. Using constructed URL. This might not work if SumUp format has changed.');
     return widgetUrl;
   }
 
   async verifyPayment(checkoutId: string): Promise<{ status: string }> {
     try {
+      console.log('Verifying payment for checkout:', checkoutId);
       const checkout = await this.sumup.checkouts.get(checkoutId);
+      
+      console.log('Checkout status from SumUp:', {
+        id: checkout.id,
+        status: checkout.status,
+        amount: checkout.amount,
+        currency: checkout.currency
+      });
       
       // Update payment status in the database
       // SumUp status values: "PENDING" | "FAILED" | "PAID"
       if (checkout.status === 'PAID') {
+        console.log('Payment is PAID, updating to succeeded');
         await this.updatePaymentStatus(checkoutId, 'succeeded');
       } else if (checkout.status === 'FAILED') {
+        console.log('Payment is FAILED, updating to failed');
         await this.updatePaymentStatus(checkoutId, 'failed');
+      } else {
+        console.log('Payment is still PENDING');
       }
       
       return { status: checkout.status };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error verifying payment:', error);
-      throw new Error('Failed to verify payment status');
+      console.error('Error details:', {
+        message: error.message,
+        status: error.status,
+        response: error.response,
+        stack: error.stack
+      });
+      throw new Error(`Failed to verify payment status: ${error.message || 'Unknown error'}`);
     }
   }
 
   private async updatePaymentStatus(checkoutId: string, status: 'succeeded' | 'failed') {
-    const { data: payment, error: paymentError } = await this.supabase
-      .from('payments')
-      .select('*')
-      .eq('sumup_checkout_id', checkoutId)
-      .single();
+    try {
+      console.log('Updating payment status:', { checkoutId, status });
+      
+      const { data: payment, error: paymentError } = await this.supabase
+        .from('payments')
+        .select('*')
+        .eq('sumup_checkout_id', checkoutId)
+        .single();
 
-    if (!paymentError && payment) {
-      await this.supabase
+      if (paymentError) {
+        console.error('Error finding payment:', paymentError);
+        throw new Error(`Payment not found for checkout ${checkoutId}: ${paymentError.message}`);
+      }
+
+      if (!payment) {
+        console.error('Payment not found for checkout:', checkoutId);
+        throw new Error(`Payment not found for checkout ${checkoutId}`);
+      }
+
+      console.log('Found payment:', { id: payment.id, order_id: payment.order_id });
+
+      // Update payment status
+      const { error: updateError } = await this.supabase
         .from('payments')
         .update({ 
           status: status,
@@ -288,16 +358,34 @@ export class SumUpService {
         })
         .eq('id', payment.id);
 
+      if (updateError) {
+        console.error('Error updating payment:', updateError);
+        throw new Error(`Failed to update payment: ${updateError.message}`);
+      }
+
+      console.log('Payment status updated successfully');
+
       // Update order status when payment succeeds
       if (status === 'succeeded') {
-        await this.supabase
+        console.log('Updating order status to paid');
+        const { error: orderUpdateError } = await this.supabase
           .from('orders')
           .update({ 
             status: 'paid',
             updated_at: new Date().toISOString()
           })
           .eq('id', payment.order_id);
+
+        if (orderUpdateError) {
+          console.error('Error updating order status:', orderUpdateError);
+          // Don't throw - payment is already updated, order update is secondary
+        } else {
+          console.log('Order status updated to paid');
+        }
       }
+    } catch (error: any) {
+      console.error('Error in updatePaymentStatus:', error);
+      throw error;
     }
   }
 

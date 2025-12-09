@@ -34,40 +34,9 @@ export default function PaymentReturnPage() {
           throw new Error('Non autorisé')
         }
 
-        // If we have a checkout_id, verify it
-        if (checkoutId) {
-          const verifyResponse = await fetch(`${backendUrl}/payments/verify-payment/${checkoutId}`, {
-            headers: {
-              'Authorization': `Bearer ${session.access_token}`,
-            },
-          })
-
-          if (verifyResponse.ok) {
-            const verifyData = await verifyResponse.json()
-            if (verifyData.status === 'PAID') {
-              setStatus('success')
-              // Redirect to success page after 2 seconds
-              setTimeout(() => {
-                router.push(`/payment-success?orderId=${orderId}`)
-              }, 2000)
-              return
-            }
-          }
-        }
-
-        // Check status from URL parameter
+        // First, check status from URL parameter (quick check)
         if (status === 'SUCCESS' || status === 'PAID') {
-          setStatus('success')
-          setTimeout(() => {
-            router.push(`/payment-success?orderId=${orderId}`)
-          }, 2000)
-        } else if (status === 'FAILED' || status === 'CANCELLED' || status === 'EXPIRED') {
-          setStatus('failed')
-          setTimeout(() => {
-            router.push(`/payment-cancelled?orderId=${orderId}`)
-          }, 2000)
-        } else {
-          // If no clear status, verify payment
+          // Verify with backend to ensure accuracy
           if (checkoutId) {
             const verifyResponse = await fetch(`${backendUrl}/payments/verify-payment/${checkoutId}`, {
               headers: {
@@ -82,20 +51,61 @@ export default function PaymentReturnPage() {
                 setTimeout(() => {
                   router.push(`/payment-success?orderId=${orderId}`)
                 }, 2000)
-              } else {
-                setStatus('failed')
-                setTimeout(() => {
-                  router.push(`/payment-cancelled?orderId=${orderId}`)
-                }, 2000)
+                return
               }
-            } else {
-              setStatus('failed')
-              setError('Impossible de vérifier le statut du paiement')
             }
           } else {
-            setStatus('failed')
-            setError('Informations de paiement incomplètes')
+            // No checkoutId but status says success - trust it but log warning
+            console.warn('Payment status is SUCCESS but no checkoutId available for verification')
+            setStatus('success')
+            setTimeout(() => {
+              router.push(`/payment-success?orderId=${orderId}`)
+            }, 2000)
+            return
           }
+        } else if (status === 'FAILED' || status === 'CANCELLED' || status === 'EXPIRED') {
+          setStatus('failed')
+          setTimeout(() => {
+            router.push(`/payment-cancelled?orderId=${orderId}`)
+          }, 2000)
+          return
+        }
+
+        // If no status in URL or unclear, verify payment with backend
+        if (checkoutId) {
+          const verifyResponse = await fetch(`${backendUrl}/payments/verify-payment/${checkoutId}`, {
+            headers: {
+              'Authorization': `Bearer ${session.access_token}`,
+            },
+          })
+
+          if (verifyResponse.ok) {
+            const verifyData = await verifyResponse.json()
+            if (verifyData.status === 'PAID') {
+              setStatus('success')
+              setTimeout(() => {
+                router.push(`/payment-success?orderId=${orderId}`)
+              }, 2000)
+            } else {
+              setStatus('failed')
+              setTimeout(() => {
+                router.push(`/payment-cancelled?orderId=${orderId}`)
+              }, 2000)
+            }
+          } else {
+            const errorData = await verifyResponse.json().catch(() => ({}))
+            setStatus('failed')
+            setError(errorData.error || errorData.message || 'Impossible de vérifier le statut du paiement')
+            setTimeout(() => {
+              router.push(`/payment-cancelled?orderId=${orderId || ''}`)
+            }, 3000)
+          }
+        } else {
+          setStatus('failed')
+          setError('Informations de paiement incomplètes. Aucun identifiant de checkout trouvé.')
+          setTimeout(() => {
+            router.push(`/payment-cancelled?orderId=${orderId || ''}`)
+          }, 3000)
         }
       } catch (err: any) {
         console.error('Payment return error:', err)
