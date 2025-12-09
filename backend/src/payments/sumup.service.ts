@@ -90,6 +90,16 @@ export class SumUpService {
         return_url: redirectUrl || `${this.configService.get('FRONTEND_URL')}/payment-callback`,
       });
 
+      // Log the full checkout response for debugging
+      console.log('SumUp checkout created:', {
+        id: checkout.id,
+        status: checkout.status,
+        amount: checkout.amount,
+        currency: checkout.currency,
+        links: checkout.links,
+        fullResponse: JSON.stringify(checkout, null, 2)
+      });
+
       // Check if payment record already exists
       const { data: existingPayment } = await this.supabase
         .from('payments')
@@ -148,8 +158,20 @@ export class SumUpService {
         throw new Error(`Failed to save payment record: ${paymentError.message || 'Unknown error'}`);
       }
 
+      // Get the checkout URL using the helper method
+      const checkoutUrl = this.getCheckoutWidgetUrl(checkout);
+
+      console.log('Checkout created successfully:', {
+        id: checkout.id,
+        status: checkout.status,
+        checkoutUrl,
+        links: checkout.links,
+        amount: checkout.amount,
+        currency: checkout.currency
+      });
+
       return {
-        checkoutUrl: this.getCheckoutWidgetUrl(checkout),
+        checkoutUrl: checkoutUrl,
         checkoutId: checkout.id,  // Added: Make sure we return the checkoutId as expected by frontend
       };
     } catch (error: any) {
@@ -204,8 +226,31 @@ export class SumUpService {
   }
 
   private getCheckoutWidgetUrl(checkout: CheckoutResponse): string {
-    // This URL will be used to load the SumUp widget
-    return `https://checkout.sumup.com/b/${checkout.id}`;
+    // SumUp widget URL format - try multiple possible formats
+    // Format 1: https://checkout.sumup.com/b/{checkout_id}
+    // Format 2: https://checkout.sumup.com/checkout/{checkout_id}
+    // Format 3: Use the link from the response if available
+    
+    // First, try to get URL from links array
+    if (checkout.links && checkout.links.length > 0) {
+      const checkoutLink = checkout.links.find(link => 
+        link.rel === 'checkout' || 
+        link.href.includes('checkout') || 
+        link.href.includes('/b/') ||
+        link.method === 'GET'
+      );
+      
+      if (checkoutLink && checkoutLink.href) {
+        console.log('Using checkout URL from links:', checkoutLink.href);
+        return checkoutLink.href;
+      }
+    }
+    
+    // Fallback: construct URL manually
+    // Try the standard widget format
+    const widgetUrl = `https://checkout.sumup.com/b/${checkout.id}`;
+    console.log('Using constructed checkout URL:', widgetUrl);
+    return widgetUrl;
   }
 
   async verifyPayment(checkoutId: string): Promise<{ status: string }> {
