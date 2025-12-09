@@ -30,6 +30,12 @@ export class PaymentsController {
       return await this.paymentsService.createPaymentIntent(orderId, amount, currency);
     } catch (error: any) {
       console.error('Payment controller error:', error);
+      console.error('Error details:', {
+        message: error.message,
+        statusCode: error.statusCode,
+        response: error.response,
+        stack: error.stack
+      });
       throw error; // Re-throw to let NestJS handle it with proper status code
     }
   }

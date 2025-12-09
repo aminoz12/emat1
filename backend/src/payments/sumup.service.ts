@@ -90,22 +90,62 @@ export class SumUpService {
         return_url: redirectUrl || `${this.configService.get('FRONTEND_URL')}/payment-callback`,
       });
 
-      // Update payment record with SumUp checkout ID
-      const { data: payment, error: paymentError } = await this.supabase
+      // Check if payment record already exists
+      const { data: existingPayment } = await this.supabase
         .from('payments')
-        .upsert({
-          order_id: orderId,
-          amount: amount,
-          currency: currency,
-          sumup_checkout_id: checkout.id,
-          status: 'pending',
-        }, {
-          onConflict: 'order_id'
-        });
+        .select('id')
+        .eq('order_id', orderId)
+        .single();
+
+      let paymentError: any = null;
+      let payment: any = null;
+
+      if (existingPayment) {
+        // Update existing payment record
+        const { data, error } = await this.supabase
+          .from('payments')
+          .update({
+            amount: amount,
+            currency: currency,
+            sumup_checkout_id: checkout.id,
+            status: 'pending',
+            updated_at: new Date().toISOString(),
+          })
+          .eq('order_id', orderId)
+          .select()
+          .single();
+        
+        payment = data;
+        paymentError = error;
+      } else {
+        // Insert new payment record
+        const { data, error } = await this.supabase
+          .from('payments')
+          .insert({
+            order_id: orderId,
+            amount: amount,
+            currency: currency,
+            sumup_checkout_id: checkout.id,
+            status: 'pending',
+          })
+          .select()
+          .single();
+        
+        payment = data;
+        paymentError = error;
+      }
 
       if (paymentError) {
         console.error('Error saving payment:', paymentError);
-        throw new Error('Failed to save payment record');
+        console.error('Payment error details:', {
+          message: paymentError.message,
+          code: paymentError.code,
+          details: paymentError.details,
+          hint: paymentError.hint,
+          orderId,
+          checkoutId: checkout.id
+        });
+        throw new Error(`Failed to save payment record: ${paymentError.message || 'Unknown error'}`);
       }
 
       return {
