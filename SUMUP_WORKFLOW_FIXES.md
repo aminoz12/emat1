@@ -151,3 +151,4 @@ Frontend → Redirige vers /payment-success ou /payment-cancelled
 
 **Note** : Le workflow utilise maintenant le **widget-only flow** (sans webhook). C'est plus simple et fonctionne bien pour la plupart des cas d'usage.
 
+

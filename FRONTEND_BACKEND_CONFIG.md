@@ -118,3 +118,4 @@ SUPABASE_SERVICE_ROLE_KEY=eyJhbGc...
 
 **Note** : Après avoir configuré les variables, n'oubliez pas de redéployer votre frontend sur Vercel pour que les changements prennent effet !
 
+
