@@ -11,6 +11,7 @@ type CheckoutResponse = {
   checkout_reference: string;
   status: string;
   return_url: string;
+  hosted_checkout_url?: string; // Direct URL for hosted checkout (when enabled)
   links: Array<{ href: string; rel: string; method: string }>;
 };
 
@@ -128,10 +129,18 @@ export class SumUpService {
         currency: checkout.currency,
         checkout_reference: checkout.checkout_reference,
         return_url: checkout.return_url,
+        hosted_checkout_url: (checkout as any).hosted_checkout_url || 'NOT PROVIDED',
         links: checkout.links,
         linksCount: checkout.links?.length || 0,
         fullResponse: JSON.stringify(checkout, null, 2)
       });
+      
+      // CRITICAL: Check for direct hosted_checkout_url first (provided when hosted_checkout is enabled)
+      if ((checkout as any).hosted_checkout_url) {
+        console.log('✅ Found hosted_checkout_url directly in response (PUBLIC CHECKOUT URL):', (checkout as any).hosted_checkout_url);
+      } else {
+        console.warn('⚠️ WARNING: hosted_checkout_url not found in response. Check if hosted_checkout: { enabled: true } was sent.');
+      }
       
       // Log each link individually for easier debugging
       if (checkout.links && checkout.links.length > 0) {
@@ -206,13 +215,24 @@ export class SumUpService {
         throw new Error(`Failed to save payment record: ${paymentError.message || 'Unknown error'}`);
       }
 
-      // Get the checkout URL using the helper method
-      const checkoutUrl = this.getCheckoutWidgetUrl(checkout);
+      // PRIORITY 1: Use hosted_checkout_url if provided (direct public URL for guest payment)
+      // This is the URL returned when hosted_checkout: { enabled: true } is set
+      let checkoutUrl: string;
+      if ((checkout as any).hosted_checkout_url) {
+        checkoutUrl = (checkout as any).hosted_checkout_url;
+        console.log('✅ Using hosted_checkout_url (direct public checkout URL for guest payment):', checkoutUrl);
+      } else {
+        // PRIORITY 2: Fallback to extracting URL from links
+        checkoutUrl = this.getCheckoutWidgetUrl(checkout);
+        console.log('⚠️ No hosted_checkout_url found, using URL from links:', checkoutUrl);
+      }
 
       console.log('✅ Checkout created successfully:', {
         id: checkout.id,
         status: checkout.status,
         checkoutUrl,
+        hosted_checkout_enabled: checkoutData.hosted_checkout?.enabled || false,
+        has_hosted_checkout_url: !!(checkout as any).hosted_checkout_url,
         links: checkout.links,
         amount: checkout.amount,
         currency: checkout.currency,
