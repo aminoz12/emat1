@@ -30,6 +30,10 @@ Ce guide vous explique comment déployer EMatricule sur Vercel.
    Cliquez sur "Environment Variables" et ajoutez :
 
    ```env
+   # Backend API (OBLIGATOIRE - après déploiement du backend sur Render)
+   NEXT_PUBLIC_BACKEND_URL=https://your-backend-service.onrender.com
+   NEXT_PUBLIC_API_URL=https://your-backend-service.onrender.com
+   
    # Supabase (OBLIGATOIRE)
    NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
    NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
@@ -108,6 +112,8 @@ Ce guide vous explique comment déployer EMatricule sur Vercel.
 ## 📝 Variables d'environnement requises
 
 ### Obligatoires
+- `NEXT_PUBLIC_BACKEND_URL` - URL de votre backend Render (ex: `https://xxx.onrender.com`)
+- `NEXT_PUBLIC_API_URL` - URL de votre backend Render (même valeur que ci-dessus, pour compatibilité)
 - `NEXT_PUBLIC_SUPABASE_URL` - URL de votre projet Supabase
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Clé publique Supabase
 - `SUPABASE_SERVICE_ROLE_KEY` - Clé service role Supabase (pour les opérations admin)
