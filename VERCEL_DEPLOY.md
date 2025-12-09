@@ -157,6 +157,30 @@ Ce guide vous explique comment déployer EMatricule sur Vercel.
 - Vérifiez la configuration `images` dans `next.config.js`
 - Assurez-vous que les domaines sont autorisés
 
+### Erreur "routes-manifest.json couldn't be found" dans backend
+Cette erreur se produit lorsque Vercel essaie de builder le backend (NestJS) comme un projet Next.js.
+
+**Solutions :**
+
+1. **Vérifier les paramètres du projet Vercel :**
+   - Allez dans Vercel Dashboard > Votre Projet > Settings > General
+   - Vérifiez que **Root Directory** est défini sur `.` (racine) et non sur `backend`
+   - Si vous avez plusieurs projets configurés, supprimez celui qui pointe vers `backend`
+
+2. **Vérifier la détection automatique :**
+   - Allez dans Settings > Git
+   - Assurez-vous que Vercel ne détecte pas automatiquement plusieurs projets
+   - Le backend NestJS doit être déployé séparément (Railway, Render, AWS, etc.)
+
+3. **Vérifier `.vercelignore` :**
+   - Le fichier `.vercelignore` doit contenir `backend/` pour exclure le backend
+   - Redéployez après avoir vérifié ce fichier
+
+4. **Note importante :**
+   - Le backend NestJS est un service séparé qui ne doit PAS être déployé sur Vercel
+   - Il doit être déployé sur une plateforme qui supporte Node.js (Railway, Render, Heroku, AWS, etc.)
+   - Le frontend Next.js communique avec le backend via `NEXT_PUBLIC_API_URL`
+
 ## 📊 Monitoring
 
 Vercel fournit automatiquement :

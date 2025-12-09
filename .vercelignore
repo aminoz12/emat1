@@ -2,7 +2,11 @@
 # Files and directories to exclude from deployment
 
 # Backend (NestJS) - not needed for Vercel deployment
+# This is a separate NestJS service that should be deployed elsewhere
 backend/
+backend/**
+**/backend/
+**/backend/**
 docker-compose.yml
 
 # Documentation files

@@ -14,9 +14,32 @@ async function bootstrap() {
   app.use(helmet());
   app.use(compression());
 
-  // CORS
+  // CORS - Support multiple origins (comma-separated) or single origin
+  const corsOrigin = configService.get('CORS_ORIGIN');
+  const allowedOrigins = corsOrigin 
+    ? corsOrigin.split(',').map(origin => origin.trim())
+    : ['http://localhost:3000'];
+  
   app.enableCors({
-    origin: configService.get('CORS_ORIGIN'),
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+      
+      // Check if origin is in allowed list
+      if (allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
+        return callback(null, true);
+      }
+      
+      // For production, allow Render and Vercel preview URLs
+      const isRenderUrl = origin.includes('.onrender.com');
+      const isVercelUrl = origin.includes('.vercel.app');
+      
+      if (isRenderUrl || isVercelUrl) {
+        return callback(null, true);
+      }
+      
+      callback(new Error('Not allowed by CORS'));
+    },
     credentials: true,
   });
 
