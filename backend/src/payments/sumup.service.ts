@@ -95,19 +95,30 @@ export class SumUpService {
         returnUrl
       });
       
-      // Create a checkout with SumUp
-      // Important: This creates a HOSTED CHECKOUT for public payment
-      // Users can pay with credit card without needing a SumUp account
-      const checkout = await this.sumup.checkouts.create({
+      // Create a HOSTED CHECKOUT with SumUp
+      // CRITICAL: hosted_checkout must be enabled for public/guest payment
+      // This allows users to pay with credit card WITHOUT needing a SumUp account
+      const checkoutData: any = {
         checkout_reference: orderId,
         amount: checkoutAmount, // API expects number, not string
         currency: currency.toUpperCase() as any,
         merchant_code: merchantCode, // Required field
         description: `Payment for order ${order.id}`,
         return_url: returnUrl,
-        // Additional parameters to ensure public checkout (no account required)
-        // Note: Check SumUp API docs for exact parameter names
+      };
+
+      // Enable hosted checkout for public/guest payment (no account required)
+      // This ensures the checkout URL is public and allows direct card payment
+      checkoutData.hosted_checkout = {
+        enabled: true
+      };
+
+      console.log('Creating SumUp hosted checkout with public payment enabled:', {
+        ...checkoutData,
+        hosted_checkout: checkoutData.hosted_checkout
       });
+
+      const checkout = await this.sumup.checkouts.create(checkoutData);
 
       // Log the full checkout response for debugging
       console.log('SumUp checkout created:', {
