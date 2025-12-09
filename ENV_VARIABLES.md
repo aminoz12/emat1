@@ -21,13 +21,15 @@ SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-here
 
 ### SumUp (paiements)
 ```env
-SUMUP_API_KEY=your_sumup_api_key_here
+SUMUP_API_KEY=sup_sk_xas2RLNos33K2gf6l2zoj4j5n8Wbk7vWw
+SUMUP_MERCHANT_CODE=your_merchant_code_here
 ```
 
 **Où les trouver** :
 - Connectez-vous à votre compte SumUp
 - Allez dans Settings > API
-- Générez ou copiez votre API Key
+- ✅ **Clé secrète configurée** : `sup_sk_xas2RLNos33K2gf6l2zoj4j5n8Wbk7vWw` (⚠️ Pour les opérations backend, utilisez une clé secrète `sup_sk_...` plutôt qu'une clé publique `sup_pk_...`)
+- `SUMUP_MERCHANT_CODE` : Votre code marchand SumUp (trouvable dans votre tableau de bord SumUp)
 
 ### Stripe (si vous utilisez les paiements - optionnel)
 ```env

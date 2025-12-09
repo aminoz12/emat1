@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import SumUp from '@sumup/sdk';
 import { createClient } from '@supabase/supabase-js';
@@ -34,6 +34,11 @@ export class SumUpService {
                    sumupApiKey.startsWith('sup_sk_') ? 'Secret Key' : 'Unknown';
     console.log(`✅ SumUp API Key loaded (Type: ${keyType})`);
 
+    // Warn if using public key for backend operations
+    if (sumupApiKey.startsWith('sup_pk_')) {
+      console.warn('⚠️ WARNING: Using a public key for backend operations. SumUp backend operations typically require a secret key (sup_sk_...).');
+    }
+
     this.sumup = new SumUp({
       apiKey: sumupApiKey,
     });
@@ -62,12 +67,25 @@ export class SumUpService {
       throw new Error(`Order not found: ${orderId}`);
     }
 
+    // Get merchant code from environment or use default
+    const merchantCode = this.configService.get('SUMUP_MERCHANT_CODE');
+    if (!merchantCode) {
+      console.warn('⚠️ SUMUP_MERCHANT_CODE is not set. This is required for checkout creation.');
+      throw new Error('SUMUP_MERCHANT_CODE is required but not configured. Please set it in your environment variables.');
+    }
+
     try {
+      // Ensure amount is a number (not string) and properly formatted
+      // SumUp API expects amount as a number (in the currency's smallest unit, e.g., cents for EUR)
+      // But based on the SDK types, it accepts decimal numbers
+      const checkoutAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
+      
       // Create a checkout with SumUp
       const checkout = await this.sumup.checkouts.create({
         checkout_reference: orderId,
-        amount: amount.toFixed(2), // Fix: Properly format amount as decimal string
-        currency: currency.toUpperCase(),
+        amount: checkoutAmount, // API expects number, not string
+        currency: currency.toUpperCase() as any,
+        merchant_code: merchantCode, // Required field
         description: `Payment for order ${order.id}`,
         return_url: redirectUrl || `${this.configService.get('FRONTEND_URL')}/payment-callback`,
       });
@@ -94,9 +112,54 @@ export class SumUpService {
         checkoutUrl: this.getCheckoutWidgetUrl(checkout),
         checkoutId: checkout.id,  // Added: Make sure we return the checkoutId as expected by frontend
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('SumUp checkout creation error:', error);
-      throw new Error(`Failed to create SumUp checkout: ${error.message}`);
+      console.error('Error details:', {
+        message: error.message,
+        status: error.status,
+        response: error.response,
+        error: error.error,
+        stack: error.stack
+      });
+      
+      // Check for geographic block
+      const errorMessage = error.message || error.error?.message || '';
+      const errorString = JSON.stringify(error).toLowerCase();
+      
+      if (error.status === 403 || error.response?.status === 403 || 
+          errorMessage.includes('banned') || errorMessage.includes('country') ||
+          errorString.includes('access denied') || errorString.includes('error 1009')) {
+        throw new HttpException(
+          {
+            statusCode: 403,
+            message: 'SumUp API access denied. Your country/region (Morocco) is blocked by SumUp. Solutions: 1) Use a VPN from an allowed region (EU/US), 2) Deploy backend to EU/US server, 3) Contact SumUp support.',
+            error: 'Geographic Restriction'
+          },
+          HttpStatus.FORBIDDEN
+        );
+      }
+      
+      // Other SumUp API errors
+      if (error.status || error.response?.status) {
+        throw new HttpException(
+          {
+            statusCode: error.status || error.response?.status || 500,
+            message: `SumUp API error: ${errorMessage || 'Unknown error'}`,
+            error: 'SumUp API Error'
+          },
+          error.status || error.response?.status || HttpStatus.INTERNAL_SERVER_ERROR
+        );
+      }
+      
+      // Generic error
+      throw new HttpException(
+        {
+          statusCode: 500,
+          message: `Failed to create SumUp checkout: ${errorMessage || 'Unknown error'}`,
+          error: 'Internal Server Error'
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
     }
   }
 
@@ -110,9 +173,10 @@ export class SumUpService {
       const checkout = await this.sumup.checkouts.get(checkoutId);
       
       // Update payment status in the database
+      // SumUp status values: "PENDING" | "FAILED" | "PAID"
       if (checkout.status === 'PAID') {
         await this.updatePaymentStatus(checkoutId, 'succeeded');
-      } else if (['FAILED', 'EXPIRED', 'CANCELLED'].includes(checkout.status)) {
+      } else if (checkout.status === 'FAILED') {
         await this.updatePaymentStatus(checkoutId, 'failed');
       }
       
@@ -172,10 +236,11 @@ export class SumUpService {
       // Verify payment status
       const checkout = await this.sumup.checkouts.get(checkoutId);
       
+      // SumUp status values: "PENDING" | "FAILED" | "PAID"
       if (checkout.status === 'PAID') {
         await this.updatePaymentStatus(checkoutId, 'succeeded');
         console.log(`Payment succeeded for checkout ${checkoutId}`);
-      } else if (['FAILED', 'EXPIRED', 'CANCELLED'].includes(checkout.status)) {
+      } else if (checkout.status === 'FAILED') {
         await this.updatePaymentStatus(checkoutId, 'failed');
         console.log(`Payment failed for checkout ${checkoutId}`);
       }

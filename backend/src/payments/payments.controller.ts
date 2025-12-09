@@ -17,12 +17,21 @@ export class PaymentsController {
     status: 200, 
     description: 'Returns checkout URL and ID for the payment widget' 
   })
+  @ApiResponse({ 
+    status: 500, 
+    description: 'Internal server error' 
+  })
   async createCheckout(
     @Body('orderId') orderId: string,
     @Body('amount') amount: number,
     @Body('currency') currency: string = 'eur',
   ) {
-    return await this.paymentsService.createPaymentIntent(orderId, amount, currency);
+    try {
+      return await this.paymentsService.createPaymentIntent(orderId, amount, currency);
+    } catch (error: any) {
+      console.error('Payment controller error:', error);
+      throw error; // Re-throw to let NestJS handle it with proper status code
+    }
   }
 
   @Post('create-payment-intent')

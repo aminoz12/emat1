@@ -27,7 +27,8 @@ Make sure your `backend/.env` file has:
 
 ```env
 # SumUp Payment
-SUMUP_API_KEY=sup_pk_VIijT0dsPb1KcN2ZPXsU8SqLLF3qRFvMJ
+SUMUP_API_KEY=sup_sk_xas2RLNos33K2gf6l2zoj4j5n8Wbk7vWw
+SUMUP_MERCHANT_CODE=your_merchant_code_here
 
 # Supabase
 SUPABASE_URL=https://your-project.supabase.co

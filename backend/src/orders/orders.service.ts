@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { SupabaseService } from '../supabase/supabase.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 
@@ -19,136 +19,219 @@ enum PaymentStatus {
 
 @Injectable()
 export class OrdersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private supabase: SupabaseService) {}
 
   async create(createOrderDto: CreateOrderDto, userId: string) {
-    return this.prisma.order.create({
-      data: {
+    const supabase = this.supabase.getClient();
+    
+    const { data: order, error } = await supabase
+      .from('orders')
+      .insert({
         ...createOrderDto,
-        userId,
-      },
-      include: {
-        user: true,
-        vehicle: true,
-        service: true,
-        documents: true,
-      },
-    });
+        user_id: userId,
+        status: OrderStatus.PENDING,
+        payment_status: PaymentStatus.PENDING,
+      })
+      .select(`
+        *,
+        user:users(*),
+        vehicle:vehicles(*),
+        service:services(*),
+        documents:documents(*)
+      `)
+      .single();
+
+    if (error) {
+      throw new Error(`Failed to create order: ${error.message}`);
+    }
+
+    return order;
   }
 
   async findAll(userId?: string, userRole?: string) {
-    const where = userRole === 'ADMIN' ? {} : { userId };
+    const supabase = this.supabase.getClient();
     
-    return this.prisma.order.findMany({
-      where,
-      include: {
-        user: true,
-        vehicle: true,
-        service: true,
-        documents: true,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
+    let query = supabase
+      .from('orders')
+      .select(`
+        *,
+        user:users(*),
+        vehicle:vehicles(*),
+        service:services(*),
+        documents:documents(*)
+      `)
+      .order('created_at', { ascending: false });
+
+    if (userRole !== 'ADMIN' && userId) {
+      query = query.eq('user_id', userId);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      throw new Error(`Failed to fetch orders: ${error.message}`);
+    }
+
+    return data || [];
   }
 
   async findOne(id: string, userId?: string, userRole?: string) {
-    const where: any = { id };
+    const supabase = this.supabase.getClient();
     
-    if (userRole !== 'ADMIN') {
-      where.userId = userId;
+    let query = supabase
+      .from('orders')
+      .select(`
+        *,
+        user:users(*),
+        vehicle:vehicles(*),
+        service:services(*),
+        documents:documents(*)
+      `)
+      .eq('id', id)
+      .single();
+
+    const { data: order, error } = await query;
+
+    if (error || !order) {
+      throw new NotFoundException('Order not found');
     }
 
-    const order = await this.prisma.order.findFirst({
-      where,
-      include: {
-        user: true,
-        vehicle: true,
-        service: true,
-        documents: true,
-      },
-    });
-
-    if (!order) {
-      throw new NotFoundException('Order not found');
+    // Check authorization
+    if (userRole !== 'ADMIN' && order.user_id !== userId) {
+      throw new ForbiddenException('Access denied');
     }
 
     return order;
   }
 
   async update(id: string, updateOrderDto: UpdateOrderDto, userId?: string, userRole?: string) {
-    const order = await this.findOne(id, userId, userRole);
+    await this.findOne(id, userId, userRole); // Verify access
     
-    return this.prisma.order.update({
-      where: { id },
-      data: updateOrderDto,
-      include: {
-        user: true,
-        vehicle: true,
-        service: true,
-        documents: true,
-      },
-    });
+    const supabase = this.supabase.getClient();
+    
+    const { data, error } = await supabase
+      .from('orders')
+      .update(updateOrderDto)
+      .eq('id', id)
+      .select(`
+        *,
+        user:users(*),
+        vehicle:vehicles(*),
+        service:services(*),
+        documents:documents(*)
+      `)
+      .single();
+
+    if (error) {
+      throw new Error(`Failed to update order: ${error.message}`);
+    }
+
+    return data;
   }
 
   async updateStatus(id: string, status: OrderStatus, userId?: string, userRole?: string) {
-    const order = await this.findOne(id, userId, userRole);
+    await this.findOne(id, userId, userRole); // Verify access
     
-    return this.prisma.order.update({
-      where: { id },
-      data: { status },
-      include: {
-        user: true,
-        vehicle: true,
-        service: true,
-        documents: true,
-      },
-    });
+    const supabase = this.supabase.getClient();
+    
+    const { data, error } = await supabase
+      .from('orders')
+      .update({ status })
+      .eq('id', id)
+      .select(`
+        *,
+        user:users(*),
+        vehicle:vehicles(*),
+        service:services(*),
+        documents:documents(*)
+      `)
+      .single();
+
+    if (error) {
+      throw new Error(`Failed to update order status: ${error.message}`);
+    }
+
+    return data;
   }
 
   async updatePaymentStatus(id: string, paymentStatus: PaymentStatus, stripePaymentId?: string) {
-    return this.prisma.order.update({
-      where: { id },
-      data: { 
-        paymentStatus,
-        stripePaymentId,
-      },
-      include: {
-        user: true,
-        vehicle: true,
-        service: true,
-        documents: true,
-      },
-    });
+    const supabase = this.supabase.getClient();
+    
+    const updateData: any = { payment_status: paymentStatus };
+    if (stripePaymentId) {
+      updateData.stripe_payment_id = stripePaymentId;
+    }
+    
+    const { data, error } = await supabase
+      .from('orders')
+      .update(updateData)
+      .eq('id', id)
+      .select(`
+        *,
+        user:users(*),
+        vehicle:vehicles(*),
+        service:services(*),
+        documents:documents(*)
+      `)
+      .single();
+
+    if (error) {
+      throw new Error(`Failed to update payment status: ${error.message}`);
+    }
+
+    return data;
   }
 
   async remove(id: string, userId?: string, userRole?: string) {
-    const order = await this.findOne(id, userId, userRole);
+    await this.findOne(id, userId, userRole); // Verify access
     
-    return this.prisma.order.delete({
-      where: { id },
-    });
+    const supabase = this.supabase.getClient();
+    
+    const { data, error } = await supabase
+      .from('orders')
+      .delete()
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(`Failed to delete order: ${error.message}`);
+    }
+
+    return data;
   }
 
   async getOrderStats() {
-    const totalOrders = await this.prisma.order.count();
-    const pendingOrders = await this.prisma.order.count({
-      where: { status: OrderStatus.PENDING },
-    });
-    const completedOrders = await this.prisma.order.count({
-      where: { status: OrderStatus.COMPLETED },
-    });
-    const totalRevenue = await this.prisma.order.aggregate({
-      where: { paymentStatus: PaymentStatus.PAID },
-      _sum: { totalPrice: true },
-    });
+    const supabase = this.supabase.getClient();
+    
+    // Get counts
+    const { count: totalOrders } = await supabase
+      .from('orders')
+      .select('*', { count: 'exact', head: true });
+
+    const { count: pendingOrders } = await supabase
+      .from('orders')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', OrderStatus.PENDING);
+
+    const { count: completedOrders } = await supabase
+      .from('orders')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', OrderStatus.COMPLETED);
+
+    // Get total revenue
+    const { data: paidOrders } = await supabase
+      .from('orders')
+      .select('price')
+      .eq('payment_status', PaymentStatus.PAID);
+
+    const totalRevenue = paidOrders?.reduce((sum, order) => sum + (order.price || 0), 0) || 0;
 
     return {
-      totalOrders,
-      pendingOrders,
-      completedOrders,
-      totalRevenue: totalRevenue._sum.totalPrice || 0,
+      totalOrders: totalOrders || 0,
+      pendingOrders: pendingOrders || 0,
+      completedOrders: completedOrders || 0,
+      totalRevenue,
     };
   }
 }

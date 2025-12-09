@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { PrismaService } from '../prisma/prisma.service';
+import { SupabaseService } from '../supabase/supabase.service';
 import * as nodemailer from 'nodemailer';
 import * as handlebars from 'handlebars';
 import * as fs from 'fs';
@@ -17,7 +17,7 @@ export class EmailService {
 
   constructor(
     private configService: ConfigService,
-    private prisma: PrismaService,
+    private supabase: SupabaseService,
   ) {
     this.transporter = nodemailer.createTransport({
       host: this.configService.get('SMTP_HOST'),
@@ -48,16 +48,20 @@ export class EmailService {
   }
 
   async sendOrderConfirmation(orderId: string, userEmail: string) {
-    const order = await this.prisma.order.findUnique({
-      where: { id: orderId },
-      include: {
-        user: true,
-        vehicle: true,
-        service: true,
-      },
-    });
+    const supabase = this.supabase.getClient();
+    
+    const { data: order, error } = await supabase
+      .from('orders')
+      .select(`
+        *,
+        user:users(*),
+        vehicle:vehicles(*),
+        service:services(*)
+      `)
+      .eq('id', orderId)
+      .single();
 
-    if (!order) {
+    if (error || !order) {
       throw new Error('Order not found');
     }
 
@@ -65,11 +69,11 @@ export class EmailService {
     const compiledTemplate = handlebars.compile(template);
     
     const html = compiledTemplate({
-      userName: order.user.name,
+      userName: order.user?.name,
       orderNumber: order.id,
-      serviceName: order.service.name,
-      totalPrice: order.totalPrice,
-      vehicleInfo: `${order.vehicle.make} ${order.vehicle.model} (${order.vehicle.year})`,
+      serviceName: order.service?.name,
+      totalPrice: order.price || order.total_price,
+      vehicleInfo: `${order.vehicle?.make} ${order.vehicle?.model} (${order.vehicle?.year})`,
     });
 
     return this.sendEmail(
@@ -80,15 +84,19 @@ export class EmailService {
   }
 
   async sendOrderStatusUpdate(orderId: string, status: string) {
-    const order = await this.prisma.order.findUnique({
-      where: { id: orderId },
-      include: {
-        user: true,
-        service: true,
-      },
-    });
+    const supabase = this.supabase.getClient();
+    
+    const { data: order, error } = await supabase
+      .from('orders')
+      .select(`
+        *,
+        user:users(*),
+        service:services(*)
+      `)
+      .eq('id', orderId)
+      .single();
 
-    if (!order) {
+    if (error || !order) {
       throw new Error('Order not found');
     }
 
@@ -96,29 +104,33 @@ export class EmailService {
     const compiledTemplate = handlebars.compile(template);
     
     const html = compiledTemplate({
-      userName: order.user.name,
+      userName: order.user?.name,
       orderNumber: order.id,
-      serviceName: order.service.name,
+      serviceName: order.service?.name,
       status,
     });
 
     return this.sendEmail(
-      order.user.email,
+      order.user?.email,
       `Mise à jour de votre commande - EMatricule`,
       html,
     );
   }
 
   async sendInvoice(orderId: string, invoiceUrl: string) {
-    const order = await this.prisma.order.findUnique({
-      where: { id: orderId },
-      include: {
-        user: true,
-        service: true,
-      },
-    });
+    const supabase = this.supabase.getClient();
+    
+    const { data: order, error } = await supabase
+      .from('orders')
+      .select(`
+        *,
+        user:users(*),
+        service:services(*)
+      `)
+      .eq('id', orderId)
+      .single();
 
-    if (!order) {
+    if (error || !order) {
       throw new Error('Order not found');
     }
 
@@ -126,15 +138,15 @@ export class EmailService {
     const compiledTemplate = handlebars.compile(template);
     
     const html = compiledTemplate({
-      userName: order.user.name,
+      userName: order.user?.name,
       orderNumber: order.id,
-      serviceName: order.service.name,
-      totalPrice: order.totalPrice,
+      serviceName: order.service?.name,
+      totalPrice: order.price || order.total_price,
       invoiceUrl,
     });
 
     return this.sendEmail(
-      order.user.email,
+      order.user?.email,
       'Votre facture - EMatricule',
       html,
     );
@@ -146,14 +158,24 @@ export class EmailService {
   }
 
   private async logEmail(to: string, subject: string, status: EmailStatus, error?: string) {
-    return this.prisma.emailLog.create({
-      data: {
+    const supabase = this.supabase.getClient();
+    
+    const { data, error: dbError } = await supabase
+      .from('email_logs')
+      .insert({
         to,
         subject,
         status,
         error,
-        sentAt: status === EmailStatus.SENT ? new Date() : null,
-      },
-    });
+        sent_at: status === EmailStatus.SENT ? new Date().toISOString() : null,
+      })
+      .select()
+      .single();
+
+    if (dbError) {
+      console.error('Failed to log email:', dbError);
+    }
+
+    return data;
   }
 }

@@ -1,13 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { PrismaService } from '../prisma/prisma.service';
+import { SupabaseService } from '../supabase/supabase.service';
 import { CreateVehicleDto } from './dto/create-vehicle.dto';
 import axios from 'axios';
 
 @Injectable()
 export class VehiclesService {
   constructor(
-    private prisma: PrismaService,
+    private supabase: SupabaseService,
     private configService: ConfigService,
   ) {}
 
@@ -30,32 +30,62 @@ export class VehiclesService {
   private async getCachedVinData(vin: string) {
     // In a real implementation, you would use Redis here
     // For now, we'll check the database
-    const existingVehicle = await this.prisma.vehicle.findUnique({
-      where: { vin },
-    });
+    const supabase = this.supabase.getClient();
     
-    return existingVehicle;
+    const { data } = await supabase
+      .from('vehicles')
+      .select('*')
+      .eq('vin', vin)
+      .single();
+    
+    return data || null;
   }
 
   private async cacheVinData(vin: string, data: any) {
     // Store in database for caching
-    return this.prisma.vehicle.upsert({
-      where: { vin },
-      update: data,
-      create: {
-        vin,
-        make: data.make,
-        model: data.model,
-        year: data.year,
-        engine: data.engine,
-        fuelType: data.fuelType,
-        color: data.color,
-        bodyType: data.bodyType,
-        weight: data.weight,
-        power: data.power,
-        displacement: data.displacement,
-      },
-    });
+    const supabase = this.supabase.getClient();
+    
+    // Check if vehicle exists
+    const { data: existing } = await supabase
+      .from('vehicles')
+      .select('id')
+      .eq('vin', vin)
+      .single();
+
+    const vehicleData = {
+      vin,
+      make: data.make,
+      model: data.model,
+      year: data.year,
+      engine: data.engine,
+      fuel_type: data.fuelType,
+      color: data.color,
+      body_type: data.bodyType,
+      weight: data.weight,
+      power: data.power,
+      displacement: data.displacement,
+    };
+
+    if (existing) {
+      const { data: updated, error } = await supabase
+        .from('vehicles')
+        .update(vehicleData)
+        .eq('vin', vin)
+        .select()
+        .single();
+      
+      if (error) throw new Error(`Failed to update vehicle: ${error.message}`);
+      return updated;
+    } else {
+      const { data: created, error } = await supabase
+        .from('vehicles')
+        .insert(vehicleData)
+        .select()
+        .single();
+      
+      if (error) throw new Error(`Failed to create vehicle: ${error.message}`);
+      return created;
+    }
   }
 
   private async callVinDecoderApi(vin: string) {
@@ -92,21 +122,45 @@ export class VehiclesService {
   }
 
   async create(createVehicleDto: CreateVehicleDto) {
-    return this.prisma.vehicle.create({
-      data: createVehicleDto,
-    });
+    const supabase = this.supabase.getClient();
+    
+    const { data, error } = await supabase
+      .from('vehicles')
+      .insert(createVehicleDto)
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(`Failed to create vehicle: ${error.message}`);
+    }
+
+    return data;
   }
 
   async findAll() {
-    return this.prisma.vehicle.findMany();
+    const supabase = this.supabase.getClient();
+    
+    const { data, error } = await supabase
+      .from('vehicles')
+      .select('*');
+
+    if (error) {
+      throw new Error(`Failed to fetch vehicles: ${error.message}`);
+    }
+
+    return data || [];
   }
 
   async findOne(id: string) {
-    const vehicle = await this.prisma.vehicle.findUnique({
-      where: { id },
-    });
+    const supabase = this.supabase.getClient();
+    
+    const { data: vehicle, error } = await supabase
+      .from('vehicles')
+      .select('*')
+      .eq('id', id)
+      .single();
 
-    if (!vehicle) {
+    if (error || !vehicle) {
       throw new NotFoundException('Vehicle not found');
     }
 
@@ -114,8 +168,18 @@ export class VehiclesService {
   }
 
   async findByVin(vin: string) {
-    return this.prisma.vehicle.findUnique({
-      where: { vin },
-    });
+    const supabase = this.supabase.getClient();
+    
+    const { data, error } = await supabase
+      .from('vehicles')
+      .select('*')
+      .eq('vin', vin)
+      .single();
+
+    if (error && error.code !== 'PGRST116') { // PGRST116 = not found
+      throw new Error(`Failed to find vehicle: ${error.message}`);
+    }
+
+    return data || null;
   }
 }

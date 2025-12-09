@@ -1,30 +1,53 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { SupabaseService } from '../supabase/supabase.service';
 import { CreateServiceDto } from './dto/create-service.dto';
 import { UpdateServiceDto } from './dto/update-service.dto';
 
 @Injectable()
 export class ServicesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private supabase: SupabaseService) {}
 
   async create(createServiceDto: CreateServiceDto) {
-    return this.prisma.service.create({
-      data: createServiceDto,
-    });
+    const supabase = this.supabase.getClient();
+    
+    const { data, error } = await supabase
+      .from('services')
+      .insert(createServiceDto)
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(`Failed to create service: ${error.message}`);
+    }
+
+    return data;
   }
 
   async findAll() {
-    return this.prisma.service.findMany({
-      where: { isActive: true },
-    });
+    const supabase = this.supabase.getClient();
+    
+    const { data, error } = await supabase
+      .from('services')
+      .select('*')
+      .eq('is_active', true);
+
+    if (error) {
+      throw new Error(`Failed to fetch services: ${error.message}`);
+    }
+
+    return data || [];
   }
 
   async findOne(id: string) {
-    const service = await this.prisma.service.findUnique({
-      where: { id },
-    });
+    const supabase = this.supabase.getClient();
+    
+    const { data: service, error } = await supabase
+      .from('services')
+      .select('*')
+      .eq('id', id)
+      .single();
 
-    if (!service) {
+    if (error || !service) {
       throw new NotFoundException('Service not found');
     }
 
@@ -32,36 +55,74 @@ export class ServicesService {
   }
 
   async update(id: string, updateServiceDto: UpdateServiceDto) {
-    const service = await this.findOne(id);
+    await this.findOne(id); // Verify service exists
     
-    return this.prisma.service.update({
-      where: { id },
-      data: updateServiceDto,
-    });
+    const supabase = this.supabase.getClient();
+    
+    const { data, error } = await supabase
+      .from('services')
+      .update(updateServiceDto)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(`Failed to update service: ${error.message}`);
+    }
+
+    return data;
   }
 
   async remove(id: string) {
-    const service = await this.findOne(id);
+    await this.findOne(id); // Verify service exists
     
-    return this.prisma.service.update({
-      where: { id },
-      data: { isActive: false },
-    });
+    const supabase = this.supabase.getClient();
+    
+    const { data, error } = await supabase
+      .from('services')
+      .update({ is_active: false })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(`Failed to deactivate service: ${error.message}`);
+    }
+
+    return data;
   }
 
   async getPricing() {
-    return this.prisma.pricing.findMany({
-      where: { isActive: true },
-    });
+    const supabase = this.supabase.getClient();
+    
+    const { data, error } = await supabase
+      .from('pricing')
+      .select('*')
+      .eq('is_active', true);
+
+    if (error) {
+      throw new Error(`Failed to fetch pricing: ${error.message}`);
+    }
+
+    return data || [];
   }
 
   async updatePricing(pricingData: any[]) {
+    const supabase = this.supabase.getClient();
+    
     // Clear existing pricing
-    await this.prisma.pricing.deleteMany({});
+    await supabase.from('pricing').delete().neq('id', '00000000-0000-0000-0000-000000000000');
     
     // Create new pricing
-    return this.prisma.pricing.createMany({
-      data: pricingData,
-    });
+    const { data, error } = await supabase
+      .from('pricing')
+      .insert(pricingData)
+      .select();
+
+    if (error) {
+      throw new Error(`Failed to update pricing: ${error.message}`);
+    }
+
+    return data;
   }
 }

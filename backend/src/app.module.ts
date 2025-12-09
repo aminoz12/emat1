@@ -3,7 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { BullModule } from '@nestjs/bull';
 import { ScheduleModule } from '@nestjs/schedule';
-import { PrismaModule } from './prisma/prisma.module';
+import { SupabaseModule } from './supabase/supabase.module';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { VehiclesModule } from './vehicles/vehicles.module';
@@ -34,7 +34,7 @@ import { AdminModule } from './admin/admin.module';
       },
     }),
     ScheduleModule.forRoot(),
-    PrismaModule,
+    SupabaseModule,
     AuthModule,
     UsersModule,
     VehiclesModule,
