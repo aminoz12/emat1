@@ -96,6 +96,8 @@ export class SumUpService {
       });
       
       // Create a checkout with SumUp
+      // Important: This creates a HOSTED CHECKOUT for public payment
+      // Users can pay with credit card without needing a SumUp account
       const checkout = await this.sumup.checkouts.create({
         checkout_reference: orderId,
         amount: checkoutAmount, // API expects number, not string
@@ -103,6 +105,8 @@ export class SumUpService {
         merchant_code: merchantCode, // Required field
         description: `Payment for order ${order.id}`,
         return_url: returnUrl,
+        // Additional parameters to ensure public checkout (no account required)
+        // Note: Check SumUp API docs for exact parameter names
       });
 
       // Log the full checkout response for debugging
@@ -266,62 +270,96 @@ export class SumUpService {
   }
 
   private getCheckoutWidgetUrl(checkout: CheckoutResponse): string {
-    // SumUp checkout URL - must use the link provided in the response
+    // SumUp checkout URL - CRITICAL: Must be a PUBLIC URL for guest payment
+    // Users should be able to pay with credit card WITHOUT needing a SumUp account
     // The checkout.links array contains the correct URL to redirect the user
     
     // First, try to get URL from links array (REQUIRED - SumUp provides the correct URL here)
     if (checkout.links && checkout.links.length > 0) {
+      console.log('🔍 Searching for PUBLIC checkout URL (guest payment)...');
       console.log('Available links from SumUp:', JSON.stringify(checkout.links, null, 2));
       
-      // Try different strategies to find the checkout/payment URL
-      // Strategy 1: Look for link with rel="checkout" or rel="payment"
-      let checkoutLink = checkout.links.find(link => 
-        link.rel === 'checkout' || 
-        link.rel === 'payment' ||
-        link.rel === 'pay'
-      );
+      // Strategy 1: Look for PUBLIC hosted checkout URL (highest priority)
+      // Public checkout URLs typically have:
+      // - Domain: me.sumup.com, pay.sumup.com, or checkout.sumup.com
+      // - Path contains: /checkout/ or similar
+      // - NO /api/, /login, /auth, /merchant, /dashboard
+      let checkoutLink = checkout.links.find(link => {
+        if (!link.href) return false;
+        const href = link.href.toLowerCase();
+        
+        // Must be a public domain (not API)
+        const isPublicDomain = href.includes('me.sumup.com') || 
+                              href.includes('pay.sumup.com') || 
+                              href.includes('checkout.sumup.com');
+        
+        // Must contain checkout/payment path
+        const isCheckoutPath = href.includes('/checkout/') || 
+                              href.includes('/checkout') ||
+                              href.includes('/pay/');
+        
+        // Must NOT require authentication
+        const isPublic = !href.includes('/api/') && 
+                        !href.includes('/login') && 
+                        !href.includes('/auth') &&
+                        !href.includes('/merchant') &&
+                        !href.includes('/dashboard') &&
+                        !href.includes('/account');
+        
+        return isPublicDomain && isCheckoutPath && isPublic;
+      });
       
-      // Strategy 2: Look for link with "checkout" or "pay" in href
+      // Strategy 2: Look for link with rel="checkout" or rel="payment" (public)
       if (!checkoutLink) {
-        checkoutLink = checkout.links.find(link => 
-          link.href && (
-            link.href.includes('checkout') || 
-            link.href.includes('/pay/') ||
-            link.href.includes('/b/') ||
-            link.href.includes('me.sumup.com') ||
-            link.href.includes('pay.sumup.com')
-          )
-        );
+        checkoutLink = checkout.links.find(link => {
+          if (!link.href) return false;
+          const href = link.href.toLowerCase();
+          const isPublic = !href.includes('/api/') && !href.includes('/login') && !href.includes('/auth');
+          return (link.rel === 'checkout' || link.rel === 'payment' || link.rel === 'pay') && isPublic;
+        });
       }
       
-      // Strategy 3: Look for any GET link that's not self or status
+      // Strategy 3: Any GET link that looks public (exclude API and auth endpoints)
       if (!checkoutLink) {
-        checkoutLink = checkout.links.find(link => 
-          link.method === 'GET' && 
-          link.rel !== 'self' && 
-          link.rel !== 'status' &&
-          link.href
-        );
+        checkoutLink = checkout.links.find(link => {
+          if (!link.href || link.method !== 'GET') return false;
+          const href = link.href.toLowerCase();
+          const isPublic = !href.includes('/api/') && 
+                          !href.includes('/login') && 
+                          !href.includes('/auth') &&
+                          !href.includes('/merchant') &&
+                          link.rel !== 'self' && 
+                          link.rel !== 'status';
+          return isPublic && (href.includes('sumup.com') || href.includes('checkout') || href.includes('pay'));
+        });
       }
       
-      // Strategy 4: Use any link that has an href (last resort)
+      // Strategy 4: Last resort - any link (but warn if it looks private)
       if (!checkoutLink) {
-        checkoutLink = checkout.links.find(link => link.href);
+        checkoutLink = checkout.links.find(link => link.href && link.method === 'GET');
       }
       
       if (checkoutLink && checkoutLink.href) {
-        // Validate that the URL is public (not an API endpoint or login page)
         const href = checkoutLink.href;
         
-        // Check if URL looks like a public checkout/payment page
+        // Final validation: Check if URL is truly public
         const isPublicUrl = !href.includes('/api/') && 
                            !href.includes('/login') && 
                            !href.includes('/auth') &&
-                           (href.includes('checkout') || href.includes('pay') || href.includes('me.sumup.com') || href.includes('pay.sumup.com'));
+                           !href.includes('/merchant') &&
+                           !href.includes('/dashboard') &&
+                           (href.includes('me.sumup.com') || 
+                            href.includes('pay.sumup.com') || 
+                            href.includes('checkout.sumup.com') ||
+                            (href.includes('checkout') && href.includes('sumup.com')));
         
         if (!isPublicUrl) {
-          console.warn('⚠️ WARNING: The checkout link might not be a public URL:', href);
-          console.warn('⚠️ This might redirect to a login page. Check SumUp documentation.');
+          console.error('❌ WARNING: The checkout URL appears to require authentication!');
+          console.error('❌ URL:', href);
+          console.error('❌ This will redirect users to a login page instead of payment page!');
+          console.error('❌ Please check SumUp configuration or use Card Widget JavaScript instead.');
+        } else {
+          console.log('✅ Found PUBLIC checkout URL (guest payment enabled)');
         }
         
         console.log('✅ Using checkout URL from SumUp links:', href);
@@ -329,18 +367,23 @@ export class SumUpService {
           href: href,
           rel: checkoutLink.rel,
           method: checkoutLink.method,
-          isPublicUrl: isPublicUrl
+          isPublicUrl: isPublicUrl,
+          allowsGuestPayment: isPublicUrl
         });
         return href;
       }
       
       // Log all available links for debugging
-      console.error('❌ Could not find a valid checkout link. All available links:');
+      console.error('❌ ERROR: Could not find a PUBLIC checkout URL for guest payment!');
+      console.error('All available links:');
       checkout.links.forEach((link, index) => {
+        const isPublic = link.href && !link.href.includes('/api/') && !link.href.includes('/login');
         console.error(`  Link ${index + 1}:`, {
           href: link.href,
           rel: link.rel,
-          method: link.method
+          method: link.method,
+          isPublic: isPublic || false,
+          warning: !isPublic ? '⚠️ This URL might require authentication' : ''
         });
       });
     }
