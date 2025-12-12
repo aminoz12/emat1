@@ -77,8 +77,6 @@ export class SumUpService {
 
     try {
       // Ensure amount is a number (not string) and properly formatted
-      // SumUp API expects amount as a number (in the currency's smallest unit, e.g., cents for EUR)
-      // But based on the SDK types, it accepts decimal numbers
       const checkoutAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
       
       // Validate amount
@@ -88,7 +86,60 @@ export class SumUpService {
 
       const returnUrl = redirectUrl || `${this.configService.get('FRONTEND_URL')}/payment/return?orderId=${orderId}`;
       
-      console.log('Creating SumUp checkout with:', {
+      // STEP 1: Check if a payment record with checkout_id exists for this order
+      const { data: existingPayment } = await this.supabase
+        .from('payments')
+        .select('*')
+        .eq('order_id', orderId)
+        .not('sumup_checkout_id', 'is', null)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      // STEP 2: If payment exists with checkout_id, try to retrieve the existing checkout
+      if (existingPayment && existingPayment.sumup_checkout_id) {
+        try {
+          console.log('Found existing payment with checkout_id, retrieving checkout:', existingPayment.sumup_checkout_id);
+          const existingCheckout = await this.sumup.checkouts.get(existingPayment.sumup_checkout_id);
+          
+          // Check if checkout is still valid (pending or similar status)
+          const validStatuses = ['PENDING', 'OPEN', 'INITIATED'];
+          if (existingCheckout && validStatuses.includes(existingCheckout.status?.toUpperCase())) {
+            console.log('✅ Reusing existing valid checkout:', {
+              id: existingCheckout.id,
+              status: existingCheckout.status,
+              reference: existingCheckout.checkout_reference
+            });
+
+            // Get the checkout URL
+            let checkoutUrl: string;
+            if ((existingCheckout as any).hosted_checkout_url) {
+              checkoutUrl = (existingCheckout as any).hosted_checkout_url;
+            } else {
+              checkoutUrl = this.getCheckoutWidgetUrl(existingCheckout);
+            }
+
+            // Validate URL
+            if (!checkoutUrl || !checkoutUrl.startsWith('http')) {
+              console.error('❌ Invalid checkout URL from existing checkout, creating new one');
+              // Continue to create a new checkout
+            } else {
+              return {
+                checkoutUrl: checkoutUrl,
+                checkoutId: existingCheckout.id,
+              };
+            }
+          } else {
+            console.log('Existing checkout is not valid (status:', existingCheckout?.status, '), creating new one');
+          }
+        } catch (retrieveError: any) {
+          console.log('Could not retrieve existing checkout (may be expired):', retrieveError.message);
+          // Continue to create a new checkout
+        }
+      }
+
+      // STEP 3: Create a new checkout (or if existing one is invalid/expired)
+      console.log('Creating new SumUp checkout with:', {
         orderId,
         amount: checkoutAmount,
         currency: currency.toUpperCase(),
@@ -98,18 +149,16 @@ export class SumUpService {
       
       // Create a HOSTED CHECKOUT with SumUp
       // CRITICAL: hosted_checkout must be enabled for public/guest payment
-      // This allows users to pay with credit card WITHOUT needing a SumUp account
       const checkoutData: any = {
         checkout_reference: orderId,
-        amount: checkoutAmount, // API expects number, not string
+        amount: checkoutAmount,
         currency: currency.toUpperCase() as any,
-        merchant_code: merchantCode, // Required field
+        merchant_code: merchantCode,
         description: `Payment for order ${order.id}`,
         return_url: returnUrl,
       };
 
       // Enable hosted checkout for public/guest payment (no account required)
-      // This ensures the checkout URL is public and allows direct card payment
       checkoutData.hosted_checkout = {
         enabled: true
       };
@@ -119,7 +168,37 @@ export class SumUpService {
         hosted_checkout: checkoutData.hosted_checkout
       });
 
-      const checkout = await this.sumup.checkouts.create(checkoutData);
+      let checkout: any;
+      try {
+        checkout = await this.sumup.checkouts.create(checkoutData);
+      } catch (createError: any) {
+        // Handle 409 DUPLICATED_CHECKOUT error
+        if (createError.status === 409 || createError.message?.includes('DUPLICATED_CHECKOUT')) {
+          console.log('⚠️ Checkout with this reference already exists, attempting to retrieve it');
+          
+          // Try to find the checkout by reference (if SumUp API supports it)
+          // Since we can't search by reference directly, we'll try to get it from our DB first
+          if (existingPayment && existingPayment.sumup_checkout_id) {
+            try {
+              checkout = await this.sumup.checkouts.get(existingPayment.sumup_checkout_id);
+              console.log('✅ Retrieved existing checkout after 409 error:', checkout.id);
+            } catch (getError: any) {
+              // If we can't get it, we need to use a different reference
+              console.log('Could not retrieve checkout, using unique reference');
+              // Generate a unique reference by appending timestamp
+              checkoutData.checkout_reference = `${orderId}-${Date.now()}`;
+              checkout = await this.sumup.checkouts.create(checkoutData);
+            }
+          } else {
+            // No existing checkout_id in DB, generate unique reference
+            console.log('No existing checkout_id found, using unique reference');
+            checkoutData.checkout_reference = `${orderId}-${Date.now()}`;
+            checkout = await this.sumup.checkouts.create(checkoutData);
+          }
+        } else {
+          throw createError;
+        }
+      }
 
       // Log the full checkout response for debugging
       console.log('SumUp checkout created:', {
@@ -157,18 +236,20 @@ export class SumUpService {
         console.warn('⚠️ WARNING: No links found in SumUp checkout response!');
       }
 
-      // Check if payment record already exists
-      const { data: existingPayment } = await this.supabase
-        .from('payments')
-        .select('id')
-        .eq('order_id', orderId)
-        .single();
-
+      // Check if payment record already exists (reuse the check from earlier)
+      // If we created a new checkout, we need to save/update the payment record
       let paymentError: any = null;
       let payment: any = null;
 
-      if (existingPayment) {
-        // Update existing payment record
+      // Re-check existing payment (in case we didn't find one earlier or created a new checkout)
+      const { data: paymentToUpdate } = await this.supabase
+        .from('payments')
+        .select('id')
+        .eq('order_id', orderId)
+        .maybeSingle();
+
+      if (paymentToUpdate) {
+        // Update existing payment record with new checkout_id
         const { data, error } = await this.supabase
           .from('payments')
           .update({

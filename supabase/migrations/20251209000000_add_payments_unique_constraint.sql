@@ -20,3 +20,4 @@ CREATE INDEX IF NOT EXISTS idx_payments_sumup_checkout_id ON public.payments(sum
 
 
 
+

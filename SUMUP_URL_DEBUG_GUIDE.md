@@ -71,3 +71,4 @@ Si les checkouts ne fonctionnent pas, SumUp propose aussi un **Card Widget** qui
 
 
 
+
