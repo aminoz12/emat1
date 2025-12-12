@@ -56,3 +56,5 @@ Si les checkouts ne permettent pas le paiement public, nous devrons peut-être p
 
 **ACTION IMMÉDIATE** : Vérifiez les logs Render et partagez-moi tous les liens retournés pour que je puisse identifier et corriger le problème.
 
+
+

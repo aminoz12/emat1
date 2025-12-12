@@ -31,6 +31,7 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useSupabaseSession } from '@/hooks/useSupabaseSession'
+import { createCheckoutAndRedirect } from '@/lib/services/orderService'
 
 interface Order {
   id: string
@@ -40,6 +41,7 @@ interface Order {
   updatedAt: string
   price: number
   reference?: string
+  paymentStatus?: 'paid' | 'pending' | 'failed' | 'unpaid'
   vehicleInfo?: {
     brand?: string
     model?: string
@@ -104,6 +106,7 @@ export default function DashboardPage() {
   const [selectedOrder, setSelectedOrder] = useState<OrderDetails | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isLoadingDetails, setIsLoadingDetails] = useState(false)
+  const [processingPayment, setProcessingPayment] = useState<string | null>(null)
 
   useEffect(() => {
     const checkUserAndRedirect = async () => {
@@ -135,6 +138,26 @@ export default function DashboardPage() {
     }
 
     checkUserAndRedirect()
+
+    // Listen for payment success messages from popup
+    const handleMessage = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return
+
+      if (event.data.type === 'SUMPUP_PAYMENT_SUCCESS') {
+        // Refresh orders after successful payment
+        fetchOrders()
+        setProcessingPayment(null)
+      } else if (event.data.type === 'SUMPUP_PAYMENT_FAILED') {
+        setProcessingPayment(null)
+        alert(event.data.error || 'Le paiement a échoué. Veuillez réessayer.')
+      }
+    }
+
+    window.addEventListener('message', handleMessage)
+
+    return () => {
+      window.removeEventListener('message', handleMessage)
+    }
   }, [user, sessionLoading, router])
 
   const fetchOrders = async () => {
@@ -157,6 +180,28 @@ export default function DashboardPage() {
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
 
+      // Fetch payments separately for each order
+      const orderIds = (ordersData || []).map((o: any) => o.id)
+      let paymentsMap: Record<string, any> = {}
+      
+      if (orderIds.length > 0) {
+        const { data: paymentsData } = await supabase
+          .from('payments')
+          .select('*')
+          .in('order_id', orderIds)
+          .order('created_at', { ascending: false })
+
+        // Group payments by order_id and get the latest one
+        if (paymentsData) {
+          paymentsData.forEach((payment: any) => {
+            if (!paymentsMap[payment.order_id] || 
+                new Date(payment.created_at) > new Date(paymentsMap[payment.order_id].created_at)) {
+              paymentsMap[payment.order_id] = payment
+            }
+          })
+        }
+      }
+
       if (error) {
         console.error('Error fetching orders:', error)
         // Fallback to empty array if error
@@ -165,20 +210,38 @@ export default function DashboardPage() {
       }
 
       // Transform Supabase data to Order format
-      const transformedOrders: Order[] = (ordersData || []).map((order: any) => ({
-        id: order.id,
-        type: order.type as 'carte-grise' | 'plaque' | 'coc',
-        status: order.status as Order['status'],
-        createdAt: order.created_at,
-        updatedAt: order.updated_at,
-        price: parseFloat(order.price),
-        reference: order.reference || undefined,
-        vehicleInfo: order.vehicles ? {
-          brand: order.vehicles.make,
-          model: order.vehicles.model,
-          registrationNumber: order.vehicles.registration_number
-        } : undefined
-      }))
+      const transformedOrders: Order[] = (ordersData || []).map((order: any) => {
+        // Determine payment status from payments map
+        let paymentStatus: 'paid' | 'pending' | 'failed' | 'unpaid' = 'unpaid'
+        const payment = paymentsMap[order.id]
+        if (payment) {
+          if (payment.status === 'succeeded' || payment.status === 'paid') {
+            paymentStatus = 'paid'
+          } else if (payment.status === 'pending') {
+            paymentStatus = 'pending'
+          } else if (payment.status === 'failed') {
+            paymentStatus = 'failed'
+          } else {
+            paymentStatus = 'unpaid'
+          }
+        }
+
+        return {
+          id: order.id,
+          type: order.type as 'carte-grise' | 'plaque' | 'coc',
+          status: order.status as Order['status'],
+          createdAt: order.created_at,
+          updatedAt: order.updated_at,
+          price: parseFloat(order.price),
+          reference: order.reference || undefined,
+          paymentStatus: paymentStatus,
+          vehicleInfo: order.vehicles ? {
+            brand: order.vehicles.make,
+            model: order.vehicles.model,
+            registrationNumber: order.vehicles.registration_number
+          } : undefined
+        }
+      })
 
       setOrders(transformedOrders)
     } catch (error) {
@@ -243,6 +306,55 @@ export default function DashboardPage() {
       month: 'long',
       year: 'numeric'
     })
+  }
+
+  const getPaymentStatusBadge = (paymentStatus?: 'paid' | 'pending' | 'failed' | 'unpaid') => {
+    if (!paymentStatus || paymentStatus === 'unpaid') {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border bg-red-100 text-red-800 border-red-200">
+          <XCircle className="w-3.5 h-3.5" />
+          Non payé
+        </span>
+      )
+    }
+    if (paymentStatus === 'paid') {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border bg-green-100 text-green-800 border-green-200">
+          <CheckCircle className="w-3.5 h-3.5" />
+          Payé
+        </span>
+      )
+    }
+    if (paymentStatus === 'pending') {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border bg-yellow-100 text-yellow-800 border-yellow-200">
+          <Clock className="w-3.5 h-3.5" />
+          En attente
+        </span>
+      )
+    }
+    if (paymentStatus === 'failed') {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border bg-red-100 text-red-800 border-red-200">
+          <XCircle className="w-3.5 h-3.5" />
+          Échec
+        </span>
+      )
+    }
+    return null
+  }
+
+  const handlePayOrder = async (order: Order) => {
+    if (processingPayment) return
+
+    try {
+      setProcessingPayment(order.id)
+      await createCheckoutAndRedirect(order.id, order.price)
+    } catch (error: any) {
+      console.error('Error creating checkout:', error)
+      alert(error.message || 'Erreur lors de la création du paiement. Veuillez réessayer.')
+      setProcessingPayment(null)
+    }
   }
 
   const formatDateTime = (dateString: string) => {
@@ -612,11 +724,12 @@ export default function DashboardPage() {
                             <TypeIcon className="w-6 h-6 text-primary-600" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-3 mb-2">
+                            <div className="flex items-center gap-3 mb-2 flex-wrap">
                               <h3 className="text-lg font-semibold text-gray-900">
                                 {getTypeLabel(order.type)}
                               </h3>
                               {getStatusBadge(order.status)}
+                              {getPaymentStatusBadge(order.paymentStatus)}
                             </div>
                             {order.reference && (
                               <p className="text-sm text-gray-600 mb-1">
@@ -642,7 +755,19 @@ export default function DashboardPage() {
                         </div>
                       </div>
                       
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {(!order.paymentStatus || order.paymentStatus === 'unpaid' || order.paymentStatus === 'failed') && (
+                          <button 
+                            onClick={() => handlePayOrder(order)}
+                            disabled={processingPayment === order.id}
+                            className="flex items-center gap-2 px-4 py-2 text-white bg-primary-600 rounded-lg hover:bg-primary-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            <CreditCard className="w-4 h-4" />
+                            <span className="hidden sm:inline">
+                              {processingPayment === order.id ? 'Traitement...' : 'Payer'}
+                            </span>
+                          </button>
+                        )}
                         <button 
                           onClick={() => handleViewOrder(order.id)}
                           className="flex items-center gap-2 px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors font-medium"

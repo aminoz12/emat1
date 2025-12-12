@@ -56,3 +56,5 @@ Cela signifie que SumUp n'a pas retourné `hosted_checkout_url`. Vérifiez :
 
 **Action** : Redéployez le backend et testez. Le `hosted_checkout_url` devrait maintenant être utilisé en priorité.
 
+
+

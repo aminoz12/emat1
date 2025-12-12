@@ -10,6 +10,7 @@ export default function PaymentReturnPage() {
   const searchParams = useSearchParams()
   const [status, setStatus] = useState<'loading' | 'success' | 'failed'>('loading')
   const [error, setError] = useState<string>('')
+  const [countdown, setCountdown] = useState(10)
 
   useEffect(() => {
     const handlePaymentReturn = async () => {
@@ -34,6 +35,8 @@ export default function PaymentReturnPage() {
           throw new Error('Non autorisé')
         }
 
+        let paymentSuccess = false
+
         // First, check status from URL parameter (quick check)
         if (status === 'SUCCESS' || status === 'PAID') {
           // Verify with backend to ensure accuracy
@@ -47,32 +50,18 @@ export default function PaymentReturnPage() {
             if (verifyResponse.ok) {
               const verifyData = await verifyResponse.json()
               if (verifyData.status === 'PAID') {
-                setStatus('success')
-                setTimeout(() => {
-                  router.push(`/payment-success?orderId=${orderId}`)
-                }, 2000)
-                return
+                paymentSuccess = true
               }
             }
           } else {
             // No checkoutId but status says success - trust it but log warning
             console.warn('Payment status is SUCCESS but no checkoutId available for verification')
-            setStatus('success')
-            setTimeout(() => {
-              router.push(`/payment-success?orderId=${orderId}`)
-            }, 2000)
-            return
+            paymentSuccess = true
           }
         } else if (status === 'FAILED' || status === 'CANCELLED' || status === 'EXPIRED') {
-          setStatus('failed')
-          setTimeout(() => {
-            router.push(`/payment-cancelled?orderId=${orderId}`)
-          }, 2000)
-          return
-        }
-
-        // If no status in URL or unclear, verify payment with backend
-        if (checkoutId) {
+          paymentSuccess = false
+        } else if (checkoutId) {
+          // If no status in URL or unclear, verify payment with backend
           const verifyResponse = await fetch(`${backendUrl}/payments/verify-payment/${checkoutId}`, {
             headers: {
               'Authorization': `Bearer ${session.access_token}`,
@@ -81,39 +70,74 @@ export default function PaymentReturnPage() {
 
           if (verifyResponse.ok) {
             const verifyData = await verifyResponse.json()
-            if (verifyData.status === 'PAID') {
-              setStatus('success')
-              setTimeout(() => {
-                router.push(`/payment-success?orderId=${orderId}`)
-              }, 2000)
-            } else {
-              setStatus('failed')
-              setTimeout(() => {
-                router.push(`/payment-cancelled?orderId=${orderId}`)
-              }, 2000)
-            }
+            paymentSuccess = verifyData.status === 'PAID'
           } else {
             const errorData = await verifyResponse.json().catch(() => ({}))
-            setStatus('failed')
             setError(errorData.error || errorData.message || 'Impossible de vérifier le statut du paiement')
-            setTimeout(() => {
-              router.push(`/payment-cancelled?orderId=${orderId || ''}`)
-            }, 3000)
+            paymentSuccess = false
           }
         } else {
-          setStatus('failed')
           setError('Informations de paiement incomplètes. Aucun identifiant de checkout trouvé.')
-          setTimeout(() => {
-            router.push(`/payment-cancelled?orderId=${orderId || ''}`)
-          }, 3000)
+          paymentSuccess = false
         }
+
+        // Set status
+        setStatus(paymentSuccess ? 'success' : 'failed')
+
+        // Send message to parent window if in popup
+        if (window.opener) {
+          if (paymentSuccess) {
+            window.opener.postMessage({
+              type: 'SUMPUP_PAYMENT_SUCCESS',
+              orderId: orderId
+            }, window.location.origin)
+          } else {
+            window.opener.postMessage({
+              type: 'SUMPUP_PAYMENT_FAILED',
+              orderId: orderId,
+              error: error || 'Le paiement a échoué'
+            }, window.location.origin)
+          }
+        }
+
+        // Start countdown and redirect after 10 seconds
+        let seconds = 10
+        const countdownInterval = setInterval(() => {
+          seconds--
+          setCountdown(seconds)
+          if (seconds <= 0) {
+            clearInterval(countdownInterval)
+            if (window.opener) {
+              // Close popup if opened from popup
+              window.close()
+            } else {
+              // Redirect to dashboard if not in popup
+              router.push('/dashboard')
+            }
+          }
+        }, 1000)
+
       } catch (err: any) {
         console.error('Payment return error:', err)
         setStatus('failed')
         setError(err.message || 'Une erreur est survenue')
+        
+        // Send error message to parent if in popup
+        if (window.opener) {
+          window.opener.postMessage({
+            type: 'SUMPUP_PAYMENT_FAILED',
+            error: err.message || 'Une erreur est survenue'
+          }, window.location.origin)
+        }
+
+        // Redirect after 10 seconds
         setTimeout(() => {
-          router.push(`/payment-cancelled?orderId=${orderId || ''}`)
-        }, 3000)
+          if (window.opener) {
+            window.close()
+          } else {
+            router.push('/dashboard')
+          }
+        }, 10000)
       }
     }
 
@@ -135,7 +159,22 @@ export default function PaymentReturnPage() {
           <>
             <CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Paiement réussi !</h2>
-            <p className="text-gray-600">Redirection en cours...</p>
+            <p className="text-gray-600 mb-2">Votre paiement a été traité avec succès.</p>
+            <p className="text-sm text-gray-500">
+              Retour à votre espace dans {countdown} seconde{countdown > 1 ? 's' : ''}...
+            </p>
+            <button
+              onClick={() => {
+                if (window.opener) {
+                  window.close()
+                } else {
+                  router.push('/dashboard')
+                }
+              }}
+              className="mt-4 px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+            >
+              Retourner maintenant
+            </button>
           </>
         )}
         
@@ -144,7 +183,21 @@ export default function PaymentReturnPage() {
             <XCircle className="w-16 h-16 text-red-600 mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Paiement échoué</h2>
             <p className="text-gray-600 mb-4">{error || 'Le paiement n\'a pas pu être traité.'}</p>
-            <p className="text-sm text-gray-500">Redirection en cours...</p>
+            <p className="text-sm text-gray-500 mb-4">
+              Retour à votre espace dans {countdown} seconde{countdown > 1 ? 's' : ''}...
+            </p>
+            <button
+              onClick={() => {
+                if (window.opener) {
+                  window.close()
+                } else {
+                  router.push('/dashboard')
+                }
+              }}
+              className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+            >
+              Fermer
+            </button>
           </>
         )}
       </div>

@@ -67,3 +67,5 @@ Avec ces informations, je pourrai corriger le code pour utiliser automatiquement
 
 **Alternative** : Si les checkouts ne fonctionnent vraiment pas, nous pourrions passer au **Card Widget JavaScript** de SumUp, qui s'intègre directement dans la page sans redirection.
 
+
+

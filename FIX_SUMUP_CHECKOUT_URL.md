@@ -105,3 +105,5 @@ L'URL du widget SumUp peut varier selon :
 Le code utilise maintenant les liens fournis par SumUp en priorité, ce qui devrait résoudre le problème dans la plupart des cas.
 
 
+
+

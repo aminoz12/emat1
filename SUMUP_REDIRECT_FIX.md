@@ -86,3 +86,5 @@ Dans ce cas, **contactez le support SumUp** avec :
 - Les liens retournés par l'API
 - La question : "Quelle URL dois-je utiliser pour rediriger l'utilisateur vers la page de paiement publique ?"
 
+
+

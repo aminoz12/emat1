@@ -98,3 +98,5 @@ Si les checkouts ne permettent pas le paiement public après vérification, nous
 
 **Action immédiate** : Vérifiez les logs Render et testez l'URL utilisée pour voir si le problème persiste avec le nouveau code.
 
+
+

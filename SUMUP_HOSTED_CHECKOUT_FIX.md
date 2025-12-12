@@ -55,3 +55,5 @@ Si le problème persiste, vérifiez :
 2. Que votre compte SumUp permet les hosted checkouts publics
 3. La configuration dans le SumUp Dashboard
 
+
+

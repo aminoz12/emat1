@@ -87,7 +87,7 @@ export async function createOrder(data: OrderData): Promise<CreateOrderResponse>
 }
 
 /**
- * Create checkout and redirect to SumUp widget
+ * Create checkout and open SumUp widget in a popup
  */
 export async function createCheckoutAndRedirect(orderId: string, amount: number): Promise<void> {
   try {
@@ -132,9 +132,68 @@ export async function createCheckoutAndRedirect(orderId: string, amount: number)
       throw new Error('URL de paiement non reçue du serveur');
     }
     
-    console.log('Redirecting to SumUp widget:', checkoutUrl);
-    // Redirect directly to SumUp widget
-    window.location.href = checkoutUrl
+    console.log('Opening SumUp checkout in popup:', checkoutUrl);
+    
+    // Open SumUp checkout in a popup window
+    const width = 600;
+    const height = 800;
+    const left = (window.screen.width - width) / 2;
+    const top = (window.screen.height - height) / 2;
+    
+    const popup = window.open(
+      checkoutUrl,
+      'SumUpCheckout',
+      `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
+    );
+
+    if (!popup) {
+      // Popup blocked - fallback to redirect
+      console.warn('Popup blocked, redirecting instead');
+      window.location.href = checkoutUrl;
+      return;
+    }
+
+    // Listen for messages from the popup
+    const messageHandler = (event: MessageEvent) => {
+      // Verify origin for security
+      if (event.origin !== window.location.origin) {
+        return;
+      }
+
+      if (event.data.type === 'SUMPUP_PAYMENT_SUCCESS') {
+        console.log('Payment successful, closing popup');
+        popup.close();
+        window.removeEventListener('message', messageHandler);
+        
+        // Refresh orders or redirect to dashboard
+        if (window.location.pathname.includes('/dashboard')) {
+          window.location.reload();
+        } else {
+          window.location.href = '/dashboard';
+        }
+      } else if (event.data.type === 'SUMPUP_PAYMENT_FAILED') {
+        console.log('Payment failed, closing popup');
+        popup.close();
+        window.removeEventListener('message', messageHandler);
+        
+        // Show error message (you can customize this)
+        alert('Le paiement a échoué. Veuillez réessayer.');
+      } else if (event.data.type === 'SUMPUP_POPUP_CLOSED') {
+        console.log('Popup closed by user');
+        window.removeEventListener('message', messageHandler);
+      }
+    };
+
+    window.addEventListener('message', messageHandler);
+
+    // Check if popup is closed manually
+    const checkPopupClosed = setInterval(() => {
+      if (popup.closed) {
+        clearInterval(checkPopupClosed);
+        window.removeEventListener('message', messageHandler);
+        console.log('Popup was closed by user');
+      }
+    }, 500);
   } catch (error: any) {
     console.error('Erreur création checkout:', error)
     console.error('Error details:', {

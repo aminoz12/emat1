@@ -107,3 +107,5 @@ Si vous êtes redirigé vers une page de connexion, cela signifie que :
 
 **Action immédiate** : Vérifiez les logs Render pour voir exactement quels liens SumUp retourne, puis testez chaque URL pour identifier celle qui fonctionne.
 
+
+

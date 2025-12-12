@@ -18,3 +18,5 @@ CREATE INDEX IF NOT EXISTS idx_payments_order_id ON public.payments(order_id);
 CREATE INDEX IF NOT EXISTS idx_payments_sumup_checkout_id ON public.payments(sumup_checkout_id);
 
 
+
+

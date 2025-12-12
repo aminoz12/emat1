@@ -71,3 +71,5 @@ console.log('Backend URL:', process.env.NEXT_PUBLIC_BACKEND_URL);
 Le fichier `.env.local` est dans `.gitignore` et ne sera **pas** commité dans Git. C'est normal et sécurisé pour vos variables locales.
 
 
+
+
