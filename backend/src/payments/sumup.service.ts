@@ -87,19 +87,22 @@ export class SumUpService {
       const returnUrl = redirectUrl || `${this.configService.get('FRONTEND_URL')}/payment/return?orderId=${orderId}`;
       
       // STEP 1: Check if a payment record with checkout_id exists for this order
+      // Only consider payments that are not failed (pending or succeeded)
       const { data: existingPayment } = await this.supabase
         .from('payments')
         .select('*')
         .eq('order_id', orderId)
         .not('sumup_checkout_id', 'is', null)
+        .neq('status', 'failed') // Exclude failed payments
+        .neq('status', 'succeeded') // Exclude succeeded payments (already paid)
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
 
-      // STEP 2: If payment exists with checkout_id, try to retrieve the existing checkout
-      if (existingPayment && existingPayment.sumup_checkout_id) {
+      // STEP 2: If payment exists with checkout_id and is pending, try to retrieve the existing checkout
+      if (existingPayment && existingPayment.sumup_checkout_id && existingPayment.status === 'pending') {
         try {
-          console.log('Found existing payment with checkout_id, retrieving checkout:', existingPayment.sumup_checkout_id);
+          console.log('Found existing pending payment with checkout_id, retrieving checkout:', existingPayment.sumup_checkout_id);
           const existingCheckout = await this.sumup.checkouts.get(existingPayment.sumup_checkout_id);
           
           // Check if checkout is still valid (pending or similar status)
@@ -130,12 +133,27 @@ export class SumUpService {
               };
             }
           } else {
-            console.log('Existing checkout is not valid (status:', existingCheckout?.status, '), creating new one');
+            console.log('Existing checkout is not valid (status:', existingCheckout?.status, '), marking payment as failed and creating new one');
+            // Mark the old payment as failed
+            await this.supabase
+              .from('payments')
+              .update({ status: 'failed', updated_at: new Date().toISOString() })
+              .eq('id', existingPayment.id);
           }
         } catch (retrieveError: any) {
           console.log('Could not retrieve existing checkout (may be expired):', retrieveError.message);
+          // Mark the old payment as failed if it exists
+          if (existingPayment) {
+            await this.supabase
+              .from('payments')
+              .update({ status: 'failed', updated_at: new Date().toISOString() })
+              .eq('id', existingPayment.id);
+          }
           // Continue to create a new checkout
         }
+      } else if (existingPayment && existingPayment.status === 'failed') {
+        console.log('Found failed payment, creating new checkout');
+        // Continue to create a new checkout
       }
 
       // STEP 3: Create a new checkout (or if existing one is invalid/expired)
@@ -545,15 +563,31 @@ export class SumUpService {
       });
       
       // Update payment status in the database
-      // SumUp status values: "PENDING" | "FAILED" | "PAID"
+      // SumUp status values: "PENDING" | "FAILED" | "PAID" | "CANCELLED" | "EXPIRED"
       if (checkout.status === 'PAID') {
         console.log('Payment is PAID, updating to succeeded');
         await this.updatePaymentStatus(checkoutId, 'succeeded');
-      } else if (checkout.status === 'FAILED') {
-        console.log('Payment is FAILED, updating to failed');
+      } else if (checkout.status === 'FAILED' || checkout.status === 'CANCELLED' || checkout.status === 'EXPIRED') {
+        console.log(`Payment is ${checkout.status}, updating to failed`);
         await this.updatePaymentStatus(checkoutId, 'failed');
       } else {
-        console.log('Payment is still PENDING');
+        // If payment is still PENDING but checkout is old (more than 30 minutes), mark as failed
+        const checkoutCreatedAt = checkout.created_at || checkout.created;
+        if (checkoutCreatedAt) {
+          const createdAt = new Date(checkoutCreatedAt);
+          const now = new Date();
+          const minutesSinceCreation = (now.getTime() - createdAt.getTime()) / (1000 * 60);
+          
+          // If checkout is older than 30 minutes and still pending, it's likely expired/failed
+          if (minutesSinceCreation > 30) {
+            console.log(`Payment is PENDING but checkout is ${minutesSinceCreation.toFixed(0)} minutes old, marking as failed`);
+            await this.updatePaymentStatus(checkoutId, 'failed');
+          } else {
+            console.log('Payment is still PENDING');
+          }
+        } else {
+          console.log('Payment is still PENDING');
+        }
       }
       
       return { status: checkout.status };

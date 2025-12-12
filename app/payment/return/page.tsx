@@ -60,6 +60,18 @@ export default function PaymentReturnPage() {
           }
         } else if (status === 'FAILED' || status === 'CANCELLED' || status === 'EXPIRED') {
           paymentSuccess = false
+          // Ensure backend updates payment status to 'failed'
+          if (checkoutId) {
+            try {
+              await fetch(`${backendUrl}/payments/verify-payment/${checkoutId}`, {
+                headers: {
+                  'Authorization': `Bearer ${session.access_token}`,
+                },
+              })
+            } catch (err) {
+              console.error('Error updating failed payment status:', err)
+            }
+          }
         } else if (checkoutId) {
           // If no status in URL or unclear, verify payment with backend
           const verifyResponse = await fetch(`${backendUrl}/payments/verify-payment/${checkoutId}`, {
@@ -71,6 +83,10 @@ export default function PaymentReturnPage() {
           if (verifyResponse.ok) {
             const verifyData = await verifyResponse.json()
             paymentSuccess = verifyData.status === 'PAID'
+            // If payment is not PAID, ensure it's marked as failed
+            if (verifyData.status !== 'PAID') {
+              paymentSuccess = false
+            }
           } else {
             const errorData = await verifyResponse.json().catch(() => ({}))
             setError(errorData.error || errorData.message || 'Impossible de vérifier le statut du paiement')

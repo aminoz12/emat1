@@ -192,11 +192,31 @@ export default function DashboardPage() {
           .order('created_at', { ascending: false })
 
         // Group payments by order_id and get the latest one
+        // Prioritize succeeded > pending > failed > unpaid
         if (paymentsData) {
           paymentsData.forEach((payment: any) => {
-            if (!paymentsMap[payment.order_id] || 
-                new Date(payment.created_at) > new Date(paymentsMap[payment.order_id].created_at)) {
+            const currentPayment = paymentsMap[payment.order_id]
+            
+            if (!currentPayment) {
               paymentsMap[payment.order_id] = payment
+            } else {
+              // Priority: succeeded > pending > failed > others
+              const currentPriority = currentPayment.status === 'succeeded' ? 4 :
+                                     currentPayment.status === 'paid' ? 4 :
+                                     currentPayment.status === 'pending' ? 3 :
+                                     currentPayment.status === 'failed' ? 2 : 1
+              
+              const newPriority = payment.status === 'succeeded' ? 4 :
+                                 payment.status === 'paid' ? 4 :
+                                 payment.status === 'pending' ? 3 :
+                                 payment.status === 'failed' ? 2 : 1
+              
+              // If same priority, use the most recent one
+              if (newPriority > currentPriority || 
+                  (newPriority === currentPriority && 
+                   new Date(payment.created_at) > new Date(currentPayment.created_at))) {
+                paymentsMap[payment.order_id] = payment
+              }
             }
           })
         }
@@ -218,9 +238,24 @@ export default function DashboardPage() {
           if (payment.status === 'succeeded' || payment.status === 'paid') {
             paymentStatus = 'paid'
           } else if (payment.status === 'pending') {
-            paymentStatus = 'pending'
+            // Check if pending payment is old (more than 30 minutes) - treat as failed/unpaid
+            const paymentCreatedAt = payment.created_at || payment.updated_at
+            if (paymentCreatedAt) {
+              const createdAt = new Date(paymentCreatedAt)
+              const now = new Date()
+              const minutesSinceCreation = (now.getTime() - createdAt.getTime()) / (1000 * 60)
+              
+              // If payment is pending for more than 30 minutes, treat as unpaid
+              if (minutesSinceCreation > 30) {
+                paymentStatus = 'unpaid'
+              } else {
+                paymentStatus = 'pending'
+              }
+            } else {
+              paymentStatus = 'pending'
+            }
           } else if (payment.status === 'failed') {
-            paymentStatus = 'failed'
+            paymentStatus = 'unpaid' // Treat failed as unpaid so payment button shows
           } else {
             paymentStatus = 'unpaid'
           }

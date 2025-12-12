@@ -178,9 +178,19 @@ export async function createCheckoutAndRedirect(orderId: string, amount: number)
         
         // Show error message (you can customize this)
         alert('Le paiement a échoué. Veuillez réessayer.');
+        
+        // Reload page to update payment status
+        if (window.location.pathname.includes('/dashboard')) {
+          window.location.reload();
+        }
       } else if (event.data.type === 'SUMPUP_POPUP_CLOSED') {
         console.log('Popup closed by user');
         window.removeEventListener('message', messageHandler);
+        
+        // Reload page when popup is closed
+        if (window.location.pathname.includes('/dashboard')) {
+          window.location.reload();
+        }
       }
     };
 
@@ -192,6 +202,11 @@ export async function createCheckoutAndRedirect(orderId: string, amount: number)
         clearInterval(checkPopupClosed);
         window.removeEventListener('message', messageHandler);
         console.log('Popup was closed by user');
+        
+        // Reload page immediately when popup is closed
+        if (window.location.pathname.includes('/dashboard')) {
+          window.location.reload();
+        }
       }
     }, 500);
   } catch (error: any) {
