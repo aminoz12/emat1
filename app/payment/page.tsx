@@ -6,6 +6,7 @@ import { motion } from 'framer-motion'
 import { CreditCard, Shield, CheckCircle, AlertCircle, ArrowLeft, Lock } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useSupabaseSession } from '@/hooks/useSupabaseSession'
+import { createCheckoutAndRedirect } from '@/lib/services/orderService'
 
 const PaymentForm = () => {
   const router = useRouter()
@@ -29,29 +30,8 @@ const PaymentForm = () => {
 
       const amount = parseFloat(orderPrice || '29.90')
 
-      // Create checkout via our API
-      const response = await fetch('/api/payments/create-checkout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          orderId,
-          amount: amount,
-          currency: 'eur'
-        }),
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Erreur lors de la création du paiement')
-      }
-
-      const { checkoutUrl } = await response.json()
-      
-      // Redirect to secure checkout page
-      window.location.href = checkoutUrl
+      // Use popup payment flow (no redirect to new page)
+      await createCheckoutAndRedirect(orderId, amount)
     } catch (err: any) {
       setError(err?.message || 'Une erreur est survenue')
       setIsProcessing(false)

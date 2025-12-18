@@ -161,16 +161,24 @@ export async function createCheckoutAndRedirect(orderId: string, amount: number)
       }
 
       if (event.data.type === 'SUMPUP_PAYMENT_SUCCESS') {
-        console.log('Payment successful, closing popup');
-        popup.close();
+        console.log('Payment successful, waiting 10 seconds before redirecting to mon espace');
         window.removeEventListener('message', messageHandler);
         
-        // Refresh orders or redirect to dashboard
-        if (window.location.pathname.includes('/dashboard')) {
-          window.location.reload();
-        } else {
-          window.location.href = '/dashboard';
-        }
+        // Wait 10 seconds before redirecting to dashboard (mon espace)
+        // The popup will show the success message and close itself after 10 seconds
+        setTimeout(() => {
+          // Close popup if still open
+          if (popup && !popup.closed) {
+            popup.close();
+          }
+          
+          // Redirect to dashboard (mon espace) after 10 seconds
+          if (window.location.pathname.includes('/dashboard')) {
+            window.location.reload();
+          } else {
+            window.location.href = '/dashboard';
+          }
+        }, 10000);
       } else if (event.data.type === 'SUMPUP_PAYMENT_FAILED') {
         console.log('Payment failed, closing popup');
         popup.close();
