@@ -134,23 +134,57 @@ export async function createCheckoutAndRedirect(orderId: string, amount: number)
     
     console.log('Opening SumUp checkout in popup:', checkoutUrl);
     
-    // Open SumUp checkout in a popup window
-    const width = 600;
-    const height = 800;
-    const left = (window.screen.width - width) / 2;
-    const top = (window.screen.height - height) / 2;
+    // Detect mobile devices
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+                     (window.innerWidth <= 768);
+    
+    // Responsive popup sizing - full screen on mobile, centered popup on desktop
+    let width: number;
+    let height: number;
+    let left: number;
+    let top: number;
+    let popupFeatures: string;
+    
+    if (isMobile) {
+      // Full screen on mobile devices
+      width = window.screen.width || window.innerWidth;
+      height = window.screen.height || window.innerHeight;
+      left = 0;
+      top = 0;
+      popupFeatures = `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,location=yes,status=yes`;
+    } else {
+      // Centered popup on desktop
+      width = 600;
+      height = 800;
+      left = Math.max(0, (window.screen.width - width) / 2);
+      top = Math.max(0, (window.screen.height - height) / 2);
+      popupFeatures = `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes,status=yes`;
+    }
     
     const popup = window.open(
       checkoutUrl,
       'SumUpCheckout',
-      `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
+      popupFeatures
     );
 
-    if (!popup) {
-      // Popup blocked - fallback to redirect
-      console.warn('Popup blocked, redirecting instead');
-      window.location.href = checkoutUrl;
+    if (!popup || popup.closed) {
+      // Popup blocked or failed to open - fallback to redirect
+      console.warn('Popup blocked or failed, redirecting instead');
+      if (isMobile) {
+        // On mobile, open in same window if popup fails
+        window.location.href = checkoutUrl;
+      } else {
+        // On desktop, try to open in new tab as fallback
+        window.open(checkoutUrl, '_blank');
+      }
       return;
+    }
+    
+    // Focus the popup window (especially important on mobile)
+    try {
+      popup.focus();
+    } catch (e) {
+      console.warn('Could not focus popup:', e);
     }
 
     // Listen for messages from the popup
@@ -167,9 +201,13 @@ export async function createCheckoutAndRedirect(orderId: string, amount: number)
         // Wait 10 seconds before redirecting to dashboard (mon espace)
         // The popup will show the success message and close itself after 10 seconds
         setTimeout(() => {
-          // Close popup if still open
-          if (popup && !popup.closed) {
-            popup.close();
+          // Close popup if still open (with error handling for mobile)
+          try {
+            if (popup && !popup.closed) {
+              popup.close();
+            }
+          } catch (e) {
+            console.warn('Could not close popup:', e);
           }
           
           // Redirect to dashboard (mon espace) after 10 seconds
@@ -181,8 +219,16 @@ export async function createCheckoutAndRedirect(orderId: string, amount: number)
         }, 10000);
       } else if (event.data.type === 'SUMPUP_PAYMENT_FAILED') {
         console.log('Payment failed, closing popup');
-        popup.close();
         window.removeEventListener('message', messageHandler);
+        
+        // Close popup with error handling
+        try {
+          if (popup && !popup.closed) {
+            popup.close();
+          }
+        } catch (e) {
+          console.warn('Could not close popup:', e);
+        }
         
         // Show error message (you can customize this)
         alert('Le paiement a échoué. Veuillez réessayer.');
@@ -204,17 +250,23 @@ export async function createCheckoutAndRedirect(orderId: string, amount: number)
 
     window.addEventListener('message', messageHandler);
 
-    // Check if popup is closed manually
+    // Check if popup is closed manually (with error handling for mobile)
     const checkPopupClosed = setInterval(() => {
-      if (popup.closed) {
-        clearInterval(checkPopupClosed);
-        window.removeEventListener('message', messageHandler);
-        console.log('Popup was closed by user');
-        
-        // Reload page immediately when popup is closed
-        if (window.location.pathname.includes('/dashboard')) {
-          window.location.reload();
+      try {
+        if (popup.closed) {
+          clearInterval(checkPopupClosed);
+          window.removeEventListener('message', messageHandler);
+          console.log('Popup was closed by user');
+          
+          // Reload page immediately when popup is closed
+          if (window.location.pathname.includes('/dashboard')) {
+            window.location.reload();
+          }
         }
+      } catch (e) {
+        // On some mobile browsers, checking popup.closed might throw an error
+        // If we can't check, assume it's still open and continue checking
+        console.warn('Error checking popup status:', e);
       }
     }, 500);
   } catch (error: any) {
