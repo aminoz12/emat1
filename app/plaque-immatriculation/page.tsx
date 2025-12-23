@@ -296,7 +296,7 @@ export default function PlaqueImmatriculationPage() {
       return
     }
     
-    if (!selectedDepartment) {
+    if (plaqueType !== 'ww-provisoire' && !selectedDepartment) {
       alert('Veuillez sélectionner un département.')
       return
     }
@@ -337,6 +337,9 @@ export default function PlaqueImmatriculationPage() {
       }
       
       totalPrice *= quantity
+      
+      // Add delivery fee
+      totalPrice += 5.00
 
       const fullAddress = `${streetNumber} ${streetType} ${streetName}`.trim()
       
@@ -363,7 +366,7 @@ export default function PlaqueImmatriculationPage() {
           registrationNumber: registrationNumber.trim().toUpperCase().replace(/\s+/g, ''),
           plaqueType,
           material,
-          department: selectedDepartment,
+          department: plaqueType !== 'ww-provisoire' ? selectedDepartment : null,
           fixingMode,
           textOption,
           customText: textOption === 'custom' ? customText : '',
@@ -481,6 +484,9 @@ export default function PlaqueImmatriculationPage() {
     
     // Multiply by quantity
     total *= quantity
+    
+    // Add delivery fee
+    total += 5.00
     
     return total.toFixed(2).replace('.', ',')
   }
@@ -640,7 +646,7 @@ export default function PlaqueImmatriculationPage() {
                       }`}
                     >
                       {/* Radio button in top right corner */}
-                      <div className="absolute top-4 right-4">
+                      <div className="absolute top-4 right-4 z-10">
                         <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
                           plaqueType === 'permanente'
                             ? 'border-primary-600 bg-primary-600'
@@ -653,14 +659,14 @@ export default function PlaqueImmatriculationPage() {
                       </div>
                       
                       {/* Image */}
-                      <div className="mb-4 mt-1">
-                        <div className="relative aspect-[520/110] overflow-hidden">
+                      <div className="mb-4 mt-1 flex justify-center">
+                        <div className="relative w-full max-w-[240px] h-20 sm:h-24 md:h-28 overflow-hidden">
                           <Image
                             src="/permanente.png"
                             alt="Plaque permanente"
                             width={520}
                             height={110}
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-contain"
                             onError={(e) => {
                               e.currentTarget.style.display = 'none'
                             }}
@@ -687,7 +693,7 @@ export default function PlaqueImmatriculationPage() {
                       }`}
                     >
                       {/* Radio button in top right corner */}
-                      <div className="absolute top-4 right-4">
+                      <div className="absolute top-4 right-4 z-10">
                         <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
                           plaqueType === 'ww-provisoire'
                             ? 'border-primary-600 bg-primary-600'
@@ -701,13 +707,13 @@ export default function PlaqueImmatriculationPage() {
                       
                       {/* Image */}
                       <div className="mb-4 mt-1 flex justify-center">
-                        <div className="relative aspect-[520/110] overflow-hidden max-w-[90%]">
+                        <div className="relative w-full max-w-[240px] h-20 sm:h-24 md:h-28 overflow-hidden">
                           <Image
                             src="/provisoire.png"
                             alt="Plaque WW provisoire"
                             width={520}
                             height={110}
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-contain"
                             onError={(e) => {
                               e.currentTarget.style.display = 'none'
                             }}
@@ -797,7 +803,8 @@ export default function PlaqueImmatriculationPage() {
               </div>
             </div>
 
-            {/* Step 4: Department Selection */}
+            {/* Step 4: Department Selection - Hidden for temporary plates */}
+            {plaqueType !== 'ww-provisoire' && (
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 md:p-8 relative">
               <div className="absolute top-5 right-5">
                 <span className="text-xs text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full font-medium">
@@ -805,14 +812,14 @@ export default function PlaqueImmatriculationPage() {
                 </span>
               </div>
               
-              <div className="flex items-start space-x-5 md:space-x-6 pr-32">
+              <div className="flex flex-col md:flex-row items-start space-y-4 md:space-y-0 md:space-x-5 md:space-x-6 pr-32">
                 <div className="relative flex-shrink-0">
                   <div className="absolute inset-0 bg-gradient-to-br from-primary-600 to-primary-700 rounded-2xl blur-sm opacity-50"></div>
                   <div className="relative bg-gradient-to-br from-primary-500 via-primary-600 to-primary-700 text-white px-5 py-2.5 rounded-2xl flex items-center justify-center font-bold text-base md:text-lg shadow-xl border-2 border-white/20 backdrop-blur-sm">
                     <span className="relative z-10">4</span>
                   </div>
                 </div>
-                <div className="flex-1">
+                <div className="flex-1 w-full">
                   <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6">
                     Choisissez la région et le département
                   </h2>
@@ -835,13 +842,13 @@ export default function PlaqueImmatriculationPage() {
                           }`}
                         >
                           {/* Department Logo (Region Logo) */}
-                          <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center bg-gray-50 rounded-lg border border-gray-200">
+                          <div className="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center bg-gray-50 rounded-lg border border-gray-200">
                             <Image
                               src={getRegionLogo(dept.code)}
                               alt={`Logo ${dept.name}`}
                               width={40}
                               height={40}
-                              className="object-contain"
+                              className="object-contain w-full h-full"
                               onError={(e) => {
                                 // Hide image if it doesn't exist
                                 e.currentTarget.style.display = 'none'
@@ -850,7 +857,7 @@ export default function PlaqueImmatriculationPage() {
                           </div>
                           
                           {/* Department Info */}
-                          <div className="flex-1 text-left">
+                          <div className="flex-1 text-left min-w-0">
                             <div className={`font-semibold text-sm ${
                               selectedDepartment === dept.code
                                 ? 'text-primary-600'
@@ -873,8 +880,9 @@ export default function PlaqueImmatriculationPage() {
                 </div>
               </div>
             </div>
+            )}
 
-            {/* Step 5: Fixing Mode */}
+            {/* Step 5: Fixing Mode (Step 4 when department selection is hidden) */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 md:p-8 relative">
               <div className="absolute top-5 right-5">
                 <span className="text-xs text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full font-medium">
@@ -882,19 +890,19 @@ export default function PlaqueImmatriculationPage() {
                 </span>
               </div>
               
-              <div className="flex items-start space-x-5 md:space-x-6 pr-32">
+              <div className="flex flex-col md:flex-row items-start space-y-4 md:space-y-0 md:space-x-5 md:space-x-6 pr-32">
                 <div className="relative flex-shrink-0">
                   <div className="absolute inset-0 bg-gradient-to-br from-primary-600 to-primary-700 rounded-2xl blur-sm opacity-50"></div>
                   <div className="relative bg-gradient-to-br from-primary-500 via-primary-600 to-primary-700 text-white px-5 py-2.5 rounded-2xl flex items-center justify-center font-bold text-base md:text-lg shadow-xl border-2 border-white/20 backdrop-blur-sm">
-                    <span className="relative z-10">5</span>
+                    <span className="relative z-10">{plaqueType !== 'ww-provisoire' ? '5' : '4'}</span>
                   </div>
                 </div>
-                <div className="flex-1">
+                <div className="flex-1 w-full">
                   <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6">
                     Choisissez le mode de fixation
                   </h2>
                   
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {fixingModes.map((mode) => (
                       <button
                         key={mode.id}
@@ -907,7 +915,7 @@ export default function PlaqueImmatriculationPage() {
                         }`}
                       >
                         {/* Radio button in top right */}
-                        <div className="absolute top-3 right-3">
+                        <div className="absolute top-3 right-3 z-10">
                           <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
                             fixingMode === mode.id
                               ? 'border-primary-600 bg-primary-600'
@@ -920,18 +928,20 @@ export default function PlaqueImmatriculationPage() {
                         </div>
 
                         {/* Image */}
-                        <div className="mb-3 mt-1 h-24 flex items-center justify-center">
-                          <Image
-                            src={mode.image}
-                            alt={mode.name}
-                            width={100}
-                            height={80}
-                            className="object-contain max-w-full max-h-full"
-                            onError={(e) => {
-                              // Fallback if image doesn't exist
-                              e.currentTarget.style.display = 'none'
-                            }}
-                          />
+                        <div className="mb-3 mt-1 flex items-center justify-center">
+                          <div className="w-full h-20 max-w-[120px]">
+                            <Image
+                              src={mode.image}
+                              alt={mode.name}
+                              width={100}
+                              height={80}
+                              className="object-contain w-full h-full"
+                              onError={(e) => {
+                                // Fallback if image doesn't exist
+                                e.currentTarget.style.display = 'none'
+                              }}
+                            />
+                          </div>
                         </div>
 
                         {/* Description */}
@@ -958,7 +968,7 @@ export default function PlaqueImmatriculationPage() {
               </div>
             </div>
 
-            {/* Step 6: Add Text Under Plate */}
+            {/* Step 6: Add Text Under Plate (Step 5 when department selection is hidden) */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 md:p-8 relative">
               <div className="absolute top-5 right-5">
                 <span className="text-xs text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full font-medium">
@@ -970,7 +980,7 @@ export default function PlaqueImmatriculationPage() {
                 <div className="relative flex-shrink-0">
                   <div className="absolute inset-0 bg-gradient-to-br from-primary-600 to-primary-700 rounded-2xl blur-sm opacity-50"></div>
                   <div className="relative bg-gradient-to-br from-primary-500 via-primary-600 to-primary-700 text-white px-5 py-2.5 rounded-2xl flex items-center justify-center font-bold text-base md:text-lg shadow-xl border-2 border-white/20 backdrop-blur-sm">
-                    <span className="relative z-10">6</span>
+                    <span className="relative z-10">{plaqueType !== 'ww-provisoire' ? '6' : '5'}</span>
                   </div>
                 </div>
                 <div className="flex-1">
@@ -1074,7 +1084,7 @@ export default function PlaqueImmatriculationPage() {
               </div>
             </div>
 
-            {/* Step 7: Quantity */}
+            {/* Step 7: Quantity (Step 6 when department selection is hidden) */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 md:p-8 relative">
               <div className="absolute top-5 right-5">
                 <CheckCircle className="w-6 h-6 text-primary-600" />
@@ -1084,7 +1094,7 @@ export default function PlaqueImmatriculationPage() {
                 <div className="relative flex-shrink-0">
                   <div className="absolute inset-0 bg-gradient-to-br from-primary-600 to-primary-700 rounded-2xl blur-sm opacity-50"></div>
                   <div className="relative bg-gradient-to-br from-primary-500 via-primary-600 to-primary-700 text-white px-5 py-2.5 rounded-2xl flex items-center justify-center font-bold text-base md:text-lg shadow-xl border-2 border-white/20 backdrop-blur-sm">
-                    <span className="relative z-10">7</span>
+                    <span className="relative z-10">{plaqueType !== 'ww-provisoire' ? '7' : '6'}</span>
                   </div>
                 </div>
                 <div className="flex-1">
@@ -1112,62 +1122,62 @@ export default function PlaqueImmatriculationPage() {
               </div>
             </div>
 
-            {/* Step 8: Plate Preview */}
+            {/* Step 8: Plate Preview (Step 7 when department selection is hidden) */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 md:p-8 relative">
-              <div className="flex items-start space-x-5 md:space-x-6">
+              <div className="flex flex-col md:flex-row items-start space-y-4 md:space-y-0 space-x-5 md:space-x-6">
                 <div className="relative flex-shrink-0">
                   <div className="absolute inset-0 bg-gradient-to-br from-primary-600 to-primary-700 rounded-2xl blur-sm opacity-50"></div>
                   <div className="relative bg-gradient-to-br from-primary-500 via-primary-600 to-primary-700 text-white px-5 py-2.5 rounded-2xl flex items-center justify-center font-bold text-base md:text-lg shadow-xl border-2 border-white/20 backdrop-blur-sm">
-                    <span className="relative z-10">8</span>
+                    <span className="relative z-10">{plaqueType !== 'ww-provisoire' ? '8' : '7'}</span>
                   </div>
                 </div>
-                <div className="flex-1">
+                <div className="flex-1 w-full">
                   <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6">
                     Visuel de votre plaque
                   </h2>
                   
                   {/* License Plate Preview */}
                   <div className="mb-4 flex justify-center">
-                    <div className="relative border-2 border-gray-400 rounded-md overflow-hidden shadow-xl" style={{ aspectRatio: '520/110', maxWidth: '520px', width: '100%' }}>
+                    <div className="relative border-2 border-gray-400 rounded-md overflow-hidden shadow-xl w-full max-w-[95vw] sm:max-w-[520px]" style={{ aspectRatio: '520/110' }}>
                       {/* Left EU band with f.jpg */}
-                      <div className="absolute left-0 top-0 bottom-0 md:left-[-2px] md:bottom-[-4px] w-16 bg-gradient-to-b from-blue-600 via-blue-500 to-blue-600 flex items-center justify-center">
+                      <div className="absolute left-0 top-0 bottom-0 w-12 sm:w-16 bg-gradient-to-b from-blue-600 via-blue-500 to-blue-600 flex items-center justify-center">
                         {!euFlagError ? (
                         <Image
                             src="/f.jpg"
                           alt="EU band with F"
                             width={64}
                           height={110}
-                          className="w-full h-[60%] object-contain md:h-full"
+                          className="w-full h-[60%] object-contain"
                             style={{ filter: 'brightness(1.15) contrast(1.1)' }}
                             onError={() => setEuFlagError(true)}
                           />
                         ) : (
                           <div className="flex flex-col items-center justify-center h-full w-full">
-                            <div className="flex items-center justify-center mb-0.5 scale-75 md:scale-100">
+                            <div className="flex items-center justify-center mb-0.5">
                               <div className="grid grid-cols-3 gap-0.5">
                                 {[...Array(12)].map((_, i) => (
                                   <div key={i} className="w-1.5 h-1.5 bg-yellow-200 rounded-sm shadow-sm" style={{ filter: 'brightness(1.3)' }}></div>
                                 ))}
                               </div>
                             </div>
-                            <div className="text-white font-bold text-sm md:text-lg leading-none mt-0.5 drop-shadow-lg" style={{ filter: 'brightness(1.2)', textShadow: '0 0 2px rgba(255,255,255,0.8)' }}>F</div>
+                            <div className="text-white font-bold text-xs sm:text-sm md:text-lg leading-none drop-shadow-lg" style={{ filter: 'brightness(1.2)', textShadow: '0 0 2px rgba(255,255,255,0.8)' }}>F</div>
                           </div>
                         )}
                       </div>
                       
                       {/* Main plate area with registration number */}
-                      <div className="absolute left-16 right-14 top-0 bottom-0 flex items-center justify-center bg-white">
-                        <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-black tracking-[0.2em] font-mono select-none">
+                      <div className="absolute left-[3.5rem] sm:left-16 right-[3.5rem] sm:right-14 top-0 bottom-0 flex items-center justify-center bg-white">
+                        <div className="text-lg sm:text-2xl md:text-3xl lg:text-4xl font-bold text-black tracking-[0.1em] sm:tracking-[0.2em] font-mono select-none">
                           {formatRegistrationNumber(registrationNumber)}
                         </div>
                       </div>
                       
                       {/* Right band with region logo and department number */}
-                      <div className="absolute right-0 top-0 bottom-0 w-14 bg-gradient-to-b from-blue-600 via-blue-500 to-blue-600 flex flex-col overflow-hidden">
-                        {selectedDepartment ? (
+                      <div className="absolute right-0 top-0 bottom-0 w-12 sm:w-14 bg-gradient-to-b from-blue-600 via-blue-500 to-blue-600 flex flex-col overflow-hidden">
+                        {plaqueType !== 'ww-provisoire' && selectedDepartment ? (
                           <>
                             {/* Top part: Region logo */}
-                            <div className="flex-1 flex items-center justify-center p-1.5 min-h-0">
+                            <div className="flex-1 flex items-center justify-center p-1 min-h-0">
                               {!regionLogoError ? (
                                 <Image
                                   src={getRegionLogo(selectedDepartment)}
@@ -1184,12 +1194,19 @@ export default function PlaqueImmatriculationPage() {
                               )}
                             </div>
                             {/* Bottom part: Department number */}
-                            <div className="flex-shrink-0 h-8 flex items-center justify-center border-t border-blue-400/30">
-                              <div className="text-white font-bold text-sm leading-none">
+                            <div className="flex-shrink-0 h-6 sm:h-8 flex items-center justify-center border-t border-blue-400/30">
+                              <div className="text-white font-bold text-xs sm:text-sm leading-none">
                                 {selectedDepartment}
                               </div>
                             </div>
                           </>
+                        ) : plaqueType === 'ww-provisoire' ? (
+                          // For temporary plates, show WW logo
+                          <div className="flex-1 flex items-center justify-center">
+                            <div className="text-white font-bold text-xs sm:text-sm text-center leading-tight">
+                              WW
+                            </div>
+                          </div>
                         ) : null}
                       </div>
                     </div>

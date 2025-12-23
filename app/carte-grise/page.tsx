@@ -3614,7 +3614,7 @@ export default function CarteGrisePage() {
                       <span className="font-semibold">Paiement sécurisé</span>
                     </div>
                     <p className="text-sm text-gray-600">
-                      Paiement sécuriser avec PayPal, Carte Bancaire, Apple Pay, Google Pay
+                      Paiement sécuriser avec Carte Bancaire, Apple Pay, Google Pay
                       </p>
                     </div>
 

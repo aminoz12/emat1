@@ -159,7 +159,7 @@ const ProcessSection = () => {
                         <h4 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-green-700 transition-colors">Économique</h4>
                       </div>
                       <p className="text-sm text-gray-700 leading-relaxed">
-                      Profitez de tarifs clairs et accessibles, dès 29,90€ sans frais cachés.
+                      Profitez de tarifs clairs et accessibles, dès 15€ sans frais cachés.
 
                       </p>
                     </div>
