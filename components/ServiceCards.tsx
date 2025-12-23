@@ -8,7 +8,7 @@ const ServiceCards = () => {
       description: 'Transférez la propriété de votre véhicule rapidement et en toute sécurité.',
       icon: Users,
       href: '/services/changement-titulaire',
-      price: '29,90€',
+      price: '35€',
       time: '24h',
       popular: true,
     },
@@ -17,7 +17,7 @@ const ServiceCards = () => {
       description: 'Obtenez un duplicata de votre carte grise en cas de perte ou de vol.',
       icon: FileText,
       href: '/services/duplicata',
-      price: '29,90€',
+      price: '60€',
       time: '24h',
     },
     {
@@ -25,7 +25,7 @@ const ServiceCards = () => {
       description: 'Plaques temporaires pour vos déplacements avant immatriculation définitive.',
       icon: Car,
       href: '/services/immatriculation-provisoire',
-      price: '39,90€',
+      price: '49€',
       time: '48h',
     },
     {
@@ -33,7 +33,7 @@ const ServiceCards = () => {
       description: 'Enregistrez la vente de votre véhicule dans les délais légaux.',
       icon: FileText,
       href: '/services/cession',
-      price: '29,90€',
+      price: '20€',
       time: '24h',
     },
     {
@@ -41,7 +41,7 @@ const ServiceCards = () => {
       description: 'Mettez à jour votre adresse sur votre carte grise.',
       icon: FileText,
       href: '/services/changement-adresse',
-      price: '29,90€',
+      price: '15€',
       time: '24h',
     },
     {
@@ -49,7 +49,7 @@ const ServiceCards = () => {
       description: 'Obtenez les informations complètes de votre véhicule.',
       icon: FileText,
       href: '/services/fiche-identification',
-      price: '19,90€',
+      price: '50€',
       time: '24h',
     },
   ]
@@ -60,7 +60,7 @@ const ServiceCards = () => {
       description: 'Service dédié aux professionnels de l\'automobile.',
       icon: Building,
       href: '/professionnels/declaration-achat',
-      price: 'Sur devis',
+      price: '25€',
       time: '24h',
     },
     {
@@ -68,7 +68,7 @@ const ServiceCards = () => {
       description: 'Solution complète pour les garages et concessionnaires.',
       icon: Wrench,
       href: '/professionnels/w-garage',
-      price: 'Sur devis',
+      price: '60€',
       time: '24h',
     },
   ]

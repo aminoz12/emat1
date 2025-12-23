@@ -23,7 +23,8 @@ export async function POST(request: NextRequest) {
       vehicleData,
       serviceType,
       price,
-      metadata
+      metadata,
+      plaqueType // 'permanente' | 'ww-provisoire' (for plaque orders)
     } = body
 
     // Validate required fields
@@ -86,7 +87,8 @@ export async function POST(request: NextRequest) {
         status: 'pending',
         reference: reference,
         price: price,
-        metadata: metadata || {}
+        metadata: metadata || {},
+        plaque_type: type === 'plaque' ? (plaqueType || metadata?.plaqueType || null) : null
       })
       .select()
       .single()

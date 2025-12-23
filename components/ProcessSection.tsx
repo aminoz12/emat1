@@ -37,39 +37,38 @@ const ProcessSection = () => {
   ]
 
   return (
-    <section className="py-8 lg:py-12 bg-gray-50 w-full max-w-full overflow-x-hidden">
+    <section className="py-12 lg:py-16 bg-gradient-to-br from-gray-50 via-white to-gray-50 w-full max-w-full overflow-x-hidden">
       <div className="container">
         {/* Header */}
-        <div className="text-center mb-16">
-          <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
-          On s’occupe de vos démarches
-
+        <div className="text-center mb-12">
+          <h2 className="text-3xl lg:text-4xl xl:text-5xl font-bold text-gray-900 mb-4">
+            On s'occupe de vos démarches
           </h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-          Pionniers de l’immatriculation en ligne, nous avons conçu un service pensé pour vous :
-rapide, simple et parfaitement guidé à chaque étape. Notre objectif : rendre vos démarches
-d’immatriculation plus faciles que jamais.
-
+          <p className="text-lg lg:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+            Pionniers de l'immatriculation en ligne, nous avons conçu un service pensé pour vous : rapide, simple et parfaitement guidé à chaque étape. Notre objectif : rendre vos démarches d'immatriculation plus faciles que jamais.
           </p>
         </div>
 
         {/* Process Steps */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 mb-12">
           {steps.map((step, index) => (
             <div key={index} className="text-center">
-              <div className="flex items-center justify-center mx-auto mb-4">
+              <div className="flex items-center justify-center mx-auto mb-3">
                 <Image 
                   src={step.icon} 
                   alt={step.title}
                   width={160}
                   height={160}
-                  className="w-40 h-40"
+                  className="w-36 h-36 md:w-40 md:h-40"
                 />
               </div>
-              <div className="text-2xl font-bold text-gray-900 mb-2">
-                {step.number}
+              <div className="relative inline-block mb-3">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary-600 to-primary-700 rounded-2xl blur-sm opacity-30"></div>
+                <div className="relative bg-gradient-to-br from-primary-500 via-primary-600 to-primary-700 text-white px-4 py-1.5 rounded-2xl flex items-center justify-center font-bold text-base shadow-lg border-2 border-white/20">
+                  <span className="relative z-10">{step.number}</span>
+                </div>
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">
+              <h3 className="text-xl font-bold text-gray-900 mb-2">
                 {step.title}
               </h3>
               <p className="text-gray-600 text-sm leading-relaxed">
@@ -80,7 +79,7 @@ d’immatriculation plus faciles que jamais.
         </div>
 
         {/* Why Choose Us */}
-        <div className="mt-12">
+        <div className="mt-8">
           <div className="relative">
             {/* Background Decorative Elements */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -88,9 +87,9 @@ d’immatriculation plus faciles que jamais.
               <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-tr from-primary-50/40 to-transparent rounded-full blur-3xl"></div>
             </div>
             
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start relative z-10">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-10 items-start relative z-10">
               {/* Left Section - Text Content */}
-              <div className="space-y-6">
+              <div className="space-y-5">
                 {/* Badge */}
                 <div>
                   <span className="inline-flex items-center gap-2 text-xs font-semibold text-primary-700 uppercase tracking-wider px-5 py-2.5 bg-gradient-to-r from-primary-100 to-primary-50 border border-primary-200/50 rounded-full shadow-sm">

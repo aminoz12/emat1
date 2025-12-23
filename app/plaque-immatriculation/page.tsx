@@ -11,7 +11,8 @@ export default function PlaqueImmatriculationPage() {
   const router = useRouter()
   const { user, loading: sessionLoading } = useSupabaseSession()
   const [registrationNumber, setRegistrationNumber] = useState('')
-  const [vehicleType, setVehicleType] = useState('auto')
+  const [registrationNumberError, setRegistrationNumberError] = useState<string | null>(null)
+  const [plaqueType, setPlaqueType] = useState<string | null>(null)
   const [material, setMaterial] = useState('plexiglass')
   const [selectedDepartment, setSelectedDepartment] = useState<string | null>(null)
   const [fixingMode, setFixingMode] = useState<string | null>(null)
@@ -226,10 +227,28 @@ export default function PlaqueImmatriculationPage() {
   ]
 
   const handleRegistrationNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Convert to uppercase and remove all non-alphanumeric characters
-    const value = e.target.value
-    const filtered = value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, 10)
-    setRegistrationNumber(filtered)
+    // Remove all non-alphanumeric characters (including dashes) and convert to uppercase
+    const value = e.target.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase()
+    
+    // Allow up to 7 characters
+    const cleaned = value.slice(0, 7)
+    
+    setRegistrationNumber(cleaned)
+    
+    // Validate format: AA123AA (2 letters, 3 digits, 2 letters)
+    if (cleaned.length > 0) {
+      const formatRegex = /^[A-Z]{2}[0-9]{3}[A-Z]{2}$/
+      if (cleaned.length === 7 && formatRegex.test(cleaned)) {
+        setRegistrationNumberError(null)
+      } else if (cleaned.length === 7) {
+        setRegistrationNumberError('Le format doit être AA-123-AA (2 lettres, 3 chiffres, 2 lettres)')
+      } else {
+        setRegistrationNumberError('Le numéro doit contenir 7 caractères (2 lettres, 3 chiffres, 2 lettres)')
+      }
+    } else {
+      setRegistrationNumberError(null)
+    }
+    
     // Reset image error states when registration changes
     setRegionLogoError(false)
     setEuFlagError(false)
@@ -255,7 +274,25 @@ export default function PlaqueImmatriculationPage() {
     
     // Validate required fields
     if (!registrationNumber || registrationNumber.trim() === '') {
+      setRegistrationNumberError('Le numéro d\'immatriculation est obligatoire.')
       alert('Le numéro d\'immatriculation est obligatoire.')
+      return
+    }
+    
+    // Validate format: must be exactly 7 characters (2 letters, 3 digits, 2 letters)
+    const cleaned = registrationNumber.replace(/[^a-zA-Z0-9]/g, '').toUpperCase()
+    const formatRegex = /^[A-Z]{2}[0-9]{3}[A-Z]{2}$/
+    if (cleaned.length !== 7 || !formatRegex.test(cleaned)) {
+      setRegistrationNumberError('Le numéro d\'immatriculation doit être au format AA-123-AA (2 lettres, 3 chiffres, 2 lettres).')
+      alert('Le numéro d\'immatriculation doit être au format AA-123-AA (2 lettres, 3 chiffres, 2 lettres).')
+      return
+    }
+    
+    // Clear error if format is valid
+    setRegistrationNumberError(null)
+    
+    if (!plaqueType) {
+      alert('Veuillez sélectionner le type de plaque.')
       return
     }
     
@@ -283,8 +320,8 @@ export default function PlaqueImmatriculationPage() {
     }
 
     try {
-      // Calculate price
-      const basePrice = 15.90
+      // Calculate price based on plaque type
+      const basePrice = plaqueType === 'ww-provisoire' ? 20.00 : plaqueType === 'permanente' ? 10.00 : 15.90
       let totalPrice = basePrice
       
       if (textOption === 'website') {
@@ -311,6 +348,7 @@ export default function PlaqueImmatriculationPage() {
         },
         serviceType: 'plaque-immatriculation',
         price: totalPrice,
+        plaqueType, // Add plaqueType at top level for database column
         metadata: {
           firstName,
           lastName,
@@ -323,7 +361,7 @@ export default function PlaqueImmatriculationPage() {
           postalCode,
           city,
           registrationNumber: registrationNumber.trim().toUpperCase().replace(/\s+/g, ''),
-          vehicleType,
+          plaqueType,
           material,
           department: selectedDepartment,
           fixingMode,
@@ -423,7 +461,9 @@ export default function PlaqueImmatriculationPage() {
 
   // Calculate total price
   const calculateTotal = () => {
-    let total = 15.90 // Base price for Plexiglass auto
+    // Base price based on plaque type
+    const basePrice = plaqueType === 'ww-provisoire' ? 20.00 : plaqueType === 'permanente' ? 10.00 : 15.90
+    let total = basePrice
     
     // Text option adjustments
     if (textOption === 'website') {
@@ -446,25 +486,25 @@ export default function PlaqueImmatriculationPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
       {/* Top Header Bar */}
-      <div className="bg-gray-100 border-b border-gray-200 py-2.5">
+      <div className="bg-gradient-to-r from-primary-600 to-primary-700 text-white shadow-md">
         <div className="container mx-auto px-4">
-          <div className="flex flex-wrap items-center justify-center gap-8 text-sm text-gray-700">
-            <div className="flex items-center space-x-1.5">
-              <Flag className="w-4 h-4 text-primary-600" />
+          <div className="flex flex-wrap items-center justify-center gap-6 md:gap-8 py-3 text-sm font-medium">
+            <div className="flex items-center space-x-2">
+              <Flag className="w-4 h-4" />
               <span>Made in France</span>
             </div>
-            <div className="flex items-center space-x-1.5">
-              <Percent className="w-4 h-4 text-primary-600" />
+            <div className="flex items-center space-x-2">
+              <Percent className="w-4 h-4" />
               <span>Economisez jusqu'à 50%</span>
             </div>
-            <div className="flex items-center space-x-1.5">
-              <Truck className="w-4 h-4 text-primary-600" />
+            <div className="flex items-center space-x-2">
+              <Truck className="w-4 h-4" />
               <span>Livraison en 24/48h</span>
             </div>
-            <div className="flex items-center space-x-1.5">
-              <Star className="w-4 h-4 text-primary-600" />
+            <div className="flex items-center space-x-2">
+              <Star className="w-4 h-4" />
               <span>Matériaux haut de gamme</span>
             </div>
           </div>
@@ -472,36 +512,45 @@ export default function PlaqueImmatriculationPage() {
       </div>
 
       {/* Main Content */}
-      <div className="container mx-auto px-4 py-10">
+      <div className="container mx-auto px-4 py-12 md:py-16">
         <div className="max-w-5xl mx-auto">
           {/* Title and Description */}
-          <div className="text-center mb-10">
-            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-3">
+          <div className="text-center mb-12 md:mb-16">
+            <div className="inline-block mb-4">
+              <span className="bg-primary-100 text-primary-700 px-4 py-1.5 rounded-full text-sm font-semibold">
+                Commande en ligne
+              </span>
+            </div>
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-4 leading-tight">
               Quelles plaques souhaitez-vous commander ?
             </h1>
-            <p className="text-base text-gray-600 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
               Toutes nos plaques d'immatriculation sont fabriquées en France avec des matériaux de haute qualité.
             </p>
-            <p className="text-base text-gray-600 max-w-3xl mx-auto leading-relaxed mt-2">
+            <p className="text-base text-gray-500 max-w-3xl mx-auto leading-relaxed mt-3">
               La production et l'expédition sont réalisées sous 24h.
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-6 md:space-y-8">
             {/* Step 1: Registration Number */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 md:p-8 relative">
-              <div className="absolute top-5 right-5">
-                <span className="text-xs text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full font-medium">
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 md:p-8 lg:p-10 relative overflow-hidden transition-all duration-300 hover:shadow-xl">
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary-600 to-primary-400"></div>
+              <div className="absolute top-6 right-6">
+                <span className="text-xs text-primary-700 bg-primary-50 border border-primary-200 px-3 py-1.5 rounded-full font-semibold">
                   Obligatoire
                 </span>
               </div>
               
-              <div className="flex items-start space-x-4 pr-32">
-                <div className="w-10 h-10 bg-primary-600 text-white rounded-full flex items-center justify-center flex-shrink-0 font-bold text-lg">
-                  1
+              <div className="flex items-start space-x-5 md:space-x-6 pr-32">
+                <div className="relative flex-shrink-0">
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary-600 to-primary-700 rounded-2xl blur-sm opacity-50"></div>
+                  <div className="relative bg-gradient-to-br from-primary-500 via-primary-600 to-primary-700 text-white px-5 py-2.5 rounded-2xl flex items-center justify-center font-bold text-base md:text-lg shadow-xl border-2 border-white/20 backdrop-blur-sm">
+                    <span className="relative z-10">1</span>
+                  </div>
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-xl font-bold text-gray-900 mb-5">
+                  <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6">
                     Indiquez le numéro d'immatriculation
                   </h2>
                   
@@ -509,31 +558,48 @@ export default function PlaqueImmatriculationPage() {
                     <div className="flex-1">
                       <input
                         type="text"
-                        value={registrationNumber}
+                        value={formatRegistrationNumber(registrationNumber)}
                         onChange={handleRegistrationNumberChange}
-                        placeholder="AA - 123 - AA"
-                        maxLength={10}
-                        className="w-full px-5 py-4 text-base border-2 border-gray-300 rounded-lg focus:border-primary-600 focus:ring-2 focus:ring-primary-600 focus:ring-opacity-20 outline-none transition-all placeholder:text-gray-400 uppercase"
+                        placeholder="AA-123-AA"
+                        maxLength={9}
+                        className={`w-full px-6 py-4 md:py-5 text-lg border-2 rounded-xl focus:ring-4 focus:ring-opacity-20 outline-none transition-all duration-200 placeholder:text-gray-400 uppercase tracking-wider font-semibold ${
+                          registrationNumberError
+                            ? 'border-red-400 bg-red-50 focus:border-red-500 focus:ring-red-500'
+                            : 'border-gray-300 bg-gray-50 focus:border-primary-500 focus:ring-primary-500 focus:bg-white'
+                        }`}
                         required
                       />
+                      {registrationNumberError ? (
+                        <p className="text-xs text-red-600 mt-2 flex items-center gap-1">
+                          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                          </svg>
+                          {registrationNumberError}
+                        </p>
+                      ) : (
+                        <p className="text-xs text-gray-500 mt-2">
+                          Format: 2 lettres, 3 chiffres, 2 lettres (ex: AA-123-AA)
+                        </p>
+                      )}
                     </div>
                     
-                    <div className="lg:w-64">
-                      <h3 className="text-sm font-semibold text-gray-900 mb-3">
+                    <div className="lg:w-72">
+                      <h3 className="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 bg-primary-500 rounded-full"></span>
                         Exemples possibles
                       </h3>
-                      <div className="space-y-2.5">
-                        <div className="bg-gray-50 px-3 py-2 rounded-md border border-gray-100">
-                          <div className="text-sm font-medium text-gray-900">AA-123-AA</div>
-                          <div className="text-xs text-gray-500 mt-0.5">Numéro actuel</div>
+                      <div className="space-y-3">
+                        <div className="bg-gradient-to-br from-primary-50 to-primary-100/50 px-4 py-3 rounded-xl border border-primary-200 shadow-sm hover:shadow-md transition-shadow">
+                          <div className="text-base font-bold text-gray-900">AA-123-AA</div>
+                          <div className="text-xs text-gray-600 mt-1">Numéro actuel</div>
                         </div>
-                        <div className="bg-gray-50 px-3 py-2 rounded-md border border-gray-100">
-                          <div className="text-sm font-medium text-gray-900">123 ABC 01</div>
-                          <div className="text-xs text-gray-500 mt-0.5">Ancien numéro</div>
+                        <div className="bg-gray-50 px-4 py-3 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                          <div className="text-base font-bold text-gray-900">123 ABC 01</div>
+                          <div className="text-xs text-gray-600 mt-1">Ancien numéro</div>
                         </div>
-                        <div className="bg-gray-50 px-3 py-2 rounded-md border border-gray-100">
-                          <div className="text-sm font-medium text-gray-900">LIVRAISON</div>
-                          <div className="text-xs text-gray-500 mt-0.5">Texte libre</div>
+                        <div className="bg-gray-50 px-4 py-3 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                          <div className="text-base font-bold text-gray-900">LIVRAISON</div>
+                          <div className="text-xs text-gray-600 mt-1">Texte libre</div>
                         </div>
                       </div>
                     </div>
@@ -542,54 +608,120 @@ export default function PlaqueImmatriculationPage() {
               </div>
             </div>
 
-            {/* Step 2: Vehicle Type */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 md:p-8 relative">
-              <div className="absolute top-5 right-5">
-                <CheckCircle className="w-6 h-6 text-primary-600" />
+            {/* Step 2: Plaque Type */}
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 md:p-8 lg:p-10 relative overflow-hidden transition-all duration-300 hover:shadow-xl">
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary-600 to-primary-400"></div>
+              <div className="absolute top-6 right-6">
+                <span className="text-xs text-primary-700 bg-primary-50 border border-primary-200 px-3 py-1.5 rounded-full font-semibold">
+                  Obligatoire
+                </span>
               </div>
               
-              <div className="flex items-start space-x-4 pr-16">
-                <div className="w-10 h-10 bg-primary-600 text-white rounded-full flex items-center justify-center flex-shrink-0 font-bold text-lg">
-                  2
+              <div className="flex items-start space-x-5 md:space-x-6 pr-32">
+                <div className="relative flex-shrink-0">
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary-600 to-primary-700 rounded-2xl blur-sm opacity-50"></div>
+                  <div className="relative bg-gradient-to-br from-primary-500 via-primary-600 to-primary-700 text-white px-5 py-2.5 rounded-2xl flex items-center justify-center font-bold text-base md:text-lg shadow-xl border-2 border-white/20 backdrop-blur-sm">
+                    <span className="relative z-10">2</span>
+                  </div>
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-xl font-bold text-gray-900 mb-5">
-                    Choisissez le type de véhicule
+                  <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6">
+                    Choisissez le type de votre plaque
                   </h2>
                   
-                  <div className="flex flex-wrap gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 md:gap-6">
                     <button
                       type="button"
-                      onClick={() => setVehicleType('auto')}
-                      className={`px-5 py-4 rounded-lg border-2 transition-all flex items-center justify-between min-w-[180px] ${
-                        vehicleType === 'auto'
-                          ? 'border-primary-600 bg-primary-50'
-                          : 'border-gray-200 bg-white hover:border-gray-300'
+                      onClick={() => setPlaqueType('permanente')}
+                      className={`relative p-6 md:p-8 rounded-2xl border-2 transition-all duration-300 text-left transform hover:scale-[1.02] ${
+                        plaqueType === 'permanente'
+                          ? 'border-primary-500 bg-gradient-to-br from-primary-50 to-primary-100/50 shadow-lg ring-2 ring-primary-200'
+                          : 'border-gray-200 bg-white hover:border-primary-300 hover:shadow-md'
                       }`}
                     >
-                      <div className="flex items-center space-x-3">
-                        <div className="relative w-6 h-6 flex-shrink-0">
+                      {/* Radio button in top right corner */}
+                      <div className="absolute top-4 right-4">
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                          plaqueType === 'permanente'
+                            ? 'border-primary-600 bg-primary-600'
+                            : 'border-gray-300 bg-white'
+                        }`}>
+                          {plaqueType === 'permanente' && (
+                            <div className="w-2.5 h-2.5 bg-white rounded-full"></div>
+                          )}
+                        </div>
+                      </div>
+                      
+                      {/* Image */}
+                      <div className="mb-4 mt-1">
+                        <div className="relative aspect-[520/110] overflow-hidden">
                           <Image
-                            src="/voiture-musclee.png"
-                            alt="Auto"
-                            width={24}
-                            height={24}
-                            className="object-contain"
+                            src="/permanente.png"
+                            alt="Plaque permanente"
+                            width={520}
+                            height={110}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none'
+                            }}
                           />
                         </div>
-                        <span className={`font-semibold text-sm ${vehicleType === 'auto' ? 'text-primary-600' : 'text-gray-700'}`}>
-                          Auto
-                        </span>
                       </div>
-                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                        vehicleType === 'auto'
-                          ? 'border-primary-600 bg-primary-600'
-                          : 'border-gray-300 bg-white'
-                      }`}>
-                        {vehicleType === 'auto' && (
-                          <div className="w-2.5 h-2.5 bg-white rounded-full"></div>
-                        )}
+                      
+                      {/* Type Info */}
+                      <h3 className={`font-semibold text-lg mb-1 ${plaqueType === 'permanente' ? 'text-primary-600' : 'text-gray-900'}`}>
+                        Permanente
+                      </h3>
+                      <p className="text-sm text-gray-600">
+                        Plaque d'immatriculation permanente
+                      </p>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setPlaqueType('ww-provisoire')}
+                      className={`relative p-6 md:p-8 rounded-2xl border-2 transition-all duration-300 text-left transform hover:scale-[1.02] ${
+                        plaqueType === 'ww-provisoire'
+                          ? 'border-primary-500 bg-gradient-to-br from-primary-50 to-primary-100/50 shadow-lg ring-2 ring-primary-200'
+                          : 'border-gray-200 bg-white hover:border-primary-300 hover:shadow-md'
+                      }`}
+                    >
+                      {/* Radio button in top right corner */}
+                      <div className="absolute top-4 right-4">
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                          plaqueType === 'ww-provisoire'
+                            ? 'border-primary-600 bg-primary-600'
+                            : 'border-gray-300 bg-white'
+                        }`}>
+                          {plaqueType === 'ww-provisoire' && (
+                            <div className="w-2.5 h-2.5 bg-white rounded-full"></div>
+                          )}
+                        </div>
                       </div>
+                      
+                      {/* Image */}
+                      <div className="mb-4 mt-1 flex justify-center">
+                        <div className="relative aspect-[520/110] overflow-hidden max-w-[90%]">
+                          <Image
+                            src="/provisoire.png"
+                            alt="Plaque WW provisoire"
+                            width={520}
+                            height={110}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none'
+                            }}
+                          />
+                        </div>
+                      </div>
+                      
+                      {/* Type Info */}
+                      <h3 className={`font-semibold text-lg mb-1 ${plaqueType === 'ww-provisoire' ? 'text-primary-600' : 'text-gray-900'}`}>
+                        WW provisoire
+                      </h3>
+                      <p className="text-sm text-gray-600">
+                        Plaque d'immatriculation provisoire WW
+                      </p>
                     </button>
                   </div>
                 </div>
@@ -597,17 +729,21 @@ export default function PlaqueImmatriculationPage() {
             </div>
 
             {/* Step 3: Material */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 md:p-8 relative">
-              <div className="absolute top-5 right-5">
-                <CheckCircle className="w-6 h-6 text-primary-600" />
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 md:p-8 lg:p-10 relative overflow-hidden transition-all duration-300 hover:shadow-xl">
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary-600 to-primary-400"></div>
+              <div className="absolute top-6 right-6">
+                <CheckCircle className="w-7 h-7 text-primary-600" />
               </div>
               
-              <div className="flex items-start space-x-4 pr-16">
-                <div className="w-10 h-10 bg-primary-600 text-white rounded-full flex items-center justify-center flex-shrink-0 font-bold text-lg">
-                  3
+              <div className="flex items-start space-x-5 md:space-x-6 pr-20">
+                <div className="relative flex-shrink-0">
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary-600 to-primary-700 rounded-2xl blur-sm opacity-50"></div>
+                  <div className="relative bg-gradient-to-br from-primary-500 via-primary-600 to-primary-700 text-white px-5 py-2.5 rounded-2xl flex items-center justify-center font-bold text-base md:text-lg shadow-xl border-2 border-white/20 backdrop-blur-sm">
+                    <span className="relative z-10">3</span>
+                  </div>
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-xl font-bold text-gray-900 mb-5">
+                  <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6">
                     Choisissez le matériau
                   </h2>
                   
@@ -615,10 +751,10 @@ export default function PlaqueImmatriculationPage() {
                     <button
                       type="button"
                       onClick={() => setMaterial('plexiglass')}
-                      className={`relative p-4 rounded-lg border-2 transition-all text-left w-full sm:w-[280px] ${
+                      className={`relative p-6 md:p-7 rounded-2xl border-2 transition-all duration-300 text-left w-full sm:w-[320px] transform hover:scale-[1.02] ${
                         material === 'plexiglass'
-                          ? 'border-primary-600 bg-primary-50'
-                          : 'border-gray-200 bg-white hover:border-gray-300'
+                          ? 'border-primary-500 bg-gradient-to-br from-primary-50 to-primary-100/50 shadow-lg ring-2 ring-primary-200'
+                          : 'border-gray-200 bg-white hover:border-primary-300 hover:shadow-md'
                       }`}
                     >
                       {/* Radio button in top right corner */}
@@ -636,7 +772,7 @@ export default function PlaqueImmatriculationPage() {
                       
                       {/* License Plate Image */}
                       <div className="mb-3 mt-1">
-                        <div className="relative bg-gray-50 rounded-lg aspect-[520/110] overflow-hidden border border-gray-100">
+                        <div className="relative aspect-[520/110] overflow-hidden">
                           {/* License Plate Image */}
                           <Image
                             src="/p.png"
@@ -672,12 +808,15 @@ export default function PlaqueImmatriculationPage() {
                 </span>
               </div>
               
-              <div className="flex items-start space-x-4 pr-32">
-                <div className="w-10 h-10 bg-primary-600 text-white rounded-full flex items-center justify-center flex-shrink-0 font-bold text-lg">
-                  4
+              <div className="flex items-start space-x-5 md:space-x-6 pr-32">
+                <div className="relative flex-shrink-0">
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary-600 to-primary-700 rounded-2xl blur-sm opacity-50"></div>
+                  <div className="relative bg-gradient-to-br from-primary-500 via-primary-600 to-primary-700 text-white px-5 py-2.5 rounded-2xl flex items-center justify-center font-bold text-base md:text-lg shadow-xl border-2 border-white/20 backdrop-blur-sm">
+                    <span className="relative z-10">4</span>
+                  </div>
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-xl font-bold text-gray-900 mb-5">
+                  <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6">
                     Choisissez la région et le département
                   </h2>
                   
@@ -746,12 +885,15 @@ export default function PlaqueImmatriculationPage() {
                 </span>
               </div>
               
-              <div className="flex items-start space-x-4 pr-32">
-                <div className="w-10 h-10 bg-primary-600 text-white rounded-full flex items-center justify-center flex-shrink-0 font-bold text-lg">
-                  5
+              <div className="flex items-start space-x-5 md:space-x-6 pr-32">
+                <div className="relative flex-shrink-0">
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary-600 to-primary-700 rounded-2xl blur-sm opacity-50"></div>
+                  <div className="relative bg-gradient-to-br from-primary-500 via-primary-600 to-primary-700 text-white px-5 py-2.5 rounded-2xl flex items-center justify-center font-bold text-base md:text-lg shadow-xl border-2 border-white/20 backdrop-blur-sm">
+                    <span className="relative z-10">5</span>
+                  </div>
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-xl font-bold text-gray-900 mb-5">
+                  <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6">
                     Choisissez le mode de fixation
                   </h2>
                   
@@ -827,12 +969,15 @@ export default function PlaqueImmatriculationPage() {
                 </span>
               </div>
               
-              <div className="flex items-start space-x-4 pr-32">
-                <div className="w-10 h-10 bg-primary-600 text-white rounded-full flex items-center justify-center flex-shrink-0 font-bold text-lg">
-                  6
+              <div className="flex items-start space-x-5 md:space-x-6 pr-32">
+                <div className="relative flex-shrink-0">
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary-600 to-primary-700 rounded-2xl blur-sm opacity-50"></div>
+                  <div className="relative bg-gradient-to-br from-primary-500 via-primary-600 to-primary-700 text-white px-5 py-2.5 rounded-2xl flex items-center justify-center font-bold text-base md:text-lg shadow-xl border-2 border-white/20 backdrop-blur-sm">
+                    <span className="relative z-10">6</span>
+                  </div>
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-xl font-bold text-gray-900 mb-5">
+                  <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6">
                     Ajoutez un texte sous votre plaque
                   </h2>
                   
@@ -938,12 +1083,15 @@ export default function PlaqueImmatriculationPage() {
                 <CheckCircle className="w-6 h-6 text-primary-600" />
               </div>
               
-              <div className="flex items-start space-x-4 pr-16">
-                <div className="w-10 h-10 bg-primary-600 text-white rounded-full flex items-center justify-center flex-shrink-0 font-bold text-lg">
-                  7
+              <div className="flex items-start space-x-5 md:space-x-6 pr-20">
+                <div className="relative flex-shrink-0">
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary-600 to-primary-700 rounded-2xl blur-sm opacity-50"></div>
+                  <div className="relative bg-gradient-to-br from-primary-500 via-primary-600 to-primary-700 text-white px-5 py-2.5 rounded-2xl flex items-center justify-center font-bold text-base md:text-lg shadow-xl border-2 border-white/20 backdrop-blur-sm">
+                    <span className="relative z-10">7</span>
+                  </div>
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-xl font-bold text-gray-900 mb-5">
+                  <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6">
                     Quantité
                   </h2>
                   
@@ -969,12 +1117,15 @@ export default function PlaqueImmatriculationPage() {
 
             {/* Step 8: Plate Preview */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 md:p-8 relative">
-              <div className="flex items-start space-x-4">
-                <div className="w-10 h-10 bg-primary-600 text-white rounded-full flex items-center justify-center flex-shrink-0 font-bold text-lg">
-                  8
+              <div className="flex items-start space-x-5 md:space-x-6">
+                <div className="relative flex-shrink-0">
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary-600 to-primary-700 rounded-2xl blur-sm opacity-50"></div>
+                  <div className="relative bg-gradient-to-br from-primary-500 via-primary-600 to-primary-700 text-white px-5 py-2.5 rounded-2xl flex items-center justify-center font-bold text-base md:text-lg shadow-xl border-2 border-white/20 backdrop-blur-sm">
+                    <span className="relative z-10">8</span>
+                  </div>
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-xl font-bold text-gray-900 mb-5">
+                  <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6">
                     Visuel de votre plaque
                   </h2>
                   
@@ -1063,8 +1214,9 @@ export default function PlaqueImmatriculationPage() {
             </div>
 
             {/* Client Information Section */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 md:p-8 mt-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-6">Vos informations</h3>
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 md:p-8 lg:p-10 mt-8 relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary-600 to-primary-400"></div>
+              <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-8">Vos informations</h3>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
@@ -1236,18 +1388,21 @@ export default function PlaqueImmatriculationPage() {
             </div>
 
             {/* Bottom Navigation and Total */}
-            <div className="flex flex-col items-center space-y-4 pt-6">
+            <div className="flex flex-col items-center space-y-6 pt-8">
               {/* Total Price */}
-              <div className="text-right w-full max-w-5xl">
-                <div className="text-2xl font-bold text-gray-900">
-                  Total {calculateTotal()} €
+              <div className="w-full max-w-5xl bg-gradient-to-r from-primary-50 to-primary-100/50 rounded-2xl p-6 md:p-8 border-2 border-primary-200">
+                <div className="flex items-center justify-between">
+                  <span className="text-lg md:text-xl font-semibold text-gray-700">Total</span>
+                  <div className="text-3xl md:text-4xl font-bold text-primary-700">
+                    {calculateTotal()} €
+                  </div>
                 </div>
               </div>
 
               {/* Next Button */}
               <button
                 type="submit"
-                className="bg-primary-600 text-white px-12 py-3.5 rounded-lg font-semibold text-base hover:bg-primary-700 transition-colors shadow-md"
+                className="bg-gradient-to-r from-primary-600 to-primary-700 text-white px-12 py-4 md:py-5 rounded-2xl font-bold text-lg hover:from-primary-700 hover:to-primary-800 transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:-translate-y-1 active:translate-y-0 w-full sm:w-auto"
               >
                 Suivant
               </button>
@@ -1255,7 +1410,7 @@ export default function PlaqueImmatriculationPage() {
               {/* Previous Link */}
               <button
                 type="button"
-                className="text-gray-500 hover:text-gray-700 transition-colors text-sm"
+                className="text-gray-500 hover:text-primary-600 transition-colors text-sm font-medium"
               >
                 &lt; Précédent
               </button>

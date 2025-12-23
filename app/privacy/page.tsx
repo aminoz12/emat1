@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { Shield, Database, Target, Scale, Clock, Share2, UserCheck } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Politique de confidentialité (RGPD) - EMatricule',
+  title: 'Politique de confidentialité (RGPD) - E-matricule',
   description: 'Politique de confidentialité et protection des données personnelles de e-matricule.',
 }
 

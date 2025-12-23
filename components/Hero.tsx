@@ -24,7 +24,7 @@ const Hero = () => {
     return () => clearInterval(interval)
   }, [carouselImages.length])
   return (
-    <section className="relative bg-gradient-to-br from-white via-primary-50/40 via-white to-primary-100/30 py-6 lg:py-10 overflow-hidden w-full max-w-full" style={{ zIndex: 1 }}>
+    <section className="relative bg-gradient-to-br from-white via-primary-50/40 via-white to-primary-100/30 py-8 lg:py-12 overflow-hidden w-full max-w-full" style={{ zIndex: 1 }}>
       {/* Advanced Decorative Background Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none w-full max-w-full">
         {/* Base Gradient Layer */}
@@ -131,15 +131,15 @@ const Hero = () => {
       <div className="container relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
           {/* Left side - Content */}
-          <div className="space-y-8 order-2 lg:order-1">
-            <div className="space-y-6">
+          <div className="space-y-6 order-2 lg:order-1">
+            <div className="space-y-5">
               {/* Badge */}
               <div className="inline-flex items-center gap-2 bg-primary-100/80 backdrop-blur-sm text-primary-700 px-4 py-2 rounded-full text-sm font-semibold border border-primary-200/50">
                 <span className="w-2 h-2 bg-primary-600 rounded-full animate-pulse"></span>
                 <span>Plateforme officielle depuis 2009</span>
               </div>
 
-              <h1 className="text-3xl lg:text-4xl font-extrabold text-gray-900 leading-tight tracking-tight">
+              <h1 className="text-4xl lg:text-5xl xl:text-6xl font-extrabold text-gray-900 leading-tight tracking-tight">
                 Faites votre{' '}
                 <span className="relative inline-block">
                   <span className="relative z-10 text-primary-600">carte grise</span>
@@ -147,18 +147,14 @@ const Hero = () => {
                 </span>
                 {' '}et vos{' '}
                 <span className="relative inline-block">
-                  <span className="relative z-10 text-primary-600">plaques d’immatriculation</span>
+                  <span className="relative z-10 text-primary-600">plaques d'immatriculation</span>
                   <span className="absolute bottom-2 left-0 right-0 h-3 bg-primary-200/40 -z-0 transform -skew-x-12"></span>
                 </span>
-                {' '} en quelques minutes
+                {' '}en quelques minutes
               </h1>
               
               <p className="text-lg lg:text-xl text-gray-600 max-w-2xl leading-relaxed">
-              Nous accompagnons des milliers d’automobilistes avec une solution simple, rapide et
-sécurisée.
-Habilités par l’État Français, nous prenons en charge toutes vos démarches
-d’immatriculation en ligne, sans déplacement ni paperasse inutile.
-
+                Nous accompagnons des milliers d'automobilistes avec une solution simple, rapide et sécurisée. Habilités par l'État Français, nous prenons en charge toutes vos démarches d'immatriculation en ligne, sans déplacement ni paperasse inutile.
               </p>
             </div>
 
@@ -177,11 +173,11 @@ d’immatriculation en ligne, sans déplacement ni paperasse inutile.
               </Link>
               
               <Link
-                href="/commander-plaques"
+                href="/plaque-immatriculation"
                 className="group relative bg-white text-primary-600 px-8 py-4 text-base font-bold rounded-3xl text-center shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 border-2 border-primary-200 hover:border-primary-300 hover:bg-primary-50/80 overflow-hidden backdrop-blur-sm"
               >
                 <span className="relative z-10 flex items-center justify-center space-x-2">
-                  <span>Commander des plaques d’immatriculation</span>
+                  <span>Commander des plaques d'immatriculation</span>
                   <span className="group-hover:translate-x-2 transition-transform duration-300">→</span>
                 </span>
                 <div className="absolute inset-0 bg-gradient-to-r from-primary-50/0 via-primary-100/50 to-primary-50/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 transform -skew-x-12 group-hover:translate-x-full group-hover:translate-x-0"></div>

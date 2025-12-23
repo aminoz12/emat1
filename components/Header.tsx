@@ -66,13 +66,13 @@ const Header = () => {
       <div className="container overflow-visible">
         <div className="flex items-center justify-between py-6 overflow-visible">
           {/* Logo */}
-          <Link href="/" className="flex items-center">
+          <Link href="/" className="flex items-center -my-2">
             <Image
               src="/logo.png"
               alt="EMatricule"
               width={280}
               height={90}
-              className="h-20 w-auto"
+              className="h-28 md:h-32 w-auto"
             />
           </Link>
 

@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { CheckCircle, Shield, Zap, FileCheck } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Qui sommes-nous ? - EMatricule',
+  title: 'Qui sommes-nous ? - E-matricule',
   description: 'e-matricule est une plateforme spécialisée dans les démarches d\'immatriculation en ligne, opérée par Espace Auto 92.',
 }
 

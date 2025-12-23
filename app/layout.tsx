@@ -7,7 +7,7 @@ import ConditionalLayout from '@/components/ConditionalLayout'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'EMatricule - Cartes Grises et Plaques d\'Immatriculation',
+  title: 'E-matricule - Cartes Grises et Plaques d\'Immatriculation',
   description: 'Votre carte grise & vos plaques d\'immatriculation en 2 minutes. Service d\'immatriculation simplifié en ligne avec habilitation du Ministère de l\'Intérieur.',
   keywords: 'carte grise, plaque immatriculation, immatriculation, véhicule, auto, moto, camion',
 }

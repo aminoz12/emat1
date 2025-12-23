@@ -75,7 +75,7 @@ const Footer = () => {
                 </li>
                 <li>
                   <Link
-                    href="/commander-plaques"
+                    href="/plaque-immatriculation"
                     className="text-gray-600 hover:text-primary-600 transition-colors text-sm"
                   >
                     Plaques d'immatriculation

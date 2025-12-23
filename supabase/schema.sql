@@ -67,6 +67,7 @@ CREATE TABLE IF NOT EXISTS public.orders (
   reference TEXT UNIQUE,
   price DECIMAL(10, 2) NOT NULL,
   metadata JSONB DEFAULT '{}'::jsonb,
+  plaque_type TEXT, -- Type of plaque: 'permanente' or 'ww-provisoire' (for plaque orders)
   created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()) NOT NULL,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()) NOT NULL
 );
@@ -100,6 +101,7 @@ CREATE INDEX IF NOT EXISTS idx_profiles_email ON public.profiles(email);
 CREATE INDEX IF NOT EXISTS idx_orders_user_id ON public.orders(user_id);
 CREATE INDEX IF NOT EXISTS idx_orders_status ON public.orders(status);
 CREATE INDEX IF NOT EXISTS idx_orders_type ON public.orders(type);
+CREATE INDEX IF NOT EXISTS idx_orders_plaque_type ON public.orders(plaque_type) WHERE plaque_type IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_documents_order_id ON public.documents(order_id);
 CREATE INDEX IF NOT EXISTS idx_payments_order_id ON public.payments(order_id);
 

@@ -2,11 +2,11 @@ import Link from 'next/link'
 
 const CTASection = () => {
   return (
-    <section className="py-24 lg:py-32 bg-gradient-to-br from-primary-700 via-primary-800 to-primary-900 text-white w-full max-w-full overflow-x-hidden">
+    <section className="py-16 lg:py-20 bg-gradient-to-br from-primary-700 via-primary-800 to-primary-900 text-white w-full max-w-full overflow-x-hidden">
       <div className="container">
         <div className="max-w-5xl mx-auto text-center">
           {/* Main Text */}
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-12 leading-tight px-4">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-8 leading-tight px-4">
             Votre carte grise & vos plaques<br className="hidden sm:block" /> d'immatriculation en 2 minutes
           </h2>
 
@@ -23,7 +23,7 @@ const CTASection = () => {
 
             {/* Button 2 - Commander plaques */}
             <Link
-              href="/commander-plaques"
+              href="/plaque-immatriculation"
               className="group relative bg-transparent border-2 border-white/90 text-white hover:bg-white hover:text-primary-800 px-10 py-4 rounded-3xl font-semibold text-base shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300"
             >
               Commander plaques

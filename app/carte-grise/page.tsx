@@ -279,7 +279,7 @@ export default function CarteGrisePage() {
       }
       
       // Calculate price
-      const finalPrice = calculatedPrice?.totalPrice || parseFloat(selectedDocument?.price?.replace('€', '').replace(',', '.') || '29.90')
+      const finalPrice = calculatedPrice?.totalPrice || parseFloat(selectedDocument?.price?.replace('€', '').replace(',', '.') || '35.00')
       
       // Handle form submission
       const fullAddress = `${streetNumber} ${streetType} ${streetName}`.trim()
@@ -1004,7 +1004,7 @@ export default function CarteGrisePage() {
       value: 'changement-titulaire', 
       label: 'Changement de titulaire', 
       description: 'Vous avez acheté un véhicule neuf ou d\'occasion, en France ou à l\'étranger.',
-      price: '29,90€',
+      price: '35€',
       icon: Users,
       iconImage: '/g1.png'
     },
@@ -1012,7 +1012,7 @@ export default function CarteGrisePage() {
       value: 'duplicata', 
       label: 'Demande de duplicata', 
       description: 'Votre carte grise est perdue, volée ou détériorée.',
-      price: '29,90€',
+      price: '60€',
       icon: Copy,
       iconImage: '/g2.png'
     },
@@ -1020,7 +1020,7 @@ export default function CarteGrisePage() {
       value: 'immatriculation-provisoire-ww', 
       label: 'Immatriculation provisoire WW', 
       description: 'Vous avez acheté un véhicule à l\'étranger et souhaitez obtenir une immatriculation provisoire WW valable 4 mois.',
-      price: '39,90€',
+      price: '49€',
       icon: Car,
       iconImage: '/g3.png'
     },
@@ -1028,7 +1028,7 @@ export default function CarteGrisePage() {
       value: 'enregistrement-cession', 
       label: 'Enregistrement de cession', 
       description: 'Vous avez vendu votre véhicule et souhaitez ne plus être tenu responsable en cas d\'amende ou d\'accident.',
-      price: '29,90€',
+      price: '20€',
       icon: FileCheck,
       iconImage: '/g4.png'
     },
@@ -1036,7 +1036,7 @@ export default function CarteGrisePage() {
       value: 'changement-adresse', 
       label: 'Changement d\'adresse', 
       description: 'Vous avez changé d\'adresse ou votre rue a été renommée : mettez à jour votre carte grise.',
-      price: '29,90€',
+      price: '15€',
       icon: Home,
       iconImage: '/g5.png'
     },
@@ -1044,7 +1044,7 @@ export default function CarteGrisePage() {
       value: 'fiche-identification', 
       label: 'Fiche d\'identification du véhicule', 
       description: 'Vous avez perdu votre carte grise et avez besoin d\'un document officiel pour réaliser un contrôle technique.',
-      price: '19,90€',
+      price: '50€',
       icon: Search,
       iconImage: '/g6.png'
     },
@@ -1052,7 +1052,7 @@ export default function CarteGrisePage() {
       value: 'declaration-achat', 
       label: 'Déclaration d\'achat', 
       description: 'Vous êtes un professionnel de l\'automobile et souhaitez déclarer l\'achat d\'un véhicule.',
-      price: 'Sur devis',
+      price: '25€',
       icon: Building2,
       iconImage: '/g7.png'
     },
@@ -1060,7 +1060,7 @@ export default function CarteGrisePage() {
       value: 'w-garage', 
       label: 'W Garage', 
       description: 'Vous êtes un professionnel de l\'automobile et souhaitez obtenir ou renouveler un certificat W Garage.',
-      price: 'Sur devis',
+      price: '60€',
       icon: Building2,
       iconImage: '/g8.png'
     },
@@ -1069,39 +1069,40 @@ export default function CarteGrisePage() {
   const selectedDocument = documentTypes.find(doc => doc.value === documentType)
 
   return (
-    <div className="min-h-screen bg-white">
-      <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
+      {/* Top Header Bar */}
+      <div className="bg-gradient-to-r from-primary-600 to-primary-700 text-white shadow-md">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-wrap items-center justify-center gap-6 md:gap-8 py-3 text-sm font-medium">
+            <div className="flex items-center space-x-2">
+              <Shield className="w-4 h-4" />
+              <span>Habilité Ministère de l'Intérieur</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Clock className="w-4 h-4" />
+              <span>Traitement express 24h</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <CheckCircle className="w-4 h-4" />
+              <span>Livraison sécurisée</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="container mx-auto px-4 py-12 md:py-16">
         <div className="max-w-7xl mx-auto">
           {/* Header Section */}
-          <div className="text-center mb-12">
-            <div className="w-20 h-20 bg-primary-600 rounded-full flex items-center justify-center mx-auto mb-6">
-              <FileText className="w-10 h-10 text-white" />
-            </div>
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
+          <div className="text-center mb-12 md:mb-16">
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 mb-4 leading-tight">
               Carte Grise en ligne
             </h1>
-            <p className="text-base sm:text-lg lg:text-xl text-gray-600 max-w-2xl mx-auto px-4 mb-4">
+            <p className="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed mb-3">
               Obtenez votre carte grise en seulement 2 minutes.
             </p>
-            <p className="text-base sm:text-lg text-gray-600 max-w-2xl mx-auto px-4 mb-6">
+            <p className="text-base text-gray-500 max-w-3xl mx-auto leading-relaxed">
               Un service d'immatriculation en ligne simple, rapide et officiellement habilité par le Ministère de l'Intérieur.
             </p>
-            
-            {/* Features */}
-            <div className="flex flex-col sm:flex-row flex-wrap justify-center gap-4 sm:gap-6 mt-6 sm:mt-8 px-4">
-              <div className="flex items-center space-x-2 text-gray-600 text-sm sm:text-base">
-                <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-primary-600 flex-shrink-0" />
-                <span className="font-medium">● Habilitation du Ministère de l'Intérieur</span>
-              </div>
-              <div className="flex items-center space-x-2 text-gray-600 text-sm sm:text-base">
-                <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-primary-600 flex-shrink-0" />
-                <span className="font-medium">● Traitement express sous 24h</span>
-              </div>
-              <div className="flex items-center space-x-2 text-gray-600 text-sm sm:text-base">
-                <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-primary-600 flex-shrink-0" />
-                <span className="font-medium">● Livraison sécurisée par l'Imprimerie Nationale</span>
-              </div>
-            </div>
           </div>
 
           {/* Main Content - Two Column Layout */}
@@ -1109,8 +1110,9 @@ export default function CarteGrisePage() {
             {/* Left Column: Document Preview / Information */}
             <div>
               {/* Document Type Selection */}
-              <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6 mb-6 shadow-sm">
-                <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-4 sm:mb-6">
+              <div className="bg-white border border-gray-100 rounded-2xl p-6 md:p-8 mb-6 shadow-lg relative overflow-hidden transition-all duration-300 hover:shadow-xl">
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary-600 to-primary-400"></div>
+                <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6">
                   Types de démarches
                 </h2>
                 <div className="space-y-2 sm:space-y-3">
@@ -1145,10 +1147,10 @@ export default function CarteGrisePage() {
                           }
                         })
                       }}
-                        className={`w-full p-3 sm:p-4 rounded-lg border transition-all text-left flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 hover:shadow-md relative ${
+                        className={`w-full p-4 sm:p-5 rounded-2xl border-2 transition-all duration-300 text-left flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 hover:shadow-lg relative transform hover:scale-[1.01] ${
                           documentType === doc.value
-                            ? 'border-primary-600 bg-white shadow-sm'
-                            : 'border-gray-200 bg-white hover:border-gray-300'
+                            ? 'border-primary-500 bg-gradient-to-br from-primary-50 to-primary-100/50 shadow-lg ring-2 ring-primary-200'
+                            : 'border-gray-200 bg-white hover:border-primary-300 hover:shadow-md'
                         }`}
                       >
                         {/* Icon - Isolated container with fixed size */}
@@ -1232,9 +1234,10 @@ export default function CarteGrisePage() {
               </div>
 
               {/* Document Preview */}
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
+              <div className="bg-white border border-gray-100 rounded-2xl p-6 md:p-8 shadow-lg relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary-600 to-primary-400"></div>
                 <div className="mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-3">
                     Aperçu du mandat
                 </h3>
                   <p className="text-sm text-gray-600 mb-4">
@@ -1246,9 +1249,9 @@ export default function CarteGrisePage() {
                     type="button"
                     onClick={handleGenerateMandat}
                     disabled={isGeneratingMandat || !firstName || !lastName || !email || !streetNumber || !streetType || !streetName || !postalCode || !city || !vin || vin.length !== 17 || !registrationNumber || !validateRegistrationNumber(registrationNumber) || !marque || (clientType === 'company' && !siret)}
-                    className={`w-full mb-4 py-3 px-4 rounded-lg font-semibold transition-colors flex items-center justify-center space-x-2 ${
+                    className={`w-full mb-4 py-4 px-6 rounded-2xl font-bold text-base transition-all duration-300 flex items-center justify-center space-x-2 shadow-lg ${
                       !isGeneratingMandat && firstName && lastName && email && streetNumber && streetType && streetName && postalCode && city && vin && vin.length === 17 && registrationNumber && validateRegistrationNumber(registrationNumber) && marque && (clientType !== 'company' || siret)
-                        ? 'bg-primary-600 text-white hover:bg-primary-700'
+                        ? 'bg-gradient-to-r from-primary-600 to-primary-700 text-white hover:from-primary-700 hover:to-primary-800 hover:shadow-xl transform hover:-translate-y-0.5 active:translate-y-0'
                         : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                     }`}
                   >
@@ -1333,7 +1336,7 @@ export default function CarteGrisePage() {
                           <button
                             type="button"
                             onClick={handleValidateSignature}
-                            className="px-6 py-2.5 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition-colors flex items-center space-x-2 shadow-md"
+                            className="px-6 py-3 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-2xl font-bold hover:from-primary-700 hover:to-primary-800 transition-all duration-300 flex items-center space-x-2 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 active:translate-y-0"
                           >
                             <CheckCircle className="w-4 h-4" />
                             <span>Valider la signature</span>
@@ -1389,19 +1392,20 @@ export default function CarteGrisePage() {
 
             {/* Right Column: Order Form */}
             <div>
-              <div className="bg-white border border-gray-200 rounded-lg p-6 md:p-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">
+              <div className="bg-white border border-gray-100 rounded-2xl p-6 md:p-8 lg:p-10 shadow-lg relative overflow-hidden transition-all duration-300 hover:shadow-xl">
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary-600 to-primary-400"></div>
+              <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-8">
                   Informations de commande
               </h2>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                   {/* Document Type Display */}
                   {selectedDocument && (
-                    <div className="bg-primary-50 border border-primary-200 rounded-lg p-4 mb-6">
+                    <div className="bg-gradient-to-br from-primary-50 to-primary-100/50 border-2 border-primary-200 rounded-2xl p-5 md:p-6 mb-6 shadow-sm">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-sm text-primary-700 font-medium">Démarche sélectionnée</p>
-                          <p className="text-lg font-bold text-primary-900">{selectedDocument.label}</p>
+                          <p className="text-sm text-primary-700 font-semibold mb-1">Démarche sélectionnée</p>
+                          <p className="text-xl md:text-2xl font-bold text-primary-900">{selectedDocument.label}</p>
                           {calculatedPrice && (
                             <p className="text-xs text-primary-600 mt-1">
                               Département {calculatedPrice.department} {calculatedPrice.departmentName && `(${calculatedPrice.departmentName})`}
@@ -1458,7 +1462,7 @@ export default function CarteGrisePage() {
                           maxLength={17}
                           minLength={17}
                           required
-                          className="w-full px-4 py-2.5 border border-gray-300 rounded focus:ring-2 focus:ring-primary-600 focus:border-primary-600 outline-none"
+                          className="w-full px-5 py-3 border-2 border-gray-300 rounded-xl focus:ring-4 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all duration-200 bg-gray-50 focus:bg-white"
                           placeholder="Ex: 1HGBH41JXMN109186"
                           pattern="[A-Z0-9]{17}"
                           title="Le VIN doit contenir exactement 17 caractères alphanumériques"
@@ -1479,10 +1483,10 @@ export default function CarteGrisePage() {
                           onChange={handleRegistrationNumberChange}
                           required
                           maxLength={9} // AA-123-CD = 9 characters with dashes
-                          className={`w-full px-4 py-2.5 border rounded focus:ring-2 focus:ring-primary-600 focus:border-primary-600 outline-none ${
-                            registrationNumberError 
-                              ? 'border-red-500 focus:border-red-500 focus:ring-red-500' 
-                              : 'border-gray-300'
+                          className={`w-full px-5 py-3 border-2 rounded-xl focus:ring-4 focus:ring-opacity-20 outline-none transition-all duration-200 ${
+                              registrationNumberError
+                              ? 'border-red-400 bg-red-50 focus:border-red-500 focus:ring-red-500' 
+                              : 'border-gray-300 bg-gray-50 focus:border-primary-500 focus:ring-primary-500 focus:bg-white'
                           }`}
                           placeholder="Ex: AB-123-CD"
                         />
@@ -1534,7 +1538,7 @@ export default function CarteGrisePage() {
                           type="text"
                           value={firstName}
                           onChange={(e) => setFirstName(e.target.value)}
-                          className="w-full px-4 py-2.5 border border-gray-300 rounded focus:ring-2 focus:ring-primary-600 focus:border-primary-600 outline-none"
+                          className="w-full px-5 py-3 border-2 border-gray-300 rounded-xl focus:ring-4 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all duration-200 bg-gray-50 focus:bg-white"
                           required
                         />
                       </div>
@@ -1546,7 +1550,7 @@ export default function CarteGrisePage() {
                           type="text"
                           value={lastName}
                           onChange={(e) => setLastName(e.target.value)}
-                          className="w-full px-4 py-2.5 border border-gray-300 rounded focus:ring-2 focus:ring-primary-600 focus:border-primary-600 outline-none"
+                          className="w-full px-5 py-3 border-2 border-gray-300 rounded-xl focus:ring-4 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all duration-200 bg-gray-50 focus:bg-white"
                           required
                         />
                     </div>
@@ -1562,7 +1566,7 @@ export default function CarteGrisePage() {
                           type="email"
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
-                          className="w-full px-4 py-2.5 border border-gray-300 rounded focus:ring-2 focus:ring-primary-600 focus:border-primary-600 outline-none"
+                          className="w-full px-5 py-3 border-2 border-gray-300 rounded-xl focus:ring-4 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all duration-200 bg-gray-50 focus:bg-white"
                           required
                         />
                       </div>
@@ -1574,7 +1578,7 @@ export default function CarteGrisePage() {
                           type="tel"
                           value={phone}
                           onChange={(e) => setPhone(e.target.value)}
-                          className="w-full px-4 py-2.5 border border-gray-300 rounded focus:ring-2 focus:ring-primary-600 focus:border-primary-600 outline-none"
+                          className="w-full px-5 py-3 border-2 border-gray-300 rounded-xl focus:ring-4 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all duration-200 bg-gray-50 focus:bg-white"
                           required
                         />
                       </div>
@@ -1607,7 +1611,7 @@ export default function CarteGrisePage() {
                         <select
                           value={streetType}
                           onChange={(e) => setStreetType(e.target.value)}
-                          className="w-full px-4 py-2.5 border border-gray-300 rounded focus:ring-2 focus:ring-primary-600 focus:border-primary-600 outline-none"
+                          className="w-full px-5 py-3 border-2 border-gray-300 rounded-xl focus:ring-4 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all duration-200 bg-gray-50 focus:bg-white"
                           required
                         >
                           <option value="">Sélectionner...</option>
@@ -1626,7 +1630,7 @@ export default function CarteGrisePage() {
                           type="text"
                           value={streetName}
                           onChange={(e) => setStreetName(e.target.value)}
-                          className="w-full px-4 py-2.5 border border-gray-300 rounded focus:ring-2 focus:ring-primary-600 focus:border-primary-600 outline-none"
+                          className="w-full px-5 py-3 border-2 border-gray-300 rounded-xl focus:ring-4 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all duration-200 bg-gray-50 focus:bg-white"
                           required
                           placeholder="Ex: de la République"
                         />
@@ -1643,7 +1647,7 @@ export default function CarteGrisePage() {
                           type="text"
                           value={postalCode}
                           onChange={(e) => setPostalCode(e.target.value)}
-                          className="w-full px-4 py-2.5 border border-gray-300 rounded focus:ring-2 focus:ring-primary-600 focus:border-primary-600 outline-none"
+                          className="w-full px-5 py-3 border-2 border-gray-300 rounded-xl focus:ring-4 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all duration-200 bg-gray-50 focus:bg-white"
                           required
                         />
                       </div>
@@ -1655,7 +1659,7 @@ export default function CarteGrisePage() {
                           type="text"
                           value={city}
                           onChange={(e) => setCity(e.target.value)}
-                          className="w-full px-4 py-2.5 border border-gray-300 rounded focus:ring-2 focus:ring-primary-600 focus:border-primary-600 outline-none"
+                          className="w-full px-5 py-3 border-2 border-gray-300 rounded-xl focus:ring-4 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all duration-200 bg-gray-50 focus:bg-white"
                           required
                         />
                 </div>
@@ -3588,7 +3592,7 @@ export default function CarteGrisePage() {
                   </div>
 
                   {/* Acceptance Checkbox */}
-                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
+                  <div className="bg-gradient-to-br from-gray-50 to-gray-100/50 border-2 border-gray-200 rounded-2xl p-5 md:p-6 mb-4 shadow-sm">
                     <label className="flex items-start space-x-3 cursor-pointer">
                       <input
                         type="checkbox"
@@ -3604,7 +3608,7 @@ export default function CarteGrisePage() {
                   </div>
 
                   {/* Payment Info */}
-                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                  <div className="bg-gradient-to-br from-primary-50 to-primary-100/30 border-2 border-primary-200 rounded-2xl p-5 md:p-6 shadow-sm">
                     <div className="flex items-center space-x-2 text-gray-700 mb-2">
                       <CreditCard className="w-5 h-5 text-primary-600" />
                       <span className="font-semibold">Paiement sécurisé</span>
@@ -3616,8 +3620,8 @@ export default function CarteGrisePage() {
 
                   {/* Error Message */}
                   {submitError && (
-                    <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4">
-                      <p className="text-sm">{submitError}</p>
+                    <div className="bg-red-50 border-2 border-red-200 text-red-700 px-5 py-4 rounded-2xl mb-4 shadow-sm">
+                      <p className="text-sm font-medium">{submitError}</p>
                     </div>
                   )}
 
@@ -3625,9 +3629,9 @@ export default function CarteGrisePage() {
                   <button
                     type="submit"
                     disabled={!acceptTerms || isSubmitting || !mandatPreviewUrl || !mandatPreviewUrlWithSignature || !isSignatureValidated}
-                    className={`w-full py-3.5 px-6 rounded font-semibold text-base transition-colors flex items-center justify-center space-x-2 ${
+                    className={`w-full py-4 md:py-5 px-6 rounded-2xl font-bold text-lg transition-all duration-300 flex items-center justify-center space-x-2 shadow-xl ${
                       acceptTerms && !isSubmitting && mandatPreviewUrl && mandatPreviewUrlWithSignature && isSignatureValidated
-                        ? 'bg-primary-600 text-white hover:bg-primary-700'
+                        ? 'bg-gradient-to-r from-primary-600 to-primary-700 text-white hover:from-primary-700 hover:to-primary-800 hover:shadow-2xl transform hover:-translate-y-1 active:translate-y-0'
                         : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                     }`}
                   >

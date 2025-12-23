@@ -688,7 +688,7 @@ const ProPage = () => {
                 Commander carte grise
               </Link>
               <Link 
-                href="/commander-plaques"
+                href="/plaque-immatriculation"
                 className="border-2 border-white text-white px-8 py-4 rounded-3xl font-semibold hover:bg-white hover:text-[#0d6962] transition-colors"
               >
                 Commander plaques

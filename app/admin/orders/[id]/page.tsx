@@ -35,6 +35,7 @@ interface OrderDetails {
   price: number
   reference?: string
   metadata?: any
+  plaque_type?: string
   created_at: string
   updated_at: string
   vehicles?: {
@@ -286,6 +287,16 @@ export default function AdminOrderDetailsPage() {
                    order.type === 'plaque' ? 'Plaque Immatriculation' : 'COC'}
                 </p>
               </div>
+              {order.type === 'plaque' && (order.plaque_type || order.metadata?.plaqueType) && (
+                <div>
+                  <p className="text-sm text-gray-600 mb-1">Type de plaque</p>
+                  <p className="font-medium text-gray-900">
+                    {(order.plaque_type || order.metadata?.plaqueType) === 'permanente' ? 'Permanente' : 
+                     (order.plaque_type || order.metadata?.plaqueType) === 'ww-provisoire' ? 'WW provisoire' : 
+                     (order.plaque_type || order.metadata?.plaqueType)}
+                  </p>
+                </div>
+              )}
               <div>
                 <p className="text-sm text-gray-600 mb-1">Prix</p>
                 <p className="font-medium text-gray-900">{order.price.toFixed(2)} €</p>

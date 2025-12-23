@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { Cookie, Shield, BarChart3, Settings, Target, AlertCircle, Clock, Trash2, UserCheck } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Politique cookies - EMatricule',
+  title: 'Politique cookies - E-matricule',
   description: 'Politique d\'utilisation des cookies sur le site e-matricule.',
 }
 

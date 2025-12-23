@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Conditions générales de vente (CGV) - EMatricule',
+  title: 'Conditions générales de vente (CGV) - E-matricule',
   description: 'Conditions générales de vente de e-matricule, opéré par Espace Auto 92.',
 }
 

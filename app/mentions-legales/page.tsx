@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { Mail, MapPin, Building2, User, Server } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Mentions légales - EMatricule',
+  title: 'Mentions légales - E-matricule',
   description: 'Mentions légales du site e-matricule, opéré par Espace Auto 92.',
 }
 
