@@ -791,9 +791,6 @@ export default function PlaqueImmatriculationPage() {
                       <p className="text-sm text-gray-600 mb-2">
                         520x110mm
                       </p>
-                      <p className="text-lg font-bold text-gray-900">
-                        15,90 €
-                      </p>
                     </button>
                   </div>
                 </div>
