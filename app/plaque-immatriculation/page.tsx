@@ -462,32 +462,37 @@ export default function PlaqueImmatriculationPage() {
     }
   }
 
-  // Calculate total price
-  const calculateTotal = () => {
+  // Calculate plate price (without delivery)
+  const calculatePlatePrice = () => {
     // Base price based on plaque type
     const basePrice = plaqueType === 'ww-provisoire' ? 20.00 : plaqueType === 'permanente' ? 10.00 : 15.90
-    let total = basePrice
+    let platePrice = basePrice
     
     // Text option adjustments
     if (textOption === 'website') {
-      total -= 1.00
+      platePrice -= 1.00
     } else if (textOption === 'custom') {
-      total += 1.50
+      platePrice += 1.50
     }
     
     // Fixing mode adjustments
     if (fixingMode === 'rivets-premium' || fixingMode === 'rivets-premium-noirs') {
-      total += 1.90
+      platePrice += 1.90
     } else if (fixingMode === 'kit-pose') {
-      total += 14.90
+      platePrice += 14.90
     }
     
     // Multiply by quantity
-    total *= quantity
+    platePrice *= quantity
     
-    // Add delivery fee
-    total += 5.00
-    
+    return platePrice
+  }
+
+  // Calculate total price
+  const calculateTotal = () => {
+    const platePrice = calculatePlatePrice()
+    const deliveryPrice = 5.00
+    const total = platePrice + deliveryPrice
     return total.toFixed(2).replace('.', ',')
   }
 
@@ -1405,10 +1410,24 @@ export default function PlaqueImmatriculationPage() {
             <div className="flex flex-col items-center space-y-6 pt-8">
               {/* Total Price */}
               <div className="w-full max-w-5xl bg-gradient-to-r from-primary-50 to-primary-100/50 rounded-2xl p-6 md:p-8 border-2 border-primary-200">
-                <div className="flex items-center justify-between">
-                  <span className="text-lg md:text-xl font-semibold text-gray-700">Total</span>
-                  <div className="text-3xl md:text-4xl font-bold text-primary-700">
-                    {calculateTotal()} €
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-lg md:text-xl font-medium text-gray-700">Prix du plaque</span>
+                    <div className="text-xl md:text-2xl font-semibold text-gray-800">
+                      {calculatePlatePrice().toFixed(2).replace('.', ',')} €
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-lg md:text-xl font-medium text-gray-700">Prix de livraison</span>
+                    <div className="text-xl md:text-2xl font-semibold text-gray-800">
+                      5,00 €
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between border-t-2 border-primary-300 pt-3">
+                    <span className="text-lg md:text-xl font-semibold text-gray-700">Total</span>
+                    <div className="text-3xl md:text-4xl font-bold text-primary-700">
+                      {calculateTotal()} €
+                    </div>
                   </div>
                 </div>
               </div>

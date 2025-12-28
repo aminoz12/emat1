@@ -229,6 +229,8 @@ export default function CarteGrisePage() {
     departmentName: string
   } | null>(null)
   const [isCalculatingPrice, setIsCalculatingPrice] = useState(false)
+  const [fraisDeDossier, setFraisDeDossier] = useState<number | null>(null)
+  const [isCalculatingFraisDossier, setIsCalculatingFraisDossier] = useState(false)
 
   const handleFileChange = (setter: (file: File | null) => void) => (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -287,7 +289,12 @@ export default function CarteGrisePage() {
       }
       
       // Calculate price
-      const finalPrice = calculatedPrice?.totalPrice || parseFloat(selectedDocument?.price?.replace('€', '').replace(',', '.') || '35.00')
+      let finalPrice: number
+      if (documentType === 'changement-titulaire' && fraisDeDossier !== null) {
+        finalPrice = fraisDeDossier + 35.00
+      } else {
+        finalPrice = calculatedPrice?.totalPrice || parseFloat(selectedDocument?.price?.replace('€', '').replace(',', '.') || '35.00')
+      }
       
       // Handle form submission
       const fullAddress = `${streetNumber} ${streetType} ${streetName}`.trim()
@@ -926,53 +933,185 @@ export default function CarteGrisePage() {
 
   // Calculer le prix de la carte grise basé sur le code postal
   useEffect(() => {
+    let isMounted = true
+    let timeoutId: NodeJS.Timeout | null = null
+
     const calculatePrice = async () => {
       // Ne calculer que si le code postal est valide (5 chiffres pour métropole, 3 pour DOM)
       if (!postalCode || (!/^\d{5}$/.test(postalCode) && !/^97\d{3}$/.test(postalCode))) {
-        setCalculatedPrice(null)
+        if (isMounted) {
+          setCalculatedPrice(null)
+        }
         return
       }
 
       // Ne calculer que pour certaines démarches (pas pour "Sur devis")
       if (documentType === 'declaration-achat' || documentType === 'w-garage') {
-        setCalculatedPrice(null)
+        if (isMounted) {
+          setCalculatedPrice(null)
+        }
         return
       }
 
-      setIsCalculatingPrice(true)
+      // For changement-titulaire, we use a different API (frais de dossier)
+      if (documentType === 'changement-titulaire') {
+        return
+      }
+
+      if (isMounted) {
+        setIsCalculatingPrice(true)
+      }
+
       try {
         const response = await fetch(`/api/calculate-carte-grise-price?postalCode=${postalCode}`)
+        
+        if (!isMounted) return
+
         if (response.ok) {
           const data = await response.json()
           // Vérifier que le prix calculé est valide
-          if (data.totalPrice !== undefined && data.totalPrice > 0) {
-            setCalculatedPrice(data)
-          } else {
-            setCalculatedPrice(null)
+          if (isMounted) {
+            if (data.totalPrice !== undefined && data.totalPrice > 0) {
+              setCalculatedPrice(data)
+            } else {
+              setCalculatedPrice(null)
+            }
           }
         } else {
           if (process.env.NODE_ENV === 'development') {
-            console.error('Erreur lors du calcul du prix:', await response.text())
+            const errorText = await response.text()
+            console.error('Erreur lors du calcul du prix:', errorText)
           }
-          setCalculatedPrice(null)
+          if (isMounted) {
+            setCalculatedPrice(null)
+          }
         }
       } catch (error) {
         if (process.env.NODE_ENV === 'development') {
           console.error('Erreur lors du calcul du prix:', error)
         }
-        setCalculatedPrice(null)
+        if (isMounted) {
+          setCalculatedPrice(null)
+        }
       } finally {
-        setIsCalculatingPrice(false)
+        if (isMounted) {
+          setIsCalculatingPrice(false)
+        }
       }
     }
 
     // Délai pour éviter trop d'appels API (debounce)
-    const timeoutId = setTimeout(() => {
+    timeoutId = setTimeout(() => {
       calculatePrice()
     }, 500)
 
-    return () => clearTimeout(timeoutId)
+    return () => {
+      isMounted = false
+      if (timeoutId) {
+        clearTimeout(timeoutId)
+      }
+    }
   }, [postalCode, documentType])
+
+  // Calculer les frais de dossier pour changement-titulaire
+  useEffect(() => {
+    let isMounted = true
+    let timeoutId: NodeJS.Timeout | null = null
+
+    const calculateFraisDossier = async () => {
+      // Only calculate for changement-titulaire
+      if (documentType !== 'changement-titulaire') {
+        if (isMounted) {
+          setFraisDeDossier(null)
+        }
+        return
+      }
+
+      // Need valid registration number and postal code
+      if (!registrationNumber || !validateRegistrationNumber(registrationNumber)) {
+        if (isMounted) {
+          setFraisDeDossier(null)
+        }
+        return
+      }
+
+      if (!postalCode || (!/^\d{5}$/.test(postalCode) && !/^97\d{3}$/.test(postalCode))) {
+        if (isMounted) {
+          setFraisDeDossier(null)
+        }
+        return
+      }
+
+      if (isMounted) {
+        setIsCalculatingFraisDossier(true)
+      }
+
+      try {
+        // Format: remove spaces but keep dashes (API expects format like FN-954-ER)
+        const formattedPlaque = registrationNumber.replace(/\s/g, '')
+        const response = await fetch(
+          `/api/calculate-frais-dossier?plaque=${encodeURIComponent(formattedPlaque)}&code_postal=${postalCode}`
+        )
+        
+        if (!isMounted) return
+
+        if (response.ok) {
+          const data = await response.json()
+          
+          // Log response for debugging
+          if (process.env.NODE_ENV === 'development') {
+            console.log('📥 Frontend received frais de dossier data:', data)
+            console.log('💰 fraisDeDossier value:', data.fraisDeDossier)
+            console.log('📦 rawResponse:', data.rawResponse)
+          }
+          
+          if (isMounted) {
+            // Accept 0 as a valid value (frais de dossier might be 0 for some cases)
+            if (data.fraisDeDossier !== undefined && data.fraisDeDossier !== null) {
+              setFraisDeDossier(data.fraisDeDossier)
+            } else if (data.error) {
+              console.error('API returned error:', data.error)
+              setFraisDeDossier(null)
+            } else {
+              console.warn('Unexpected response structure:', data)
+              setFraisDeDossier(null)
+            }
+          }
+        } else {
+          if (process.env.NODE_ENV === 'development') {
+            const errorText = await response.text()
+            console.error('❌ Erreur lors du calcul des frais de dossier:', response.status, errorText)
+          }
+          if (isMounted) {
+            setFraisDeDossier(null)
+          }
+        }
+      } catch (error) {
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Erreur lors du calcul des frais de dossier:', error)
+        }
+        if (isMounted) {
+          setFraisDeDossier(null)
+        }
+      } finally {
+        if (isMounted) {
+          setIsCalculatingFraisDossier(false)
+        }
+      }
+    }
+
+    // Délai pour éviter trop d'appels API (debounce)
+    timeoutId = setTimeout(() => {
+      calculateFraisDossier()
+    }, 500)
+
+    return () => {
+      isMounted = false
+      if (timeoutId) {
+        clearTimeout(timeoutId)
+      }
+    }
+  }, [registrationNumber, postalCode, documentType])
 
   // Track if user has manually changed the document type
   const [userChangedType, setUserChangedType] = useState(false)
@@ -1036,8 +1175,8 @@ export default function CarteGrisePage() {
     {
       value: 'carte-grise-vehicule-etranger-ue', 
       label: 'Carte grise véhicule étranger (UE)', 
-      description: 'À la suite de l’achat d’un véhicule à l’étranger, avec ou sans immatriculation WW. Délai de traitement estimé entre 1 et 5 semaines.',
-      price: '99€',
+      description: 'Vous avez acheté un véhicule à l\'étranger et souhaitez obtenir une immatriculation provisoire WW valable 4 mois.',
+      price: '49€',
       icon: Car,
       iconImage: '/wwe.png'
     },
@@ -1185,10 +1324,12 @@ export default function CarteGrisePage() {
                               src={doc.iconImage as string}
                               alt={doc.label}
                               width={
+                                (doc.iconImage as string)?.includes('wwe.png') ? 120 :
                                 doc.value === 'declaration-achat' || doc.value === 'w-garage' ? 171 :
                                 doc.value === 'changement-adresse' ? 640 : 240
                               }
                               height={
+                                (doc.iconImage as string)?.includes('wwe.png') ? 120 :
                                 doc.value === 'declaration-achat' || doc.value === 'w-garage' ? 171 :
                                 doc.value === 'changement-adresse' ? 640 : 240
                               }
@@ -1196,9 +1337,11 @@ export default function CarteGrisePage() {
                               loading="lazy"
                               style={{
                                 maxWidth: 
+                                  (doc.iconImage as string)?.includes('wwe.png') ? '120px' :
                                   (doc.value === 'declaration-achat' || doc.value === 'w-garage') ? '171px' :
                                   doc.value === 'changement-adresse' ? '640px' : '240px',
                                 maxHeight: 
+                                  (doc.iconImage as string)?.includes('wwe.png') ? '120px' :
                                   (doc.value === 'declaration-achat' || doc.value === 'w-garage') ? '171px' :
                                   doc.value === 'changement-adresse' ? '640px' : '240px',
                                 width: 'auto',
@@ -1427,7 +1570,30 @@ export default function CarteGrisePage() {
                           )}
                         </div>
                         <div className="text-right">
-                          {isCalculatingPrice ? (
+                          {documentType === 'changement-titulaire' ? (
+                            isCalculatingFraisDossier ? (
+                              <div className="flex items-center space-x-2">
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-600"></div>
+                                <span className="text-sm text-primary-600">Calcul...</span>
+                              </div>
+                            ) : fraisDeDossier !== null ? (
+                              <div className="space-y-1">
+                                <div className="text-xs text-primary-500 text-right">
+                                  Frais de dossier: {fraisDeDossier.toFixed(2)} €
+                                </div>
+                                <div className="text-xs text-primary-500 text-right">
+                                  35,00 €
+                                </div>
+                                <div className="text-2xl font-bold text-primary-600 border-t border-primary-300 pt-1">
+                                  {(fraisDeDossier + 35.00).toFixed(2)} €
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="text-2xl font-bold text-primary-600">
+                                {selectedDocument.price}
+                              </div>
+                            )
+                          ) : isCalculatingPrice ? (
                             <div className="flex items-center space-x-2">
                               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-600"></div>
                               <span className="text-sm text-primary-600">Calcul...</span>
@@ -1442,8 +1608,8 @@ export default function CarteGrisePage() {
                               </div>
                             </div>
                           ) : (
-                        <div className="text-2xl font-bold text-primary-600">
-                          {selectedDocument.price}
+                            <div className="text-2xl font-bold text-primary-600">
+                              {selectedDocument.price}
                             </div>
                           )}
                         </div>
@@ -2877,7 +3043,33 @@ export default function CarteGrisePage() {
                           </div>
                         </div>
 
-                       
+                        {/* Demande de certificat d'immatriculation et mandat d'immatriculation */}
+                        <div className="mb-4">
+                          <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
+                            Demande de certificat d'immatriculation et mandat d'immatriculation (les cerfas sont préremplis et signés automatiquement dès validation de votre commande sur notre site) *
+                            <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
+                              <Info className="w-3 h-3 text-gray-600" />
+                            </div>
+                          </label>
+                          <div className="flex items-center space-x-3">
+                            <label className="cursor-pointer">
+                              <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
+                                <Upload className="w-4 h-4" />
+                                <span>Choisir un fichier</span>
+                              </span>
+                              <input
+                                type="file"
+                                onChange={handleFileChange(setWwDemandeCertificatMandatFile)}
+                                className="hidden"
+                                accept="image/*,.pdf"
+                                required
+                              />
+                            </label>
+                            <span className="text-sm text-gray-500">
+                              {wwDemandeCertificatMandatFile ? wwDemandeCertificatMandatFile.name : 'Aucun fichier choisi'}
+                            </span>
+                          </div>
+                        </div>
 
                         {/* Justificatif de propriété du véhicule */}
                         <div className="mb-4">
@@ -3107,7 +3299,33 @@ export default function CarteGrisePage() {
                           </div>
                         </div>
 
-                        
+                        {/* Demande de certificat d'immatriculation et mandat d'immatriculation */}
+                        <div className="mb-4">
+                          <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
+                            Demande de certificat d'immatriculation et mandat d'immatriculation (les cerfas sont préremplis et signés automatiquement dès validation de votre commande sur notre site) *
+                            <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
+                              <Info className="w-3 h-3 text-gray-600" />
+                            </div>
+                          </label>
+                          <div className="flex items-center space-x-3">
+                            <label className="cursor-pointer">
+                              <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
+                                <Upload className="w-4 h-4" />
+                                <span>Choisir un fichier</span>
+                              </span>
+                              <input
+                                type="file"
+                                onChange={handleFileChange(setUeDemandeCertificatMandatFile)}
+                                className="hidden"
+                                accept="image/*,.pdf"
+                                required
+                              />
+                            </label>
+                            <span className="text-sm text-gray-500">
+                              {ueDemandeCertificatMandatFile ? ueDemandeCertificatMandatFile.name : 'Aucun fichier choisi'}
+                            </span>
+                          </div>
+                        </div>
 
                         {/* Justificatif de propriété du véhicule */}
                         <div className="mb-4">
@@ -3802,11 +4020,19 @@ export default function CarteGrisePage() {
                         <CreditCard className="w-5 h-5" />
                         <span>
                           Procéder au paiement - {
-                            isCalculatingPrice 
-                              ? 'Calcul...' 
-                              : calculatedPrice 
-                                ? `${calculatedPrice.totalPrice.toFixed(2)} €`
-                                : selectedDocument?.price
+                            documentType === 'changement-titulaire' ? (
+                              isCalculatingFraisDossier 
+                                ? 'Calcul...' 
+                                : fraisDeDossier !== null 
+                                  ? `${(fraisDeDossier + 35.00).toFixed(2)} €`
+                                  : selectedDocument?.price
+                            ) : (
+                              isCalculatingPrice 
+                                ? 'Calcul...' 
+                                : calculatedPrice 
+                                  ? `${calculatedPrice.totalPrice.toFixed(2)} €`
+                                  : selectedDocument?.price
+                            )
                           }
                         </span>
                       </>
