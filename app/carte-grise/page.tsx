@@ -1579,10 +1579,10 @@ export default function CarteGrisePage() {
                             ) : fraisDeDossier !== null ? (
                               <div className="space-y-1">
                                 <div className="text-xs text-primary-500 text-right">
-                                  Frais de dossier: {fraisDeDossier.toFixed(2)} €
+                                  Frais de carte grise: {fraisDeDossier.toFixed(2)} €
                                 </div>
                                 <div className="text-xs text-primary-500 text-right">
-                                  35,00 €
+                                  Frais de dossier: 35,00 €
                                 </div>
                                 <div className="text-2xl font-bold text-primary-600 border-t border-primary-300 pt-1">
                                   {(fraisDeDossier + 35.00).toFixed(2)} €
