@@ -1036,8 +1036,8 @@ export default function CarteGrisePage() {
     {
       value: 'carte-grise-vehicule-etranger-ue', 
       label: 'Carte grise véhicule étranger (UE)', 
-      description: 'Vous avez acheté un véhicule à l\'étranger et souhaitez obtenir une immatriculation provisoire WW valable 4 mois.',
-      price: '49€',
+      description: 'À la suite de l’achat d’un véhicule à l’étranger, avec ou sans immatriculation WW. Délai de traitement estimé entre 1 et 5 semaines.',
+      price: '99€',
       icon: Car,
       iconImage: '/g3.png'
     },
@@ -2877,33 +2877,7 @@ export default function CarteGrisePage() {
                           </div>
                         </div>
 
-                        {/* Demande de certificat d'immatriculation et mandat d'immatriculation */}
-                        <div className="mb-4">
-                          <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
-                            Demande de certificat d'immatriculation et mandat d'immatriculation (les cerfas sont préremplis et signés automatiquement dès validation de votre commande sur notre site) *
-                            <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
-                              <Info className="w-3 h-3 text-gray-600" />
-                            </div>
-                          </label>
-                          <div className="flex items-center space-x-3">
-                            <label className="cursor-pointer">
-                              <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
-                                <Upload className="w-4 h-4" />
-                                <span>Choisir un fichier</span>
-                              </span>
-                              <input
-                                type="file"
-                                onChange={handleFileChange(setWwDemandeCertificatMandatFile)}
-                                className="hidden"
-                                accept="image/*,.pdf"
-                                required
-                              />
-                            </label>
-                            <span className="text-sm text-gray-500">
-                              {wwDemandeCertificatMandatFile ? wwDemandeCertificatMandatFile.name : 'Aucun fichier choisi'}
-                            </span>
-                          </div>
-                        </div>
+                       
 
                         {/* Justificatif de propriété du véhicule */}
                         <div className="mb-4">
@@ -3133,33 +3107,7 @@ export default function CarteGrisePage() {
                           </div>
                         </div>
 
-                        {/* Demande de certificat d'immatriculation et mandat d'immatriculation */}
-                        <div className="mb-4">
-                          <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
-                            Demande de certificat d'immatriculation et mandat d'immatriculation (les cerfas sont préremplis et signés automatiquement dès validation de votre commande sur notre site) *
-                            <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
-                              <Info className="w-3 h-3 text-gray-600" />
-                            </div>
-                          </label>
-                          <div className="flex items-center space-x-3">
-                            <label className="cursor-pointer">
-                              <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
-                                <Upload className="w-4 h-4" />
-                                <span>Choisir un fichier</span>
-                              </span>
-                              <input
-                                type="file"
-                                onChange={handleFileChange(setUeDemandeCertificatMandatFile)}
-                                className="hidden"
-                                accept="image/*,.pdf"
-                                required
-                              />
-                            </label>
-                            <span className="text-sm text-gray-500">
-                              {ueDemandeCertificatMandatFile ? ueDemandeCertificatMandatFile.name : 'Aucun fichier choisi'}
-                            </span>
-                          </div>
-                        </div>
+                        
 
                         {/* Justificatif de propriété du véhicule */}
                         <div className="mb-4">
