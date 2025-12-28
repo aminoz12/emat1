@@ -106,44 +106,122 @@ export async function GET(request: NextRequest) {
       console.log('📊 API Response:', JSON.stringify(data, null, 2))
     }
 
+    // Helper function to recursively search for numeric values in nested objects
+    const findNumericValue = (obj: any, visited = new Set(), depth = 0): number | null => {
+      if (!obj || typeof obj !== 'object' || depth > 5) return null // Limit depth to avoid infinite recursion
+      if (visited.has(obj)) return null // Avoid circular references
+      visited.add(obj)
+
+      // Check for common field names that might contain the value
+      const fieldNames = [
+        'frais_de_dossier', 'fraisDossier', 'frais_de_dossier_total', 'fraisDossierTotal',
+        'frais_total', 'fraisTotal', 'total_frais', 'totalFrais',
+        'total', 'cout', 'cout_total', 'coutTotal', 'total_cout', 'totalCout',
+        'prix', 'montant', 'amount', 'frais', 'cost', 'price',
+        'montant_total', 'montantTotal', 'total_amount', 'totalAmount'
+      ]
+
+      // First, check direct field names
+      for (const field of fieldNames) {
+        if (obj[field] !== undefined && obj[field] !== null) {
+          const value = Number(obj[field])
+          if (!isNaN(value) && value >= 0) {
+            return value
+          }
+        }
+      }
+
+      // Recursively search nested objects
+      for (const key in obj) {
+        if (obj.hasOwnProperty(key)) {
+          const value = obj[key]
+          if (typeof value === 'number' && value > 0) {
+            // Found a positive number, but check if it's in a meaningful context
+            // Skip if it's an array index or very small number that's likely an ID
+            if (value > 1) {
+              return value
+            }
+          } else if (typeof value === 'object' && value !== null) {
+            const nestedValue = findNumericValue(value, visited, depth + 1)
+            if (nestedValue !== null) {
+              return nestedValue
+            }
+          }
+        }
+      }
+
+      return null
+    }
+
     // Extract frais de dossier from the API response
-    // Targeted extraction for known structure: data.data.total
     let fraisDeDossier = 0
     
     // First check if data is a number (direct response)
     if (typeof data === 'number') {
       fraisDeDossier = data
     } else if (typeof data === 'object' && data !== null) {
-      // Priority 1: Check for data.data.total (the known structure)
-      if (data.data && typeof data.data === 'object' && data.data.total !== undefined && data.data.total !== null) {
-        fraisDeDossier = data.data.total
+      // Priority 1: Check for data.data.price.total (the actual structure: data.data.price.total = "178.76")
+      if (data.data && typeof data.data === 'object' && data.data.price && typeof data.data.price === 'object' && data.data.price.total !== undefined && data.data.price.total !== null) {
+        const value = Number(data.data.price.total)
+        if (!isNaN(value)) {
+          fraisDeDossier = value
+        }
       }
-      // Priority 2: Check for data.data.price
+      // Priority 2: Check for data.price.total (direct structure)
+      else if (data.price && typeof data.price === 'object' && data.price.total !== undefined && data.price.total !== null) {
+        const value = Number(data.price.total)
+        if (!isNaN(value)) {
+          fraisDeDossier = value
+        }
+      }
+      // Priority 3: Check for data.data.total
+      else if (data.data && typeof data.data === 'object' && data.data.total !== undefined && data.data.total !== null) {
+        const value = Number(data.data.total)
+        if (!isNaN(value)) {
+          fraisDeDossier = value
+        }
+      }
+      // Priority 4: Check for data.data.price (direct)
       else if (data.data && typeof data.data === 'object' && data.data.price !== undefined && data.data.price !== null) {
-        fraisDeDossier = data.data.price
+        const value = Number(data.data.price)
+        if (!isNaN(value)) {
+          fraisDeDossier = value
+        }
       }
-      // Priority 3: Check other direct fields
-      else if (data.total !== undefined && data.total !== null) {
-        fraisDeDossier = data.total
+      // Priority 5: Recursively search in data.data
+      else if (data.data && typeof data.data === 'object') {
+        const foundValue = findNumericValue(data.data, new Set(), 0)
+        if (foundValue !== null) {
+          fraisDeDossier = foundValue
+        }
       }
-      // Priority 4: Check other common field names
-      else if (data.frais_de_dossier !== undefined && data.frais_de_dossier !== null) {
-        fraisDeDossier = data.frais_de_dossier
-      } else if (data.fraisDossier !== undefined && data.fraisDossier !== null) {
-        fraisDeDossier = data.fraisDossier
-      } else if (data.cout !== undefined && data.cout !== null) {
-        fraisDeDossier = data.cout
-      } else if (data.prix !== undefined && data.prix !== null) {
-        fraisDeDossier = data.prix
+      
+      // If still 0, recursively search the entire object structure
+      if (fraisDeDossier === 0) {
+        const foundValue = findNumericValue(data, new Set(), 0)
+        if (foundValue !== null) {
+          fraisDeDossier = foundValue
+        }
       }
     }
 
     // Ensure we return a number
     fraisDeDossier = Number(fraisDeDossier) || 0
 
-    // Log the extracted value for debugging
+    // Log the extracted value and full structure for debugging
     if (process.env.NODE_ENV === 'development') {
       console.log('💰 Extracted fraisDeDossier:', fraisDeDossier)
+      console.log('📋 Full response keys:', data && typeof data === 'object' ? Object.keys(data) : 'N/A')
+      if (data && typeof data === 'object' && data.price) {
+        console.log('📋 data.price:', data.price)
+        console.log('📋 data.price.total:', data.price.total)
+      }
+      if (data && typeof data === 'object' && data.data) {
+        console.log('📋 data.data keys:', typeof data.data === 'object' ? Object.keys(data.data) : 'N/A')
+        if (data.data && typeof data.data === 'object' && data.data.price) {
+          console.log('📋 data.data.price:', data.data.price)
+        }
+      }
     }
 
     return NextResponse.json({
