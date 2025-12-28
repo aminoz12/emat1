@@ -107,83 +107,35 @@ export async function GET(request: NextRequest) {
     }
 
     // Extract frais de dossier from the API response
-    // The API response structure may vary, so we'll try different possible field names
+    // Targeted extraction for known structure: data.data.total
     let fraisDeDossier = 0
     
-    if (typeof data === 'object' && data !== null) {
-      // Try different possible field names (French and English variations)
-      // Check explicitly for undefined/null, not using || which treats 0 as falsy
-      if (data.frais_de_dossier !== undefined && data.frais_de_dossier !== null) {
+    // First check if data is a number (direct response)
+    if (typeof data === 'number') {
+      fraisDeDossier = data
+    } else if (typeof data === 'object' && data !== null) {
+      // Priority 1: Check for data.data.total (the known structure)
+      if (data.data && typeof data.data === 'object' && data.data.total !== undefined && data.data.total !== null) {
+        fraisDeDossier = data.data.total
+      }
+      // Priority 2: Check for data.data.price
+      else if (data.data && typeof data.data === 'object' && data.data.price !== undefined && data.data.price !== null) {
+        fraisDeDossier = data.data.price
+      }
+      // Priority 3: Check other direct fields
+      else if (data.total !== undefined && data.total !== null) {
+        fraisDeDossier = data.total
+      }
+      // Priority 4: Check other common field names
+      else if (data.frais_de_dossier !== undefined && data.frais_de_dossier !== null) {
         fraisDeDossier = data.frais_de_dossier
       } else if (data.fraisDossier !== undefined && data.fraisDossier !== null) {
         fraisDeDossier = data.fraisDossier
-      } else if (data.frais_de_dossier_total !== undefined && data.frais_de_dossier_total !== null) {
-        fraisDeDossier = data.frais_de_dossier_total
-      } else if (data.fraisDossierTotal !== undefined && data.fraisDossierTotal !== null) {
-        fraisDeDossier = data.fraisDossierTotal
-      } else if (data.frais_total !== undefined && data.frais_total !== null) {
-        fraisDeDossier = data.frais_total
-      } else if (data.fraisTotal !== undefined && data.fraisTotal !== null) {
-        fraisDeDossier = data.fraisTotal
-      } else if (data.total_frais !== undefined && data.total_frais !== null) {
-        fraisDeDossier = data.total_frais
-      } else if (data.total !== undefined && data.total !== null) {
-        fraisDeDossier = data.total
       } else if (data.cout !== undefined && data.cout !== null) {
         fraisDeDossier = data.cout
-      } else if (data.cout_total !== undefined && data.cout_total !== null) {
-        fraisDeDossier = data.cout_total
       } else if (data.prix !== undefined && data.prix !== null) {
         fraisDeDossier = data.prix
-      } else if (data.montant !== undefined && data.montant !== null) {
-        fraisDeDossier = data.montant
-      } else if (data.amount !== undefined && data.amount !== null) {
-        fraisDeDossier = data.amount
-      } else if (data.frais !== undefined && data.frais !== null) {
-        fraisDeDossier = data.frais
       }
-      
-      // If frais_de_dossier is still 0, try to find it in nested structure
-      if (fraisDeDossier === 0) {
-        // Check nested data object
-        if (data.data && typeof data.data === 'object') {
-          fraisDeDossier = data.data.frais_de_dossier || 
-                          data.data.fraisDossier || 
-                          data.data.frais_de_dossier_total ||
-                          data.data.frais_total ||
-                          data.data.total ||
-                          data.data.cout ||
-                          data.data.prix ||
-                          0
-        }
-        
-        // Check result object
-        if (fraisDeDossier === 0 && data.result && typeof data.result === 'object') {
-          fraisDeDossier = data.result.frais_de_dossier || 
-                          data.result.fraisDossier || 
-                          data.result.frais_de_dossier_total ||
-                          data.result.frais_total ||
-                          data.result.total ||
-                          data.result.cout ||
-                          0
-        }
-        
-        // Check items array (if response is an array with objects)
-        if (fraisDeDossier === 0 && Array.isArray(data)) {
-          const firstItem = data[0]
-          if (firstItem && typeof firstItem === 'object') {
-            fraisDeDossier = firstItem.frais_de_dossier || 
-                            firstItem.fraisDossier || 
-                            firstItem.frais_de_dossier_total ||
-                            firstItem.frais_total ||
-                            firstItem.total ||
-                            firstItem.cout ||
-                            0
-          }
-        }
-      }
-    } else if (typeof data === 'number') {
-      fraisDeDossier = data
     }
 
     // Ensure we return a number
