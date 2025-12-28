@@ -1,7 +1,6 @@
-import { Controller, Post, Body, UseGuards, Get, Param, Headers, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Get, Param } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { SupabaseAuthGuard } from '../auth/guards/supabase-auth.guard';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard'; // Fixed: Correct path to JWT guard
 import { PaymentsService } from './payments.service';
 
 @ApiTags('payments')
@@ -10,34 +9,19 @@ export class PaymentsController {
   constructor(private readonly paymentsService: PaymentsService) {}
 
   @Post('create-checkout')
-  @UseGuards(SupabaseAuthGuard) // Using Supabase auth instead of JWT
+  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Create SumUp checkout' })
   @ApiResponse({ 
     status: 200, 
     description: 'Returns checkout URL and ID for the payment widget' 
   })
-  @ApiResponse({ 
-    status: 500, 
-    description: 'Internal server error' 
-  })
   async createCheckout(
     @Body('orderId') orderId: string,
     @Body('amount') amount: number,
     @Body('currency') currency: string = 'eur',
   ) {
-    try {
-      return await this.paymentsService.createPaymentIntent(orderId, amount, currency);
-    } catch (error: any) {
-      console.error('Payment controller error:', error);
-      console.error('Error details:', {
-        message: error.message,
-        statusCode: error.statusCode,
-        response: error.response,
-        stack: error.stack
-      });
-      throw error; // Re-throw to let NestJS handle it with proper status code
-    }
+    return await this.paymentsService.createPaymentIntent(orderId, amount, currency);
   }
 
   @Post('create-payment-intent')
@@ -57,7 +41,7 @@ export class PaymentsController {
   }
 
   @Get('verify-payment/:checkoutId')
-  @UseGuards(SupabaseAuthGuard) // Using Supabase auth instead of JWT
+  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Verify payment status' })
   @ApiResponse({ 
@@ -68,22 +52,5 @@ export class PaymentsController {
     @Param('checkoutId') checkoutId: string
   ) {
     return this.paymentsService.verifyPayment(checkoutId);
-  }
-
-  // Optional: Webhook endpoint (not required for widget-only flow)
-  // The widget return flow handles payment verification automatically
-  // You can enable this if you want real-time webhook notifications
-  @Post('webhook')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'SumUp webhook endpoint (OPTIONAL - widget-only flow works without it)' })
-  @ApiResponse({ 
-    status: 200, 
-    description: 'Webhook processed successfully' 
-  })
-  async handleWebhook(
-    @Body() body: any,
-    @Headers('x-sumup-signature') signature: string,
-  ) {
-    return this.paymentsService.handleWebhook(body, signature);
   }
 }

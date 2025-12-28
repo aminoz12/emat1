@@ -457,6 +457,7 @@ export default function DashboardPage() {
       'changement-titulaire': 'Changement de titulaire',
       'duplicata': 'Demande de duplicata',
       'immatriculation-provisoire-ww': 'Immatriculation provisoire WW',
+      'carte-grise-vehicule-etranger-ue': 'Carte grise véhicule étranger (UE)',
       'enregistrement-cession': 'Enregistrement de cession',
       'changement-adresse': 'Changement d\'adresse',
       'fiche-identification': 'Fiche d\'identification',

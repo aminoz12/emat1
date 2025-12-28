@@ -251,6 +251,7 @@ export function mapAndFillFields(
     'duplicata': 'Demande de duplicata',
     'declaration-achat': 'Déclaration d\'achat',
     'immatriculation-provisoire-ww': 'Immatriculation provisoire WW',
+    'carte-grise-vehicule-etranger-ue': 'Carte grise véhicule étranger (UE)',
     'fiche-identification': 'Fiche d\'identification d\'un véhicule',
     'enregistrement-cession': 'Enregistrement de cession',
     'w-garage': 'W Garage',

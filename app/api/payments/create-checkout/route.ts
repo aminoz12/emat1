@@ -32,7 +32,7 @@ export async function POST(request: Request) {
     }
 
     // Get order details from database
-    const { data: order, error: orderError } = await supabase
+    const { data: order, error: orderError } = await (await supabase)
       .from('orders')
       .select('*')
       .eq('id', orderId)
@@ -42,17 +42,6 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { error: 'Commande non trouvée' },
         { status: 404 }
-      )
-    }
-
-    // Get Supabase session token for backend authentication
-    const { data: { session } } = await supabase.auth.getSession()
-    const accessToken = session?.access_token
-
-    if (!accessToken) {
-      return NextResponse.json(
-        { error: 'Session expirée. Veuillez vous reconnecter.' },
-        { status: 401 }
       )
     }
 
@@ -67,54 +56,28 @@ export async function POST(request: Request) {
     })
     
     // Call the backend service to create a checkout
-    let response: Response;
-    try {
-      // Create abort controller for timeout
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
-      
-      response = await fetch(backendEndpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${accessToken}` // Using Supabase token
-        },
-        body: JSON.stringify({
-          orderId,
-          amount: parseFloat(amount),
-          currency: currency.toLowerCase(),
-        }),
-        signal: controller.signal,
-      })
-      
-      clearTimeout(timeoutId);
-    } catch (fetchError: any) {
-      console.error('Failed to connect to backend:', fetchError)
-      if (fetchError.name === 'AbortError') {
-        throw new Error('Le serveur de paiement ne répond pas. Veuillez réessayer.')
-      }
-      if (fetchError.code === 'ECONNREFUSED' || fetchError.message?.includes('fetch failed') || fetchError.message?.includes('ECONNREFUSED')) {
-        throw new Error('Impossible de se connecter au serveur de paiement. Vérifiez que le serveur backend est démarré sur le port 3001.')
-      }
-      throw new Error(`Erreur de connexion: ${fetchError.message}`)
-    }
+    const response = await fetch(backendEndpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': request.headers.get('Authorization') || ''
+      },
+      body: JSON.stringify({
+        orderId,
+        amount: parseFloat(amount),
+        currency: currency.toLowerCase(),
+      }),
+    })
 
-    let responseData: any = {};
-    try {
-      const text = await response.text();
-      responseData = text ? JSON.parse(text) : {};
-    } catch (e) {
-      console.error('Failed to parse backend response:', e);
-    }
+    const responseData = await response.json().catch(() => ({}))
     
     if (!response.ok) {
       console.error('Backend error:', {
         status: response.status,
         statusText: response.statusText,
-        error: responseData,
-        url: backendEndpoint
+        error: responseData
       })
-      throw new Error(responseData.message || responseData.error || `Backend error: ${response.status} ${response.statusText}`)
+      throw new Error(responseData.message || 'Erreur lors de la création du paiement')
     }
     
     console.log('Backend response:', responseData)
@@ -122,7 +85,7 @@ export async function POST(request: Request) {
     const { checkoutUrl, checkoutId } = responseData
 
     // Update order with checkout ID
-    const { error: updateError } = await supabase
+    const { error: updateError } = await (await supabase)
       .from('orders')
       .update({ payment_intent_id: checkoutId })
       .eq('id', orderId)
@@ -135,17 +98,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ checkoutUrl })
   } catch (error: any) {
     console.error('Error in create-checkout:', error)
-    console.error('Error stack:', error.stack)
-    console.error('Error details:', {
-      message: error.message,
-      name: error.name,
-      cause: error.cause
-    })
     return NextResponse.json(
-      { 
-        error: error.message || 'Erreur serveur',
-        details: process.env.NODE_ENV === 'development' ? error.stack : undefined
-      },
+      { error: error.message || 'Erreur serveur' },
       { status: 500 }
     )
   }

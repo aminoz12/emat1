@@ -1,4 +1,4 @@
-import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import SumUp from '@sumup/sdk';
 import { createClient } from '@supabase/supabase-js';
@@ -11,7 +11,6 @@ type CheckoutResponse = {
   checkout_reference: string;
   status: string;
   return_url: string;
-  hosted_checkout_url?: string; // Direct URL for hosted checkout (when enabled)
   links: Array<{ href: string; rel: string; method: string }>;
 };
 
@@ -23,36 +22,13 @@ export class SumUpService {
   constructor(
     private configService: ConfigService,
   ) {
-    const sumupApiKey = this.configService.get('SUMUP_API_KEY');
-    
-    if (!sumupApiKey) {
-      console.error('⚠️ SUMUP_API_KEY is not set in environment variables');
-      throw new Error('SUMUP_API_KEY is required but not configured');
-    }
-
-    // Log key type for debugging (without exposing the full key)
-    const keyType = sumupApiKey.startsWith('sup_pk_') ? 'Public Key' : 
-                   sumupApiKey.startsWith('sup_sk_') ? 'Secret Key' : 'Unknown';
-    console.log(`✅ SumUp API Key loaded (Type: ${keyType})`);
-
-    // Warn if using public key for backend operations
-    if (sumupApiKey.startsWith('sup_pk_')) {
-      console.warn('⚠️ WARNING: Using a public key for backend operations. SumUp backend operations typically require a secret key (sup_sk_...).');
-    }
-
     this.sumup = new SumUp({
-      apiKey: sumupApiKey,
+      apiKey: this.configService.get('SUMUP_API_KEY'),
     });
     
     // Initialize Supabase client
     const supabaseUrl = this.configService.get('SUPABASE_URL');
     const supabaseKey = this.configService.get('SUPABASE_SERVICE_ROLE_KEY');
-    
-    if (!supabaseUrl || !supabaseKey) {
-      console.error('⚠️ Supabase credentials are not set');
-      throw new Error('Supabase credentials are required');
-    }
-    
     this.supabase = createClient(supabaseUrl, supabaseKey);
   }
 
@@ -68,637 +44,82 @@ export class SumUpService {
       throw new Error(`Order not found: ${orderId}`);
     }
 
-    // Get merchant code from environment or use default
-    const merchantCode = this.configService.get('SUMUP_MERCHANT_CODE');
-    if (!merchantCode) {
-      console.warn('⚠️ SUMUP_MERCHANT_CODE is not set. This is required for checkout creation.');
-      throw new Error('SUMUP_MERCHANT_CODE is required but not configured. Please set it in your environment variables.');
-    }
-
     try {
-      // Ensure amount is a number (not string) and properly formatted
-      const checkoutAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
-      
-      // Validate amount
-      if (isNaN(checkoutAmount) || checkoutAmount <= 0) {
-        throw new Error(`Invalid amount: ${amount}. Amount must be a positive number.`);
-      }
-
-      const returnUrl = redirectUrl || `${this.configService.get('FRONTEND_URL')}/payment/return?orderId=${orderId}`;
-      
-      // STEP 1: Check if a payment record with checkout_id exists for this order
-      // Only consider payments that are not failed (pending or succeeded)
-      const { data: existingPayment } = await this.supabase
-        .from('payments')
-        .select('*')
-        .eq('order_id', orderId)
-        .not('sumup_checkout_id', 'is', null)
-        .neq('status', 'failed') // Exclude failed payments
-        .neq('status', 'succeeded') // Exclude succeeded payments (already paid)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      // STEP 2: If payment exists with checkout_id and is pending, try to retrieve the existing checkout
-      if (existingPayment && existingPayment.sumup_checkout_id && existingPayment.status === 'pending') {
-        try {
-          console.log('Found existing pending payment with checkout_id, retrieving checkout:', existingPayment.sumup_checkout_id);
-          const existingCheckout = await this.sumup.checkouts.get(existingPayment.sumup_checkout_id);
-          
-          // Check if checkout is still valid (pending or similar status)
-          const validStatuses = ['PENDING', 'OPEN', 'INITIATED'];
-          if (existingCheckout && validStatuses.includes(existingCheckout.status?.toUpperCase())) {
-            console.log('✅ Reusing existing valid checkout:', {
-              id: existingCheckout.id,
-              status: existingCheckout.status,
-              reference: existingCheckout.checkout_reference
-            });
-
-            // Get the checkout URL
-            let checkoutUrl: string;
-            if ((existingCheckout as any).hosted_checkout_url) {
-              checkoutUrl = (existingCheckout as any).hosted_checkout_url;
-            } else {
-              checkoutUrl = this.getCheckoutWidgetUrl(existingCheckout);
-            }
-
-            // Validate URL
-            if (!checkoutUrl || !checkoutUrl.startsWith('http')) {
-              console.error('❌ Invalid checkout URL from existing checkout, creating new one');
-              // Continue to create a new checkout
-            } else {
-              return {
-                checkoutUrl: checkoutUrl,
-                checkoutId: existingCheckout.id,
-              };
-            }
-          } else {
-            console.log('Existing checkout is not valid (status:', existingCheckout?.status, '), marking payment as failed and creating new one');
-            // Mark the old payment as failed
-            await this.supabase
-              .from('payments')
-              .update({ status: 'failed', updated_at: new Date().toISOString() })
-              .eq('id', existingPayment.id);
-          }
-        } catch (retrieveError: any) {
-          console.log('Could not retrieve existing checkout (may be expired):', retrieveError.message);
-          // Mark the old payment as failed if it exists
-          if (existingPayment) {
-            await this.supabase
-              .from('payments')
-              .update({ status: 'failed', updated_at: new Date().toISOString() })
-              .eq('id', existingPayment.id);
-          }
-          // Continue to create a new checkout
-        }
-      } else if (existingPayment && existingPayment.status === 'failed') {
-        console.log('Found failed payment, creating new checkout');
-        // Continue to create a new checkout
-      }
-
-      // STEP 3: Create a new checkout (or if existing one is invalid/expired)
-      console.log('Creating new SumUp checkout with:', {
-        orderId,
-        amount: checkoutAmount,
-        currency: currency.toUpperCase(),
-        merchantCode,
-        returnUrl
-      });
-      
-      // Create a HOSTED CHECKOUT with SumUp
-      // CRITICAL: hosted_checkout must be enabled for public/guest payment
-      const checkoutData: any = {
+      // Create a checkout with SumUp
+      const checkout = await this.sumup.checkouts.create({
         checkout_reference: orderId,
-        amount: checkoutAmount,
-        currency: currency.toUpperCase() as any,
-        merchant_code: merchantCode,
+        amount: amount.toFixed(2), // Fix: Properly format amount as decimal string
+        currency: currency.toUpperCase(),
         description: `Payment for order ${order.id}`,
-        return_url: returnUrl,
-      };
-
-      // Enable hosted checkout for public/guest payment (no account required)
-      checkoutData.hosted_checkout = {
-        enabled: true
-      };
-
-      console.log('Creating SumUp hosted checkout with public payment enabled:', {
-        ...checkoutData,
-        hosted_checkout: checkoutData.hosted_checkout
+        return_url: redirectUrl || `${this.configService.get('FRONTEND_URL')}/payment-callback`,
       });
 
-      let checkout: any;
-      try {
-        checkout = await this.sumup.checkouts.create(checkoutData);
-      } catch (createError: any) {
-        // Handle 409 DUPLICATED_CHECKOUT error
-        if (createError.status === 409 || createError.message?.includes('DUPLICATED_CHECKOUT')) {
-          console.log('⚠️ Checkout with this reference already exists, attempting to retrieve it');
-          
-          // Try to find the checkout by reference (if SumUp API supports it)
-          // Since we can't search by reference directly, we'll try to get it from our DB first
-          if (existingPayment && existingPayment.sumup_checkout_id) {
-            try {
-              checkout = await this.sumup.checkouts.get(existingPayment.sumup_checkout_id);
-              console.log('✅ Retrieved existing checkout after 409 error:', checkout.id);
-            } catch (getError: any) {
-              // If we can't get it, we need to use a different reference
-              console.log('Could not retrieve checkout, using unique reference');
-              // Generate a unique reference by appending timestamp
-              checkoutData.checkout_reference = `${orderId}-${Date.now()}`;
-              checkout = await this.sumup.checkouts.create(checkoutData);
-            }
-          } else {
-            // No existing checkout_id in DB, generate unique reference
-            console.log('No existing checkout_id found, using unique reference');
-            checkoutData.checkout_reference = `${orderId}-${Date.now()}`;
-            checkout = await this.sumup.checkouts.create(checkoutData);
-          }
-        } else {
-          throw createError;
-        }
-      }
-
-      // Log the full checkout response for debugging
-      console.log('SumUp checkout created:', {
-        id: checkout.id,
-        status: checkout.status,
-        amount: checkout.amount,
-        currency: checkout.currency,
-        checkout_reference: checkout.checkout_reference,
-        return_url: checkout.return_url,
-        hosted_checkout_url: (checkout as any).hosted_checkout_url || 'NOT PROVIDED',
-        links: checkout.links,
-        linksCount: checkout.links?.length || 0,
-        fullResponse: JSON.stringify(checkout, null, 2)
-      });
-      
-      // CRITICAL: Check for direct hosted_checkout_url first (provided when hosted_checkout is enabled)
-      if ((checkout as any).hosted_checkout_url) {
-        console.log('✅ Found hosted_checkout_url directly in response (PUBLIC CHECKOUT URL):', (checkout as any).hosted_checkout_url);
-      } else {
-        console.warn('⚠️ WARNING: hosted_checkout_url not found in response. Check if hosted_checkout: { enabled: true } was sent.');
-      }
-      
-      // Log each link individually for easier debugging
-      if (checkout.links && checkout.links.length > 0) {
-        console.log('=== SUMUP LINKS DETAILS ===');
-        checkout.links.forEach((link, index) => {
-          console.log(`Link ${index + 1}:`, {
-            href: link.href,
-            rel: link.rel,
-            method: link.method
-          });
-        });
-        console.log('===========================');
-      } else {
-        console.warn('⚠️ WARNING: No links found in SumUp checkout response!');
-      }
-
-      // Check if payment record already exists (reuse the check from earlier)
-      // If we created a new checkout, we need to save/update the payment record
-      let paymentError: any = null;
-      let payment: any = null;
-
-      // Re-check existing payment (in case we didn't find one earlier or created a new checkout)
-      const { data: paymentToUpdate } = await this.supabase
+      // Update payment record with SumUp checkout ID
+      const { data: payment, error: paymentError } = await this.supabase
         .from('payments')
-        .select('id')
-        .eq('order_id', orderId)
-        .maybeSingle();
-
-      if (paymentToUpdate) {
-        // Update existing payment record with new checkout_id
-        const { data, error } = await this.supabase
-          .from('payments')
-          .update({
-            amount: amount,
-            currency: currency,
-            sumup_checkout_id: checkout.id,
-            status: 'pending',
-            updated_at: new Date().toISOString(),
-          })
-          .eq('order_id', orderId)
-          .select()
-          .single();
-        
-        payment = data;
-        paymentError = error;
-      } else {
-        // Insert new payment record
-        const { data, error } = await this.supabase
-          .from('payments')
-          .insert({
-            order_id: orderId,
-            amount: amount,
-            currency: currency,
-            sumup_checkout_id: checkout.id,
-            status: 'pending',
-          })
-          .select()
-          .single();
-        
-        payment = data;
-        paymentError = error;
-      }
+        .upsert({
+          order_id: orderId,
+          amount: amount,
+          currency: currency,
+          sumup_checkout_id: checkout.id,
+          status: 'pending',
+        }, {
+          onConflict: 'order_id'
+        });
 
       if (paymentError) {
         console.error('Error saving payment:', paymentError);
-        console.error('Payment error details:', {
-          message: paymentError.message,
-          code: paymentError.code,
-          details: paymentError.details,
-          hint: paymentError.hint,
-          orderId,
-          checkoutId: checkout.id
-        });
-        throw new Error(`Failed to save payment record: ${paymentError.message || 'Unknown error'}`);
-      }
-
-      // PRIORITY 1: Use hosted_checkout_url if provided (direct public URL for guest payment)
-      // This is the URL returned when hosted_checkout: { enabled: true } is set
-      let checkoutUrl: string;
-      if ((checkout as any).hosted_checkout_url) {
-        checkoutUrl = (checkout as any).hosted_checkout_url;
-        console.log('✅ Using hosted_checkout_url (direct public checkout URL for guest payment):', checkoutUrl);
-      } else {
-        // PRIORITY 2: Fallback to extracting URL from links
-        checkoutUrl = this.getCheckoutWidgetUrl(checkout);
-        console.log('⚠️ No hosted_checkout_url found, using URL from links:', checkoutUrl);
-      }
-
-      console.log('✅ Checkout created successfully:', {
-        id: checkout.id,
-        status: checkout.status,
-        checkoutUrl,
-        hosted_checkout_enabled: checkoutData.hosted_checkout?.enabled || false,
-        has_hosted_checkout_url: !!(checkout as any).hosted_checkout_url,
-        links: checkout.links,
-        amount: checkout.amount,
-        currency: checkout.currency,
-        checkout_reference: checkout.checkout_reference
-      });
-      
-      // Additional validation: Check if URL looks valid
-      if (!checkoutUrl || !checkoutUrl.startsWith('http')) {
-        console.error('❌ ERROR: Invalid checkout URL generated!', checkoutUrl);
-        throw new Error('Failed to generate valid checkout URL. Please check SumUp API response.');
+        throw new Error('Failed to save payment record');
       }
 
       return {
-        checkoutUrl: checkoutUrl,
+        checkoutUrl: this.getCheckoutWidgetUrl(checkout),
         checkoutId: checkout.id,  // Added: Make sure we return the checkoutId as expected by frontend
       };
-    } catch (error: any) {
+    } catch (error) {
       console.error('SumUp checkout creation error:', error);
-      console.error('Error details:', {
-        message: error.message,
-        status: error.status,
-        response: error.response,
-        error: error.error,
-        stack: error.stack
-      });
-      
-      // Check for geographic block
-      const errorMessage = error.message || error.error?.message || '';
-      const errorString = JSON.stringify(error).toLowerCase();
-      
-      if (error.status === 403 || error.response?.status === 403 || 
-          errorMessage.includes('banned') || errorMessage.includes('country') ||
-          errorString.includes('access denied') || errorString.includes('error 1009')) {
-        throw new HttpException(
-          {
-            statusCode: 403,
-            message: 'SumUp API access denied. Your country/region (Morocco) is blocked by SumUp. Solutions: 1) Use a VPN from an allowed region (EU/US), 2) Deploy backend to EU/US server, 3) Contact SumUp support.',
-            error: 'Geographic Restriction'
-          },
-          HttpStatus.FORBIDDEN
-        );
-      }
-      
-      // Other SumUp API errors
-      if (error.status || error.response?.status) {
-        throw new HttpException(
-          {
-            statusCode: error.status || error.response?.status || 500,
-            message: `SumUp API error: ${errorMessage || 'Unknown error'}`,
-            error: 'SumUp API Error'
-          },
-          error.status || error.response?.status || HttpStatus.INTERNAL_SERVER_ERROR
-        );
-      }
-      
-      // Generic error
-      throw new HttpException(
-        {
-          statusCode: 500,
-          message: `Failed to create SumUp checkout: ${errorMessage || 'Unknown error'}`,
-          error: 'Internal Server Error'
-        },
-        HttpStatus.INTERNAL_SERVER_ERROR
-      );
+      throw new Error(`Failed to create SumUp checkout: ${error.message}`);
     }
   }
 
   private getCheckoutWidgetUrl(checkout: CheckoutResponse): string {
-    // SumUp checkout URL - CRITICAL: Must be a PUBLIC URL for guest payment
-    // Users should be able to pay with credit card WITHOUT needing a SumUp account
-    // The checkout.links array contains the correct URL to redirect the user
-    
-    // First, try to get URL from links array (REQUIRED - SumUp provides the correct URL here)
-    if (checkout.links && checkout.links.length > 0) {
-      console.log('🔍 Searching for PUBLIC checkout URL (guest payment)...');
-      console.log('Available links from SumUp:', JSON.stringify(checkout.links, null, 2));
-      
-      // Strategy 1: Look for PUBLIC hosted checkout URL (highest priority)
-      // Public checkout URLs typically have:
-      // - Domain: me.sumup.com, pay.sumup.com, or checkout.sumup.com
-      // - Path contains: /checkout/ or similar
-      // - NO /api/, /login, /auth, /merchant, /dashboard
-      let checkoutLink = checkout.links.find(link => {
-        if (!link.href) return false;
-        const href = link.href.toLowerCase();
-        
-        // Must be a public domain (not API)
-        const isPublicDomain = href.includes('me.sumup.com') || 
-                              href.includes('pay.sumup.com') || 
-                              href.includes('checkout.sumup.com');
-        
-        // Must contain checkout/payment path
-        const isCheckoutPath = href.includes('/checkout/') || 
-                              href.includes('/checkout') ||
-                              href.includes('/pay/');
-        
-        // Must NOT require authentication
-        const isPublic = !href.includes('/api/') && 
-                        !href.includes('/login') && 
-                        !href.includes('/auth') &&
-                        !href.includes('/merchant') &&
-                        !href.includes('/dashboard') &&
-                        !href.includes('/account');
-        
-        return isPublicDomain && isCheckoutPath && isPublic;
-      });
-      
-      // Strategy 2: Look for link with rel="checkout" or rel="payment" (public)
-      if (!checkoutLink) {
-        checkoutLink = checkout.links.find(link => {
-          if (!link.href) return false;
-          const href = link.href.toLowerCase();
-          const isPublic = !href.includes('/api/') && !href.includes('/login') && !href.includes('/auth');
-          return (link.rel === 'checkout' || link.rel === 'payment' || link.rel === 'pay') && isPublic;
-        });
-      }
-      
-      // Strategy 3: Any GET link that looks public (exclude API and auth endpoints)
-      if (!checkoutLink) {
-        checkoutLink = checkout.links.find(link => {
-          if (!link.href || link.method !== 'GET') return false;
-          const href = link.href.toLowerCase();
-          const isPublic = !href.includes('/api/') && 
-                          !href.includes('/login') && 
-                          !href.includes('/auth') &&
-                          !href.includes('/merchant') &&
-                          link.rel !== 'self' && 
-                          link.rel !== 'status';
-          return isPublic && (href.includes('sumup.com') || href.includes('checkout') || href.includes('pay'));
-        });
-      }
-      
-      // Strategy 4: Last resort - any link (but warn if it looks private)
-      if (!checkoutLink) {
-        checkoutLink = checkout.links.find(link => link.href && link.method === 'GET');
-      }
-      
-      if (checkoutLink && checkoutLink.href) {
-        const href = checkoutLink.href;
-        
-        // Final validation: Check if URL is truly public
-        const isPublicUrl = !href.includes('/api/') && 
-                           !href.includes('/login') && 
-                           !href.includes('/auth') &&
-                           !href.includes('/merchant') &&
-                           !href.includes('/dashboard') &&
-                           (href.includes('me.sumup.com') || 
-                            href.includes('pay.sumup.com') || 
-                            href.includes('checkout.sumup.com') ||
-                            (href.includes('checkout') && href.includes('sumup.com')));
-        
-        if (!isPublicUrl) {
-          console.error('❌ WARNING: The checkout URL appears to require authentication!');
-          console.error('❌ URL:', href);
-          console.error('❌ This will redirect users to a login page instead of payment page!');
-          console.error('❌ Please check SumUp configuration or use Card Widget JavaScript instead.');
-        } else {
-          console.log('✅ Found PUBLIC checkout URL (guest payment enabled)');
-        }
-        
-        console.log('✅ Using checkout URL from SumUp links:', href);
-        console.log('Link details:', {
-          href: href,
-          rel: checkoutLink.rel,
-          method: checkoutLink.method,
-          isPublicUrl: isPublicUrl,
-          allowsGuestPayment: isPublicUrl
-        });
-        return href;
-      }
-      
-      // Log all available links for debugging
-      console.error('❌ ERROR: Could not find a PUBLIC checkout URL for guest payment!');
-      console.error('All available links:');
-      checkout.links.forEach((link, index) => {
-        const isPublic = link.href && !link.href.includes('/api/') && !link.href.includes('/login');
-        console.error(`  Link ${index + 1}:`, {
-          href: link.href,
-          rel: link.rel,
-          method: link.method,
-          isPublic: isPublic || false,
-          warning: !isPublic ? '⚠️ This URL might require authentication' : ''
-        });
-      });
-    }
-    
-    // If no links found, this is an error - SumUp should always return links
-    console.error('❌ ERROR: No valid checkout URL found in SumUp response links!');
-    console.error('Checkout response:', JSON.stringify(checkout, null, 2));
-    console.error('Available links:', checkout.links);
-    
-    // IMPORTANT: SumUp checkouts should have a public payment URL
-    // If we reach here, it means the links structure might be different
-    // Try to construct URL based on common SumUp patterns
-    
-    // Check if checkout has a direct payment URL property
-    if ((checkout as any).payment_url || (checkout as any).url) {
-      const directUrl = (checkout as any).payment_url || (checkout as any).url;
-      console.log('✅ Using direct payment URL from checkout:', directUrl);
-      return directUrl;
-    }
-    
-    // Last resort: Try common SumUp checkout URL patterns
-    // NOTE: These might not work - SumUp should provide the correct URL in links
-    const fallbackUrls = [
-      `https://me.sumup.com/checkout/${checkout.id}`,  // Most common format
-      `https://pay.sumup.com/checkout/${checkout.id}`,  // Alternative format
-      `https://checkout.sumup.com/checkout/${checkout.id}`,  // Alternative format 2
-    ];
-    
-    const fallbackUrl = fallbackUrls[0];
-    console.warn('⚠️ WARNING: Using fallback URL (MIGHT NOT WORK):', fallbackUrl);
-    console.warn('⚠️ This URL might redirect to login page. Check SumUp API response for correct URL.');
-    console.warn('⚠️ Action required: Check logs above for actual links returned by SumUp');
-    
-    return fallbackUrl;
+    // This URL will be used to load the SumUp widget
+    return `https://checkout.sumup.com/b/${checkout.id}`;
   }
 
   async verifyPayment(checkoutId: string): Promise<{ status: string }> {
     try {
-      console.log('Verifying payment for checkout:', checkoutId);
       const checkout = await this.sumup.checkouts.get(checkoutId);
       
-      console.log('Checkout status from SumUp:', {
-        id: checkout.id,
-        status: checkout.status,
-        amount: checkout.amount,
-        currency: checkout.currency
-      });
-      
       // Update payment status in the database
-      // SumUp status values: "PENDING" | "FAILED" | "PAID" | "CANCELLED" | "EXPIRED"
       if (checkout.status === 'PAID') {
-        console.log('Payment is PAID, updating to succeeded');
         await this.updatePaymentStatus(checkoutId, 'succeeded');
-      } else if (checkout.status === 'FAILED' || checkout.status === 'CANCELLED' || checkout.status === 'EXPIRED') {
-        console.log(`Payment is ${checkout.status}, updating to failed`);
+      } else if (['FAILED', 'EXPIRED', 'CANCELLED'].includes(checkout.status)) {
         await this.updatePaymentStatus(checkoutId, 'failed');
-      } else {
-        // If payment is still PENDING but checkout is old (more than 30 minutes), mark as failed
-        const checkoutCreatedAt = checkout.created_at || checkout.created;
-        if (checkoutCreatedAt) {
-          const createdAt = new Date(checkoutCreatedAt);
-          const now = new Date();
-          const minutesSinceCreation = (now.getTime() - createdAt.getTime()) / (1000 * 60);
-          
-          // If checkout is older than 30 minutes and still pending, it's likely expired/failed
-          if (minutesSinceCreation > 30) {
-            console.log(`Payment is PENDING but checkout is ${minutesSinceCreation.toFixed(0)} minutes old, marking as failed`);
-            await this.updatePaymentStatus(checkoutId, 'failed');
-          } else {
-            console.log('Payment is still PENDING');
-          }
-        } else {
-          console.log('Payment is still PENDING');
-        }
       }
       
       return { status: checkout.status };
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error verifying payment:', error);
-      console.error('Error details:', {
-        message: error.message,
-        status: error.status,
-        response: error.response,
-        stack: error.stack
-      });
-      throw new Error(`Failed to verify payment status: ${error.message || 'Unknown error'}`);
+      throw new Error('Failed to verify payment status');
     }
   }
 
   private async updatePaymentStatus(checkoutId: string, status: 'succeeded' | 'failed') {
-    try {
-      console.log('Updating payment status:', { checkoutId, status });
-      
-      const { data: payment, error: paymentError } = await this.supabase
-        .from('payments')
-        .select('*')
-        .eq('sumup_checkout_id', checkoutId)
-        .single();
+    const { data: payment, error: paymentError } = await this.supabase
+      .from('payments')
+      .select('*')
+      .eq('sumup_checkout_id', checkoutId)
+      .single();
 
-      if (paymentError) {
-        console.error('Error finding payment:', paymentError);
-        throw new Error(`Payment not found for checkout ${checkoutId}: ${paymentError.message}`);
-      }
-
-      if (!payment) {
-        console.error('Payment not found for checkout:', checkoutId);
-        throw new Error(`Payment not found for checkout ${checkoutId}`);
-      }
-
-      console.log('Found payment:', { id: payment.id, order_id: payment.order_id });
-
-      // Update payment status
-      const { error: updateError } = await this.supabase
+    if (!paymentError && payment) {
+      await this.supabase
         .from('payments')
         .update({ 
           status: status,
           updated_at: new Date().toISOString()
         })
         .eq('id', payment.id);
-
-      if (updateError) {
-        console.error('Error updating payment:', updateError);
-        throw new Error(`Failed to update payment: ${updateError.message}`);
-      }
-
-      console.log('Payment status updated successfully');
-
-      // Update order status when payment succeeds
-      if (status === 'succeeded') {
-        console.log('Updating order status to paid');
-        const { error: orderUpdateError } = await this.supabase
-          .from('orders')
-          .update({ 
-            status: 'paid',
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', payment.order_id);
-
-        if (orderUpdateError) {
-          console.error('Error updating order status:', orderUpdateError);
-          // Don't throw - payment is already updated, order update is secondary
-        } else {
-          console.log('Order status updated to paid');
-        }
-      }
-    } catch (error: any) {
-      console.error('Error in updatePaymentStatus:', error);
-      throw error;
-    }
-  }
-
-  async handleWebhook(body: any, signature: string) {
-    try {
-      // Verify webhook signature if SumUp provides one
-      // Note: SumUp webhook signature verification should be implemented based on their documentation
-      // For now, we'll process the webhook and log the signature for verification
-
-      const eventType = body.type || body.event_type;
-      const checkoutId = body.checkout_id || body.id;
-      const checkoutReference = body.checkout_reference;
-
-      console.log('SumUp webhook received:', { eventType, checkoutId, checkoutReference, signature });
-
-      if (!checkoutId) {
-        console.error('Webhook missing checkout_id');
-        return { received: true };
-      }
-
-      // Verify payment status
-      const checkout = await this.sumup.checkouts.get(checkoutId);
-      
-      // SumUp status values: "PENDING" | "FAILED" | "PAID"
-      if (checkout.status === 'PAID') {
-        await this.updatePaymentStatus(checkoutId, 'succeeded');
-        console.log(`Payment succeeded for checkout ${checkoutId}`);
-      } else if (checkout.status === 'FAILED') {
-        await this.updatePaymentStatus(checkoutId, 'failed');
-        console.log(`Payment failed for checkout ${checkoutId}`);
-      }
-
-      return { received: true, processed: true };
-    } catch (error) {
-      console.error('Error processing SumUp webhook:', error);
-      // Return success to prevent SumUp from retrying
-      return { received: true, error: error.message };
     }
   }
 }
