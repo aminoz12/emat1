@@ -1039,7 +1039,7 @@ export default function CarteGrisePage() {
       description: 'À la suite de l’achat d’un véhicule à l’étranger, avec ou sans immatriculation WW. Délai de traitement estimé entre 1 et 5 semaines.',
       price: '99€',
       icon: Car,
-      iconImage: '/g3.png'
+      iconImage: '/wwe.png'
     },
     {
       value: 'enregistrement-cession', 
