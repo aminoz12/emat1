@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
     const options = {
       method: 'GET',
       headers: {
-        'x-rapidapi-key': '400d025f5fmsh992a54decd50a2ap18ee4ejsn012b99663b43',
+        'x-rapidapi-key': '9053235091msh103688341019d00p12b837jsn994c5dc3e28d',
         'x-rapidapi-host': 'api-simulateur-de-cout-carte-grise-france.p.rapidapi.com'
       }
     }
