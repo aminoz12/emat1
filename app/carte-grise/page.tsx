@@ -158,8 +158,7 @@ export default function CarteGrisePage() {
   // Company documents
   const [kbisFile, setKbisFile] = useState<File | null>(null)
   const [gerantIdFile, setGerantIdFile] = useState<File | null>(null)
-  const [cachetSocieteFile, setCachetSocieteFile] = useState<File | null>(null)
-  const [companyAssuranceFile, setCompanyAssuranceFile] = useState<File | null>(null)
+    const [companyAssuranceFile, setCompanyAssuranceFile] = useState<File | null>(null)
   // Duplicata documents
   const [mandatFile, setMandatFile] = useState<File | null>(null)
   const [cerfa13750File, setCerfa13750File] = useState<File | null>(null)
@@ -1175,8 +1174,8 @@ export default function CarteGrisePage() {
     {
       value: 'carte-grise-vehicule-etranger-ue', 
       label: 'Carte grise véhicule étranger (UE)', 
-      description: 'Vous avez acheté un véhicule à l\'étranger et souhaitez obtenir une immatriculation provisoire WW valable 4 mois.',
-      price: '49€',
+      description: 'À la suite de l\'achat d\'un véhicule à l\'étranger, avec ou sans immatriculation WW. Ce service concerne les véhicules en provenance de l\'Union Européenne. Le délai de traitement est estimé entre 1 et 5 semaines.',
+      price: '99€',
       icon: Car,
       iconImage: '/wwe.png'
     },
@@ -1311,10 +1310,10 @@ export default function CarteGrisePage() {
                           className="flex-shrink-0 flex items-center justify-center w-full sm:w-auto" 
                           style={{ 
                             width: '100%',
-                            maxWidth: '120px',
-                            minWidth: '80px',
-                            height: '60px',
-                            minHeight: '60px',
+                            maxWidth: doc.value === 'changement-titulaire' || doc.value === 'fiche-identification' ? '80px' : '120px',
+                            minWidth: doc.value === 'changement-titulaire' || doc.value === 'fiche-identification' ? '60px' : '80px',
+                            height: doc.value === 'changement-titulaire' || doc.value === 'fiche-identification' ? '40px' : '60px',
+                            minHeight: doc.value === 'changement-titulaire' || doc.value === 'fiche-identification' ? '40px' : '60px',
                             overflow: 'visible',
                             isolation: 'isolate'
                           }}
@@ -1326,24 +1325,28 @@ export default function CarteGrisePage() {
                               width={
                                 (doc.iconImage as string)?.includes('wwe.png') ? 120 :
                                 doc.value === 'declaration-achat' || doc.value === 'w-garage' ? 171 :
-                                doc.value === 'changement-adresse' ? 640 : 240
+                                doc.value === 'changement-adresse' ? 640 : 
+                                doc.value === 'changement-titulaire' || doc.value === 'fiche-identification' ? 80 : 240
                               }
                               height={
                                 (doc.iconImage as string)?.includes('wwe.png') ? 120 :
                                 doc.value === 'declaration-achat' || doc.value === 'w-garage' ? 171 :
-                                doc.value === 'changement-adresse' ? 640 : 240
+                                doc.value === 'changement-adresse' ? 640 : 
+                                doc.value === 'changement-titulaire' || doc.value === 'fiche-identification' ? 80 : 240
                               }
                               className="w-auto h-auto"
                               loading="lazy"
                               style={{
                                 maxWidth: 
                                   (doc.iconImage as string)?.includes('wwe.png') ? '120px' :
-                                  (doc.value === 'declaration-achat' || doc.value === 'w-garage') ? '171px' :
-                                  doc.value === 'changement-adresse' ? '640px' : '240px',
+                                  (doc.value === 'declaration-achat' || doc.value === 'w-garage' ? '171px' :
+                                  (doc.value === 'changement-adresse' ? '640px' : 
+                                  (doc.value === 'changement-titulaire' || doc.value === 'fiche-identification' ? '80px' : '240px'))),
                                 maxHeight: 
                                   (doc.iconImage as string)?.includes('wwe.png') ? '120px' :
-                                  (doc.value === 'declaration-achat' || doc.value === 'w-garage') ? '171px' :
-                                  doc.value === 'changement-adresse' ? '640px' : '240px',
+                                  (doc.value === 'declaration-achat' || doc.value === 'w-garage' ? '171px' :
+                                  (doc.value === 'changement-adresse' ? '640px' : 
+                                  (doc.value === 'changement-titulaire' || doc.value === 'fiche-identification' ? '80px' : '240px'))),
                                 width: 'auto',
                                 height: 'auto',
                                 objectFit: 'contain',
@@ -1366,11 +1369,36 @@ export default function CarteGrisePage() {
 
                         {/* Text Content */}
                         <div className="flex-1 min-w-0 w-full sm:w-auto">
-                          <h3 className={`font-bold text-sm sm:text-base mb-1 ${
-                            documentType === doc.value ? 'text-gray-900' : 'text-gray-900'
-                          }`}>
-                            {doc.label}
-                          </h3>
+                          <div className="flex items-start justify-between mb-1">
+                            <h3 className={`font-bold text-sm sm:text-base ${
+                              documentType === doc.value ? 'text-gray-900' : 'text-gray-900'
+                            }`}>
+                              {doc.label}
+                            </h3>
+                            <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help flex-shrink-0" title={
+                              doc.value === 'immatriculation-provisoire-ww' 
+                                ? 'Immatriculation provisoire WW: Permet de circuler légalement en France pendant 4 mois avec un véhicule acheté à l\'étranger. Valable uniquement pour les véhicules en provenance de l\'Union Européenne.'
+                                : doc.value === 'carte-grise-vehicule-etranger-ue'
+                                ? 'Carte grise véhicule étranger (UE): Pour immatriculer définitivement un véhicule acheté dans l\'Union Européenne. Le délai de traitement est de 1 à 5 semaines.'
+                                : doc.value === 'changement-titulaire'
+                                ? 'Changement de titulaire: Service pour transférer la propriété d\'un véhicule. Valable pour les achats en France ou à l\'étranger.'
+                                : doc.value === 'duplicata'
+                                ? 'Duplicata: Service pour obtenir une nouvelle carte grise en cas de perte, vol ou détérioration de l\'originale.'
+                                : doc.value === 'changement-adresse'
+                                ? 'Changement d\'adresse: Mettez à jour votre carte grise après un déménagement ou un changement de nom de rue.'
+                                : doc.value === 'enregistrement-cession'
+                                ? 'Enregistrement de cession: Déclarez la vente de votre véhicule pour ne plus être responsable des amendes et accidents.'
+                                : doc.value === 'fiche-identification'
+                                ? 'Fiche d\'identification: Document officiel remplaçant temporairement la carte grise pour les contrôles techniques.'
+                                : doc.value === 'declaration-achat'
+                                ? 'Déclaration d\'achat: Service réservé aux professionnels de l\'automobile pour déclarer leurs acquisitions.'
+                                : doc.value === 'w-garage'
+                                ? 'W Garage: Certificat professionnel pour les garages souhaitant immatriculer des véhicules pour leurs clients.'
+                                : 'Plus d\'informations sur ce service'
+                            }>
+                              <Info className="w-3 h-3 text-gray-600" />
+                            </div>
+                          </div>
                           <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">
                             {doc.description}
                           </p>
@@ -1626,7 +1654,7 @@ export default function CarteGrisePage() {
                       <div>
                         <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
                           Numéro VIN (17 caractères) *
-                          <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help" title="Le numéro VIN doit contenir exactement 17 caractères alphanumériques">
+                          <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help" title="Le numéro VIN se trouve sur votre carte grise au champ E. Il correspond au numéro d'identification du véhicule et contient 17 caractères (lettres et chiffres).">
                             <Info className="w-3 h-3 text-gray-600" />
                           </div>
                         </label>
@@ -1654,8 +1682,11 @@ export default function CarteGrisePage() {
                         )}
                       </div>
               <div>
-                        <label className="block text-sm font-medium text-gray-900 mb-2">
+                        <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
                           Numéro d'immatriculation *
+                          <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help" title="Le numéro d'immatriculation figure sur votre plaque et sur la carte grise (champ A).">
+                            <Info className="w-3 h-3 text-gray-600" />
+                          </div>
                         </label>
                         <input
                           type="text"
@@ -1944,15 +1975,15 @@ export default function CarteGrisePage() {
                           </div>
                         </div>
 
-                        {/* Certificat de cession */}
+                        {/* Certificat de cession (Cerfa 15776) */}
                         <div className="mb-4">
                           <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
-                            Certificat de cession *
+                            3. Certificat de cession (Cerfa 15776) *
                             <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
                               <Info className="w-3 h-3 text-gray-600" />
                             </div>
                           </label>
-                          <div className="flex items-center space-x-3">
+                          <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
                             <label className="cursor-pointer">
                               <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
                                 <Upload className="w-4 h-4" />
@@ -1960,14 +1991,22 @@ export default function CarteGrisePage() {
                               </span>
                               <input
                                 type="file"
-                                onChange={handleFileChange(setCertificatCessionFile)}
+                                onChange={handleFileChange(setCertificatCessionCerfa15776File)}
                                 className="hidden"
                                 accept="image/*,.pdf"
                                 required
                               />
                             </label>
+                            <a
+                              href="/cerfa_15776-01.pdf"
+                              download
+                              className="inline-flex items-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                            >
+                              <Download className="w-4 h-4 mr-2" />
+                              Télécharger le formulaire
+                            </a>
                             <span className="text-sm text-gray-500">
-                              {certificatCessionFile ? certificatCessionFile.name : 'Aucun fichier choisi'}
+                              {certificatCessionCerfa15776File ? certificatCessionCerfa15776File.name : 'Aucun fichier choisi'}
                             </span>
                           </div>
                         </div>
@@ -2301,34 +2340,7 @@ export default function CarteGrisePage() {
                             </div>
                           </div>
 
-                          {/* Cachet de la société */}
-                          <div className="mb-4">
-                            <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
-                              Cachet de la société *
-                              <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
-                                <Info className="w-3 h-3 text-gray-600" />
-                              </div>
-                            </label>
-                            <div className="flex items-center space-x-3">
-                              <label className="cursor-pointer">
-                                <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
-                                  <Upload className="w-4 h-4" />
-                                  <span>Choisir un fichier</span>
-                                </span>
-                                <input
-                                  type="file"
-                                  onChange={handleFileChange(setCachetSocieteFile)}
-                                  className="hidden"
-                                  accept="image/*,.pdf"
-                                  required
-                                />
-                              </label>
-                              <span className="text-sm text-gray-500">
-                                {cachetSocieteFile ? cachetSocieteFile.name : 'Aucun fichier choisi'}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
+                                                  </div>
                       </>
                     )}
 
@@ -2338,7 +2350,7 @@ export default function CarteGrisePage() {
                         {/* Photocopie carte grise */}
                         <div className="mb-4">
                           <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
-                            Photocopie carte grise *
+                             carte grise *
                             <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
                               <Info className="w-3 h-3 text-gray-600" />
                             </div>
@@ -2366,7 +2378,7 @@ export default function CarteGrisePage() {
                         {/* Photocopie Pièce d'identité */}
                         <div className="mb-4">
                           <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
-                            Photocopie Pièce d'identité *
+                             Pièce d'identité *
                             <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
                               <Info className="w-3 h-3 text-gray-600" />
                             </div>
@@ -2394,7 +2406,7 @@ export default function CarteGrisePage() {
                         {/* Photocopie justificatif de domicile (nouvelle adresse) */}
                         <div className="mb-4">
                           <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
-                            Photocopie justificatif de domicile (nouvelle adresse) *
+                             justificatif de domicile (nouvelle adresse) *
                             <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
                               <Info className="w-3 h-3 text-gray-600" />
                             </div>
@@ -2516,12 +2528,11 @@ export default function CarteGrisePage() {
                               <Info className="w-3 h-3 text-gray-600" />
                             </div>
                           </label>
-                          <div className="flex items-center space-x-3">
+                          <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
                             <label className="cursor-pointer">
-                              <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
-                                <Upload className="w-4 h-4" />
-                                <span>Choisir un fichier</span>
-                              </span>
+                              <div className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors">
+                                Choisir un fichier
+                              </div>
                               <input
                                 type="file"
                                 onChange={handleFileChange(setCerfa13750File)}
@@ -2530,6 +2541,14 @@ export default function CarteGrisePage() {
                                 required
                               />
                             </label>
+                            <a
+                              href="/Formulaire de demande cerfa 13750-05.pdf"
+                              download
+                              className="inline-flex items-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                            >
+                              <Download className="w-4 h-4 mr-2" />
+                              Télécharger le formulaire
+                            </a>
                             <span className="text-sm text-gray-500">
                               {cerfa13750File ? cerfa13750File.name : 'Aucun fichier choisi'}
                             </span>
@@ -2576,12 +2595,11 @@ export default function CarteGrisePage() {
                                 <Info className="w-3 h-3 text-gray-600" />
                               </div>
                             </label>
-                            <div className="flex items-center space-x-3">
+                            <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
                               <label className="cursor-pointer">
-                                <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
-                                  <Upload className="w-4 h-4" />
-                                  <span>Choisir un fichier</span>
-                                </span>
+                                <div className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors">
+                                  Choisir un fichier
+                                </div>
                                 <input
                                   type="file"
                                   onChange={handleFileChange(setCerfa13753File)}
@@ -2590,6 +2608,14 @@ export default function CarteGrisePage() {
                                   required
                                 />
                               </label>
+                              <a
+                                href="/cerfa-13753-02-declaration-perte-vol.pdf"
+                                download
+                                className="inline-flex items-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                              >
+                                <Download className="w-4 h-4 mr-2" />
+                                Télécharger le formulaire
+                              </a>
                               <span className="text-sm text-gray-500">
                                 {cerfa13753File ? cerfa13753File.name : 'Aucun fichier choisi'}
                               </span>

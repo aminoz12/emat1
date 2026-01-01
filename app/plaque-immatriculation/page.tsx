@@ -553,7 +553,7 @@ export default function PlaqueImmatriculationPage() {
                 </span>
               </div>
               
-              <div className="flex items-start space-x-5 md:space-x-6 pr-32">
+              <div className="flex flex-col md:flex-row items-start space-y-4 md:space-y-0 md:space-x-5 md:space-x-6 md:pr-32">
                 <div className="relative flex-shrink-0">
                   <div className="absolute inset-0 bg-gradient-to-br from-primary-600 to-primary-700 rounded-2xl blur-sm opacity-50"></div>
                   <div className="relative bg-gradient-to-br from-primary-500 via-primary-600 to-primary-700 text-white px-5 py-2.5 rounded-2xl flex items-center justify-center font-bold text-base md:text-lg shadow-xl border-2 border-white/20 backdrop-blur-sm">
@@ -628,7 +628,7 @@ export default function PlaqueImmatriculationPage() {
                 </span>
               </div>
               
-              <div className="flex items-start space-x-5 md:space-x-6 pr-32">
+              <div className="flex flex-col md:flex-row items-start space-y-4 md:space-y-0 md:space-x-5 md:space-x-6 md:pr-32">
                 <div className="relative flex-shrink-0">
                   <div className="absolute inset-0 bg-gradient-to-br from-primary-600 to-primary-700 rounded-2xl blur-sm opacity-50"></div>
                   <div className="relative bg-gradient-to-br from-primary-500 via-primary-600 to-primary-700 text-white px-5 py-2.5 rounded-2xl flex items-center justify-center font-bold text-base md:text-lg shadow-xl border-2 border-white/20 backdrop-blur-sm">
@@ -746,7 +746,7 @@ export default function PlaqueImmatriculationPage() {
                 <CheckCircle className="w-7 h-7 text-primary-600" />
               </div>
               
-              <div className="flex items-start space-x-5 md:space-x-6 pr-20">
+              <div className="flex flex-col md:flex-row items-start space-y-4 md:space-y-0 md:space-x-5 md:space-x-6 md:pr-20">
                 <div className="relative flex-shrink-0">
                   <div className="absolute inset-0 bg-gradient-to-br from-primary-600 to-primary-700 rounded-2xl blur-sm opacity-50"></div>
                   <div className="relative bg-gradient-to-br from-primary-500 via-primary-600 to-primary-700 text-white px-5 py-2.5 rounded-2xl flex items-center justify-center font-bold text-base md:text-lg shadow-xl border-2 border-white/20 backdrop-blur-sm">
@@ -828,64 +828,10 @@ export default function PlaqueImmatriculationPage() {
                   <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6">
                     Choisissez la région et le département
                   </h2>
-                  
-                  {/* Scrollable Department List */}
-                  <div className="border-2 border-gray-200 rounded-lg overflow-hidden">
-                    <div className="max-h-96 overflow-y-auto">
-                      {departments.map((dept) => (
-                        <button
-                          key={dept.code}
-                          type="button"
-                          onClick={() => {
-                            setSelectedDepartment(dept.code)
-                            setRegionLogoError(false)
-                          }}
-                          className={`w-full px-4 py-3 flex items-center space-x-3 border-b border-gray-100 last:border-b-0 transition-all hover:bg-gray-50 ${
-                            selectedDepartment === dept.code
-                              ? 'bg-primary-50 border-l-4 border-l-primary-600'
-                              : 'bg-white'
-                          }`}
-                        >
-                          {/* Department Logo (Region Logo) */}
-                          <div className="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center bg-gray-50 rounded-lg border border-gray-200">
-                            <Image
-                              src={getRegionLogo(dept.code)}
-                              alt={`Logo ${dept.name}`}
-                              width={40}
-                              height={40}
-                              className="object-contain w-full h-full"
-                              onError={(e) => {
-                                // Hide image if it doesn't exist
-                                e.currentTarget.style.display = 'none'
-                              }}
-                            />
-                          </div>
-                          
-                          {/* Department Info */}
-                          <div className="flex-1 text-left min-w-0">
-                            <div className={`font-semibold text-sm ${
-                              selectedDepartment === dept.code
-                                ? 'text-primary-600'
-                                : 'text-gray-900'
-                            }`}>
-                              {dept.code} - {dept.name}
-                            </div>
-                          </div>
-                          
-                          {/* Selection Indicator */}
-                          {selectedDepartment === dept.code && (
-                            <div className="flex-shrink-0">
-                              <CheckCircle className="w-5 h-5 text-primary-600" />
-                            </div>
-                          )}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
                 </div>
               </div>
             </div>
-            )}
+            )
 
             {/* Step 5: Fixing Mode (Step 4 when department selection is hidden) */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 md:p-8 relative">
@@ -981,7 +927,7 @@ export default function PlaqueImmatriculationPage() {
                 </span>
               </div>
               
-              <div className="flex items-start space-x-5 md:space-x-6 pr-32">
+              <div className="flex flex-col md:flex-row items-start space-y-4 md:space-y-0 md:space-x-5 md:space-x-6 md:pr-32">
                 <div className="relative flex-shrink-0">
                   <div className="absolute inset-0 bg-gradient-to-br from-primary-600 to-primary-700 rounded-2xl blur-sm opacity-50"></div>
                   <div className="relative bg-gradient-to-br from-primary-500 via-primary-600 to-primary-700 text-white px-5 py-2.5 rounded-2xl flex items-center justify-center font-bold text-base md:text-lg shadow-xl border-2 border-white/20 backdrop-blur-sm">
@@ -1418,7 +1364,7 @@ export default function PlaqueImmatriculationPage() {
                     </div>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-lg md:text-xl font-medium text-gray-700">Prix de livraison</span>
+                    <span className="text-lg md:text-xl font-medium text-gray-700">Frais de livraison</span>
                     <div className="text-xl md:text-2xl font-semibold text-gray-800">
                       5,00 €
                     </div>

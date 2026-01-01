@@ -691,108 +691,96 @@ const FAQSection = () => {
   const faqCategories = {
     Commandes: [
       {
-        question: 'Quel est le délai de livraison standard ?',
-        answer: 'Le délai de livraison standard pour une carte grise est de 24 à 48 heures après validation de votre dossier. La carte grise est envoyée par l\'Imprimerie Nationale en recommandé avec accusé de réception.',
+        question: 'Puis-je annuler ma commande ?',
+        answer: 'Une commande peut être annulée tant qu\'elle n\'a pas été traitée. Une fois la démarche administrative engagée, aucun remboursement n\'est possible (prestations administratives).',
       },
       {
-        question: 'Comment puis-je suivre mon paiement ?',
-        answer: 'Une fois votre paiement effectué, vous recevez un email de confirmation avec votre numéro de suivi. Vous pouvez également suivre l\'avancement de votre dossier dans votre espace client sur notre site.',
+        question: 'Quelle est votre politique de remboursement ?',
+        answer: 'Une commande peut être annulée tant qu\'elle n\'a pas été traitée. Une fois la démarche administrative engagée, aucun remboursement n\'est possible (prestations administratives).',
       },
       {
-        question: 'Quels documents sont nécessaires pour commander ?',
-        answer: 'Pour commander votre carte grise, vous aurez besoin de votre permis de conduire, de la carte grise actuelle (si changement de propriétaire), et d\'un justificatif de domicile de moins de 3 mois.',
+        question: 'Qu\'est-ce que le service de carte grise en ligne ?',
+        answer: 'Notre service de carte grise en ligne vous permet d\'effectuer vos démarches administratives (changement de titulaire, d\'adresse, duplicata, etc.) rapidement et sans vous déplacer, via une plateforme agréée.',
       },
       {
-        question: 'Puis-je payer en plusieurs fois ?',
-        answer: 'Oui, nous proposons le paiement en 3 fois sans frais pour tous nos clients. Cette option est disponible lors du processus de paiement.',
+        question: 'Êtes-vous agréé par l\'État ?',
+        answer: 'Oui, notre service est habilité et agréé par le Ministère de l\'Intérieur, conformément à la réglementation en vigueur (SIV).',
+      },
+      {
+        question: 'Quelles démarches puis-je effectuer ?',
+        answer: 'Vous pouvez réaliser notamment : Changement de titulaire (achat / vente), Changement d\'adresse, Duplicata (perte, vol, détérioration), Immatriculation d\'un véhicule neuf ou importé',
+      },
+      {
+        question: 'Quels documents sont nécessaires ?',
+        answer: 'Les documents varient selon la démarche, mais généralem...',
+      },
+      {
+        question: 'Proposez-vous des plaques d\'immatriculation homologuées ?',
+        answer: 'Oui, toutes nos plaques sont homologuées UTAC, conformes à la réglementation française en vigueur.',
+      },
+      {
+        question: 'Quels types de plaques proposez-vous ?',
+        answer: 'Nous proposons : Plaques auto (avant / arrière), Plaques plexiglas, Plaque provisoire (WW/W)',
+      },
+      {
+        question: 'Puis-je choisir le numéro de département et le logo régional ?',
+        answer: 'Oui, vous pouvez choisir le département et le logo régional, quel que soit votre lieu de résidence (dans le respect de la loi).',
+      },
+      {
+        question: 'Les plaques sont-elles prêtes à poser ?',
+        answer: 'Oui, les plaques sont livrées prêtes à poser. Les rivets peuvent être fournis selon l\'option choisie.',
+      },
+      {
+        question: 'Quel est le délai de fabrication et de livraison ?',
+        answer: 'Les plaques sont généralement fabriquées et expédiées sous 24 à 48 heures ouvrées.',
+      },
+      {
+        question: 'Puis-je commander carte grise et plaques en même temps ?',
+        answer: 'Oui, vous pouvez effectuer les deux démarches en une seule commande pour plus de simplicité.',
+      },
+      {
+        question: 'Proposez-vous un service client ?',
+        answer: 'Oui, notre service client est disponible pour vous accompagner avant, pendant et après votre commande.',
       },
     ],
     Livraison: [
       {
-        question: 'Quel est le délai de livraison standard ?',
-        answer: 'Le délai de livraison standard est de 24 à 48 heures après validation de votre dossier. La carte grise est envoyée par l\'Imprimerie Nationale en recommandé.',
+        question: 'Puis-je annuler ma commande ?',
+        answer: 'Une commande peut être annulée tant qu\'elle n\'a pas été traitée. Une fois la démarche administrative engagée, aucun remboursement n\'est possible (prestations administratives).',
       },
       {
-        question: 'Comment est livrée ma carte grise ?',
-        answer: 'Votre carte grise est livrée par l\'Imprimerie Nationale en recommandé avec accusé de réception directement à l\'adresse que vous avez indiquée lors de la commande.',
-      },
-      {
-        question: 'Puis-je suivre ma livraison ?',
-        answer: 'Oui, vous recevez un numéro de suivi par email une fois votre carte grise expédiée. Vous pouvez suivre l\'acheminement sur le site de La Poste.',
-      },
-      {
-        question: 'Que faire si je ne reçois pas ma carte grise ?',
-        answer: 'Si vous ne recevez pas votre carte grise dans les délais, contactez notre service client au 01 47 85 10 00. Nous pourrons vérifier le statut de votre envoi et procéder à un nouvel envoi si nécessaire.',
+        question: 'Quelle est votre politique de remboursement ?',
+        answer: 'Une commande peut être annulée tant qu\'elle n\'a pas été traitée. Une fois la démarche administrative engagée, aucun remboursement n\'est possible (prestations administratives).',
       },
     ],
     Retours: [
       {
-        question: 'Comment effectuer un retour ?',
-        answer: 'Pour effectuer un retour, contactez notre service client au 01 47 85 10 00 ou par email à contact@ematricule.fr. Notre équipe vous guidera dans la procédure de retour.',
-      },
-      {
-        question: 'Quand serai-je remboursé après un retour ?',
-        answer: 'Le remboursement est effectué dans un délai de 5 à 10 jours ouvrables après réception et validation de votre retour par notre équipe. Le remboursement se fait sur le même moyen de paiement utilisé lors de la commande.',
-      },
-      {
         question: 'Puis-je annuler ma commande ?',
-        answer: 'Oui, vous pouvez annuler votre commande tant que le dossier n\'a pas été traité. Contactez-nous rapidement au 01 47 85 10 00 pour annuler votre commande.',
+        answer: 'Une commande peut être annulée tant qu\'elle n\'a pas été traitée. Une fois la démarche administrative engagée, aucun remboursement n\'est possible (prestations administratives).',
       },
       {
         question: 'Quelle est votre politique de remboursement ?',
-        answer: 'Nous remboursons intégralement les commandes annulées avant traitement. Une fois le dossier traité, les frais administratifs peuvent être retenus. Contactez-nous pour plus de détails.',
+        answer: 'Une commande peut être annulée tant qu\'elle n\'a pas été traitée. Une fois la démarche administrative engagée, aucun remboursement n\'est possible (prestations administratives).',
       },
     ],
     'Carte grise': [
       {
-        question: 'Qu\'est-ce qu\'une carte grise ?',
-        answer: 'La carte grise, officiellement appelée "certificat d\'immatriculation", est le document officiel qui prouve l\'identité de votre véhicule. Elle contient toutes les informations techniques et administratives de votre véhicule.',
+        question: 'Puis-je annuler ma commande ?',
+        answer: 'Une commande peut être annulée tant qu\'elle n\'a pas été traitée. Une fois la démarche administrative engagée, aucun remboursement n\'est possible (prestations administratives).',
       },
       {
-        question: 'Comment obtenir ma carte grise ?',
-        answer: 'Vous pouvez obtenir votre carte grise en ligne sur notre plateforme EMatricule. Il suffit de remplir notre formulaire en quelques clics, de fournir les documents nécessaires et de procéder au paiement. Nous nous occupons de toutes les démarches administratives.',
-      },
-      {
-        question: 'Combien coûte une carte grise ?',
-        answer: 'Le prix d\'une carte grise varie selon plusieurs facteurs : le type de véhicule, la puissance fiscale, la région d\'immatriculation, et le type de démarche. Nos tarifs commencent à partir de 29,90€. Vous obtiendrez un devis précis après avoir rempli notre formulaire.',
-      },
-      {
-        question: 'Quels sont les délais pour obtenir ma carte grise ?',
-        answer: 'Une fois votre dossier validé et votre paiement effectué, nous traitons votre demande en 24 heures maximum. La carte grise est ensuite envoyée par l\'Imprimerie Nationale en recommandé, avec un délai de livraison de 24 à 48 heures supplémentaires.',
-      },
-      {
-        question: 'Quels documents sont nécessaires pour une carte grise ?',
-        answer: 'Les documents nécessaires varient selon le type de démarche. Généralement, vous aurez besoin de votre permis de conduire, de la carte grise actuelle (si changement de propriétaire), d\'un justificatif de domicile de moins de 3 mois, et parfois d\'un certificat de non-gage ou d\'un contrôle technique selon le cas.',
-      },
-      {
-        question: 'Puis-je faire ma carte grise en ligne ?',
-        answer: 'Oui, absolument ! EMatricule est une plateforme officielle habilitée par le Ministère de l\'Intérieur depuis 2009. Vous pouvez effectuer toutes vos démarches de carte grise en ligne, de manière sécurisée et rapide.',
+        question: 'Quelle est votre politique de remboursement ?',
+        answer: 'Une commande peut être annulée tant qu\'elle n\'a pas été traitée. Une fois la démarche administrative engagée, aucun remboursement n\'est possible (prestations administratives).',
       },
     ],
     'Matricule': [
       {
-        question: 'Qu\'est-ce qu\'un numéro de matricule ?',
-        answer: 'Le numéro de matricule, également appelé numéro d\'immatriculation ou plaque d\'immatriculation, est le code unique qui identifie votre véhicule. Il est composé de lettres et de chiffres (format AA-123-AA) et doit être affiché sur les plaques d\'immatriculation de votre véhicule.',
+        question: 'Puis-je annuler ma commande ?',
+        answer: 'Une commande peut être annulée tant qu\'elle n\'a pas été traitée. Une fois la démarche administrative engagée, aucun remboursement n\'est possible (prestations administratives).',
       },
       {
-        question: 'Comment obtenir un nouveau numéro de matricule ?',
-        answer: 'Lors de l\'immatriculation d\'un nouveau véhicule ou lors d\'un changement d\'immatriculation, vous recevez automatiquement un nouveau numéro de matricule. Ce numéro est attribué par le système d\'immatriculation des véhicules (SIV) et vous est communiqué lors de la délivrance de votre carte grise.',
-      },
-      {
-        question: 'Puis-je choisir mon numéro de matricule ?',
-        answer: 'Oui, vous pouvez demander un numéro de matricule personnalisé (plaque personnalisée) moyennant des frais supplémentaires. Cette option vous permet de choisir une combinaison de lettres et de chiffres selon certaines règles. Contactez-nous pour plus d\'informations.',
-      },
-      {
-        question: 'Que faire en cas de perte ou vol de ma carte grise ?',
-        answer: 'En cas de perte ou de vol de votre carte grise, vous devez demander un duplicata. Vous pouvez le faire en ligne sur notre plateforme. Il vous faudra fournir une déclaration de perte ou de vol et payer les frais de duplicata.',
-      },
-      {
-        question: 'Comment changer mon adresse sur ma carte grise ?',
-        answer: 'Pour changer votre adresse sur votre carte grise, vous devez effectuer une démarche de changement d\'adresse. Cette procédure est simple et peut être faite en ligne sur notre site. Vous devrez fournir un justificatif de domicile récent (moins de 3 mois) à votre nouvelle adresse.',
-      },
-      {
-        question: 'Qu\'est-ce que le code de cession ?',
-        answer: 'Le code de cession est un code unique à 4 caractères qui est fourni lors de la vente d\'un véhicule. Il permet à l\'acheteur de procéder à l\'enregistrement de la cession et à l\'immatriculation du véhicule à son nom. Ce code est valable 30 jours.',
+        question: 'Quelle est votre politique de remboursement ?',
+        answer: 'Une commande peut être annulée tant qu\'elle n\'a pas été traitée. Une fois la démarche administrative engagée, aucun remboursement n\'est possible (prestations administratives).',
       },
     ],
   }

@@ -114,7 +114,7 @@ const Header = () => {
           {/* Right side - Phone and CTA */}
           <div className="flex items-center space-x-4">
             {/* Phone */}
-            <a href="tel:0147851000" className="flex items-center space-x-2 text-gray-700 hover:text-primary-600 transition-colors">
+            <a href="tel:0147851000" className="hidden md:flex items-center space-x-2 text-gray-700 hover:text-primary-600 transition-colors">
               <Phone className="w-4 h-4" />
               <div className="text-right">
                 <div className="text-sm font-semibold">01 47 85 10 00</div>
@@ -314,7 +314,7 @@ const Header = () => {
               )}
 
               <div className="pt-4 border-t space-y-2">
-                <a href="tel:0147851000" className="flex items-center space-x-2 text-gray-700 hover:text-primary-600 transition-colors">
+                <a href="tel:0147851000" className="hidden md:flex items-center space-x-2 text-gray-700 hover:text-primary-600 transition-colors">
                   <Phone className="w-4 h-4" />
                   <div>
                     <div className="font-medium">01 47 85 10 00</div>
