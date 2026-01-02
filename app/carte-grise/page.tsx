@@ -2069,13 +2069,13 @@ export default function CarteGrisePage() {
                         <div className="mb-4">
                           <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
                             Permis de conduire *
-                            <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
+                            <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help" title="Le permis de conduire est requis pour confirmer que vous êtes autorisé à conduire le véhicule.">
                               <Info className="w-3 h-3 text-gray-600" />
                             </div>
                           </label>
                           <div className="flex items-center space-x-3">
                             <label className="cursor-pointer">
-                              <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
+                              <span className="w-full mb-4 py-4 px-6 rounded-2xl font-bold text-base transition-all duration-300 flex items-center justify-center space-x-2 shadow-lg bg-gradient-to-r from-primary-600 to-primary-700 text-white hover:from-primary-700 hover:to-primary-800 hover:shadow-xl transform hover:-translate-y-0.5 active:translate-y-0">
                                 <Upload className="w-4 h-4" />
                                 <span>Choisir un fichier</span>
                               </span>
@@ -2126,7 +2126,7 @@ export default function CarteGrisePage() {
                           <div className="mb-4">
                             <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
                               Assurance *
-                              <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
+                              <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help" title="Une attestation d'assurance est requise pour prouver que le véhicule est assuré.">
                                 <Info className="w-3 h-3 text-gray-600" />
                               </div>
                             </label>
