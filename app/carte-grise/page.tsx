@@ -1310,10 +1310,10 @@ export default function CarteGrisePage() {
                           className="flex-shrink-0 flex items-center justify-center w-full sm:w-auto" 
                           style={{ 
                             width: '100%',
-                            maxWidth: doc.value === 'changement-titulaire' || doc.value === 'fiche-identification' ? '80px' : '120px',
-                            minWidth: doc.value === 'changement-titulaire' || doc.value === 'fiche-identification' ? '60px' : '80px',
-                            height: doc.value === 'changement-titulaire' || doc.value === 'fiche-identification' ? '40px' : '60px',
-                            minHeight: doc.value === 'changement-titulaire' || doc.value === 'fiche-identification' ? '40px' : '60px',
+                            maxWidth: '120px',
+                            minWidth: '80px',
+                            height: '60px',
+                            minHeight: '60px',
                             overflow: 'visible',
                             isolation: 'isolate'
                           }}
@@ -1325,14 +1325,12 @@ export default function CarteGrisePage() {
                               width={
                                 (doc.iconImage as string)?.includes('wwe.png') ? 120 :
                                 doc.value === 'declaration-achat' || doc.value === 'w-garage' ? 171 :
-                                doc.value === 'changement-adresse' ? 640 : 
-                                doc.value === 'changement-titulaire' || doc.value === 'fiche-identification' ? 80 : 240
+                                doc.value === 'changement-adresse' ? 640 : 240
                               }
                               height={
                                 (doc.iconImage as string)?.includes('wwe.png') ? 120 :
                                 doc.value === 'declaration-achat' || doc.value === 'w-garage' ? 171 :
-                                doc.value === 'changement-adresse' ? 640 : 
-                                doc.value === 'changement-titulaire' || doc.value === 'fiche-identification' ? 80 : 240
+                                doc.value === 'changement-adresse' ? 640 : 240
                               }
                               className="w-auto h-auto"
                               loading="lazy"
@@ -1340,13 +1338,11 @@ export default function CarteGrisePage() {
                                 maxWidth: 
                                   (doc.iconImage as string)?.includes('wwe.png') ? '120px' :
                                   (doc.value === 'declaration-achat' || doc.value === 'w-garage' ? '171px' :
-                                  (doc.value === 'changement-adresse' ? '640px' : 
-                                  (doc.value === 'changement-titulaire' || doc.value === 'fiche-identification' ? '80px' : '240px'))),
+                                  (doc.value === 'changement-adresse' ? '640px' : '240px')),
                                 maxHeight: 
                                   (doc.iconImage as string)?.includes('wwe.png') ? '120px' :
                                   (doc.value === 'declaration-achat' || doc.value === 'w-garage' ? '171px' :
-                                  (doc.value === 'changement-adresse' ? '640px' : 
-                                  (doc.value === 'changement-titulaire' || doc.value === 'fiche-identification' ? '80px' : '240px'))),
+                                  (doc.value === 'changement-adresse' ? '640px' : '240px')),
                                 width: 'auto',
                                 height: 'auto',
                                 objectFit: 'contain',
@@ -1951,7 +1947,7 @@ export default function CarteGrisePage() {
                         <div className="mb-4">
                           <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
                             Carte Grise *
-                            <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
+                            <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help" title="Veuillez télécharger la carte grise du véhicule (certificat d'immatriculation) afin de confirmer que vous êtes le propriétaire du véhicule.">
                               <Info className="w-3 h-3 text-gray-600" />
                             </div>
                           </label>
@@ -1979,7 +1975,7 @@ export default function CarteGrisePage() {
                         <div className="mb-4">
                           <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
                             3. Certificat de cession (Cerfa 15776) *
-                            <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
+                            <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help" title="Le certificat de cession est un document obligatoire lors de la vente d'un véhicule. Il doit être signé par l'ancien et le nouveau propriétaire.">
                               <Info className="w-3 h-3 text-gray-600" />
                             </div>
                           </label>
@@ -2000,7 +1996,7 @@ export default function CarteGrisePage() {
                             <a
                               href="/cerfa_15776-01.pdf"
                               download
-                              className="inline-flex items-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                              className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 active:translate-y-0"
                             >
                               <Download className="w-4 h-4 mr-2" />
                               Télécharger le formulaire
@@ -2015,7 +2011,7 @@ export default function CarteGrisePage() {
                         <div className="mb-4">
                           <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
                             Pièce d'identité *
-                            <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
+                            <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help" title="Une pièce d'identité en cours de validité est requise (carte nationale d'identité, passeport, ou permis de conduire).">
                               <Info className="w-3 h-3 text-gray-600" />
                             </div>
                           </label>
@@ -2044,7 +2040,7 @@ export default function CarteGrisePage() {
                           <div className="mb-4">
                             <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
                               Justificatif de domicile (moins de 3 mois) *
-                              <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
+                              <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help" title="Un justificatif de domicile de moins de 3 mois est requis (facture d'électricité, gaz, eau, internet, ou quittance de loyer).">
                                 <Info className="w-3 h-3 text-gray-600" />
                               </div>
                             </label>
@@ -2101,7 +2097,7 @@ export default function CarteGrisePage() {
                         <div className="mb-4">
                           <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
                             Contrôle technique (moins de 6 mois) *
-                            <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
+                            <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help" title="Le contrôle technique est obligatoire pour les véhicules de plus de 4 ans, sauf exemption. Il doit daté de moins de 6 mois.">
                               <Info className="w-3 h-3 text-gray-600" />
                             </div>
                           </label>
@@ -2544,7 +2540,7 @@ export default function CarteGrisePage() {
                             <a
                               href="/Formulaire de demande cerfa 13750-05.pdf"
                               download
-                              className="inline-flex items-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                              className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 active:translate-y-0"
                             >
                               <Download className="w-4 h-4 mr-2" />
                               Télécharger le formulaire
@@ -2611,7 +2607,7 @@ export default function CarteGrisePage() {
                               <a
                                 href="/cerfa-13753-02-declaration-perte-vol.pdf"
                                 download
-                                className="inline-flex items-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                                className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 active:translate-y-0"
                               >
                                 <Download className="w-4 h-4 mr-2" />
                                 Télécharger le formulaire
