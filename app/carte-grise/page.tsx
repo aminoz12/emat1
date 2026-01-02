@@ -160,13 +160,11 @@ export default function CarteGrisePage() {
   const [gerantIdFile, setGerantIdFile] = useState<File | null>(null)
     const [companyAssuranceFile, setCompanyAssuranceFile] = useState<File | null>(null)
   // Duplicata documents
-  const [mandatFile, setMandatFile] = useState<File | null>(null)
   const [cerfa13750File, setCerfa13750File] = useState<File | null>(null)
   const [cerfa13753File, setCerfa13753File] = useState<File | null>(null)
   const [duplicataReason, setDuplicataReason] = useState<'perte-vol' | 'autre' | null>(null)
   // Déclaration d'achat documents
   const [carteGriseVendeurFile, setCarteGriseVendeurFile] = useState<File | null>(null)
-  const [demandeCertificatMandatFile, setDemandeCertificatMandatFile] = useState<File | null>(null)
   const [certificatCessionCerfa15776File, setCertificatCessionCerfa15776File] = useState<File | null>(null)
   const [recepisseDeclarationAchatFile, setRecepisseDeclarationAchatFile] = useState<File | null>(null)
   const [certificatDeclarationAchatCerfa13751File, setCertificatDeclarationAchatCerfa13751File] = useState<File | null>(null)
@@ -181,7 +179,6 @@ export default function CarteGrisePage() {
   // Immatriculation provisoire WW documents
   const [wwCarteGriseEtrangereFile, setWwCarteGriseEtrangereFile] = useState<File | null>(null)
   const [wwCertificatConformiteFile, setWwCertificatConformiteFile] = useState<File | null>(null)
-  const [wwDemandeCertificatMandatFile, setWwDemandeCertificatMandatFile] = useState<File | null>(null)
   const [wwJustificatifProprieteFile, setWwJustificatifProprieteFile] = useState<File | null>(null)
   const [wwQuitusFiscalFile, setWwQuitusFiscalFile] = useState<File | null>(null)
   const [wwPermisConduireFile, setWwPermisConduireFile] = useState<File | null>(null)
@@ -191,7 +188,6 @@ export default function CarteGrisePage() {
   // Carte grise véhicule étranger (UE) documents
   const [ueCarteGriseEtrangereFile, setUeCarteGriseEtrangereFile] = useState<File | null>(null)
   const [ueCertificatConformiteFile, setUeCertificatConformiteFile] = useState<File | null>(null)
-  const [ueDemandeCertificatMandatFile, setUeDemandeCertificatMandatFile] = useState<File | null>(null)
   const [ueJustificatifProprieteFile, setUeJustificatifProprieteFile] = useState<File | null>(null)
   const [ueQuitusFiscalFile, setUeQuitusFiscalFile] = useState<File | null>(null)
   const [uePermisConduireFile, setUePermisConduireFile] = useState<File | null>(null)
@@ -207,12 +203,10 @@ export default function CarteGrisePage() {
   const [wGaragePreuveActiviteFile, setWGaragePreuveActiviteFile] = useState<File | null>(null)
   const [wGarageAttestationFiscaleFile, setWGarageAttestationFiscaleFile] = useState<File | null>(null)
   const [wGarageAttestationUrssafFile, setWGarageAttestationUrssafFile] = useState<File | null>(null)
-  const [wGarageMandatFile, setWGarageMandatFile] = useState<File | null>(null)
   // Enregistrement de cession documents
   const [cessionCarteGriseBarreeFile, setCessionCarteGriseBarreeFile] = useState<File | null>(null)
   const [cessionCarteIdentiteFile, setCessionCarteIdentiteFile] = useState<File | null>(null)
   const [cessionCertificatVenteFile, setCessionCertificatVenteFile] = useState<File | null>(null)
-  const [cessionMandatFile, setCessionMandatFile] = useState<File | null>(null)
   const [acceptTerms, setAcceptTerms] = useState(false)
   const [mandatPreviewUrl, setMandatPreviewUrl] = useState<string | null>(null)
   const [isGeneratingMandat, setIsGeneratingMandat] = useState(false)
@@ -431,34 +425,6 @@ export default function CarteGrisePage() {
         )
       }
       
-      // Handle mandat files
-      if (mandatPreviewUrlWithSignature && isSignatureValidated) {
-        try {
-          const response = await fetch(mandatPreviewUrlWithSignature)
-          const blob = await response.blob()
-          const mandatFile = new File([blob], `mandat_${documentType}_${Date.now()}.pdf`, { type: 'application/pdf' })
-          filePromises.push(
-            convertFileToBase64(mandatFile).then(base64 => {
-              filesToStore.mandatFile = { name: mandatFile.name, type: mandatFile.type, base64 }
-            })
-          )
-        } catch (error) {
-          console.error('Erreur conversion mandat:', error)
-        }
-      } else if (mandatPreviewUrl) {
-        try {
-          const response = await fetch(mandatPreviewUrl)
-          const blob = await response.blob()
-          const mandatFile = new File([blob], `mandat_${documentType}_${Date.now()}.pdf`, { type: 'application/pdf' })
-          filePromises.push(
-            convertFileToBase64(mandatFile).then(base64 => {
-              filesToStore.mandatFile = { name: mandatFile.name, type: mandatFile.type, base64 }
-            })
-          )
-        } catch (error) {
-          console.error('Erreur conversion mandat:', error)
-        }
-      }
 
       // Wait for all files to be converted
       await Promise.all(filePromises)
@@ -524,12 +490,6 @@ export default function CarteGrisePage() {
               file: base64ToFile(filesToStore.assuranceFile.base64, filesToStore.assuranceFile.name, filesToStore.assuranceFile.type), 
               documentType: 'assurance' 
             })
-          }
-          if (filesToStore.mandatFile) {
-            filesToUpload.push({ 
-              file: base64ToFile(filesToStore.mandatFile.base64, filesToStore.mandatFile.name, filesToStore.mandatFile.type), 
-              documentType: isSignatureValidated ? 'mandat_signe' : 'mandat' 
-              })
           }
           
           // Create order
@@ -1413,163 +1373,6 @@ export default function CarteGrisePage() {
                   })}
                 </div>
               </div>
-
-              {/* Document Preview */}
-              <div className="bg-white border border-gray-100 rounded-2xl p-6 md:p-8 shadow-lg relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary-600 to-primary-400"></div>
-                <div className="mb-4">
-                  <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-3">
-                    Aperçu du mandat
-                </h3>
-                  <p className="text-sm text-gray-600 mb-4">
-                    Le mandat sera prérempli automatiquement avec vos informations. Merci de le télécharger, le signer, puis de l'ajouter avec les documents requis.
-                  </p>
-                  
-                  {/* Button to generate mandat */}
-                  <button
-                    type="button"
-                    onClick={handleGenerateMandat}
-                    disabled={isGeneratingMandat || !firstName || !lastName || !email || !streetNumber || !streetType || !streetName || !postalCode || !city || !vin || vin.length !== 17 || !registrationNumber || !validateRegistrationNumber(registrationNumber) || !marque || (clientType === 'company' && !siret)}
-                    className={`w-full mb-4 py-4 px-6 rounded-2xl font-bold text-base transition-all duration-300 flex items-center justify-center space-x-2 shadow-lg ${
-                      !isGeneratingMandat && firstName && lastName && email && streetNumber && streetType && streetName && postalCode && city && vin && vin.length === 17 && registrationNumber && validateRegistrationNumber(registrationNumber) && marque && (clientType !== 'company' || siret)
-                        ? 'bg-gradient-to-r from-primary-600 to-primary-700 text-white hover:from-primary-700 hover:to-primary-800 hover:shadow-xl transform hover:-translate-y-0.5 active:translate-y-0'
-                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    }`}
-                  >
-                    {isGeneratingMandat ? (
-                      <>
-                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                        <span>Génération en cours...</span>
-                      </>
-                    ) : (
-                      <>
-                        <FileText className="w-5 h-5" />
-                        <span>Générer le mandat</span>
-                      </>
-                    )}
-                  </button>
-
-                  {/* Download button (shown only when PDF is generated) */}
-                  {mandatPreviewUrl && (
-                    <button
-                      type="button"
-                      onClick={handleDownloadMandat}
-                      className="w-full mb-4 py-3 px-4 rounded-lg font-semibold bg-green-600 text-white hover:bg-green-700 transition-colors flex items-center justify-center space-x-2"
-                    >
-                      <Download className="w-5 h-5" />
-                      <span>Télécharger le mandat</span>
-                    </button>
-                  )}
-                </div>
-                
-                {/* PDF Preview - Full space without controls - Responsive height */}
-                <div className="relative w-full bg-white border border-gray-300 rounded overflow-auto h-[600px] sm:h-[700px] md:h-[calc(100vh-200px)] lg:h-[calc(100vh-150px)] min-h-[500px] sm:min-h-[600px] md:min-h-[700px] max-h-[900px] md:max-h-[1200px]">
-                  {mandatPreviewUrl ? (
-                    <PDFViewer url={mandatPreviewUrlWithSignature || mandatPreviewUrl} useCanvas={false} />
-                  ) : (
-                    <>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="text-center text-gray-400">
-                      <FileText className="w-16 h-16 mx-auto mb-3 opacity-50" />
-                          <p className="text-sm">Aperçu du mandat</p>
-                          <p className="text-xs mt-2">Le mandat sera généré avec vos informations</p>
-              </div>
-              </div>
-                  {/* Watermark */}
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <div className="text-gray-200 text-xs opacity-20 transform -rotate-45">
-                      EMATRICULE.FR
-              </div>
-            </div>
-                    </>
-                  )}
-          </div>
-
-                {/* Signature électronique */}
-                <div className="mt-4 pt-4 border-t border-gray-200">
-                  <div className="flex items-center space-x-2 mb-3">
-                    <Pen className="w-4 h-4 text-primary-600" />
-                    <h4 className="text-base font-semibold text-gray-900">
-                      Signature électronique
-                    </h4>
-        </div>
-                  <p className="text-xs text-gray-600 mb-4">
-                    {isSignatureValidated 
-                      ? 'Signature validée et intégrée dans le mandat.' 
-                      : 'Signez ci-dessous avec votre souris ou votre doigt. Votre signature sera automatiquement intégrée à l\'emplacement prévu sur le mandat.'}
-                  </p>
-                  
-                  {!isSignatureValidated ? (
-                    <>
-                      <div className="flex justify-center mb-4">
-                        <SignaturePad
-                          onSignatureChange={(dataUrl) => {
-                            setSignatureDataUrl(dataUrl)
-                            console.log('Signature mise à jour:', dataUrl ? 'Signature présente' : 'Signature effacée')
-                          }}
-                          width={500}
-                          height={150}
-                        />
-              </div>
-                      
-                      {signatureDataUrl && mandatPreviewUrl && (
-                        <div className="flex justify-center space-x-3 mb-3">
-                          <button
-                            type="button"
-                            onClick={handleValidateSignature}
-                            className="px-6 py-3 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-2xl font-bold hover:from-primary-700 hover:to-primary-800 transition-all duration-300 flex items-center space-x-2 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 active:translate-y-0"
-                          >
-                            <CheckCircle className="w-4 h-4" />
-                            <span>Valider la signature</span>
-                          </button>
-                        </div>
-                      )}
-                      
-                      {signatureDataUrl && !mandatPreviewUrl && (
-                        <div className="mt-3 p-2 bg-yellow-50 border border-yellow-200 rounded-lg">
-                          <p className="text-xs text-yellow-800 flex items-center space-x-2">
-                            <Info className="w-3 h-3" />
-                            <span>Générez d'abord le mandat pour valider la signature.</span>
-                          </p>
-                        </div>
-                      )}
-                    </>
-                  ) : (
-                    <div className="space-y-3">
-                      <div className="flex justify-center">
-                        <div className="relative border-2 border-green-500 rounded-lg bg-white p-4" style={{ maxWidth: '500px' }}>
-                          <img 
-                            src={signatureDataUrl || ''} 
-                            alt="Signature validée" 
-                            className="w-full h-auto"
-                            style={{ maxHeight: '150px', objectFit: 'contain' }}
-                          />
-                          <div className="absolute -top-2 -right-2 bg-green-500 rounded-full p-1">
-                            <CheckCircle className="w-4 h-4 text-white" />
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex justify-center">
-                        <button
-                          type="button"
-                          onClick={handleResign}
-                          className="px-6 py-2.5 bg-gray-600 text-white rounded-lg font-semibold hover:bg-gray-700 transition-colors flex items-center space-x-2"
-                        >
-                          <RotateCcw className="w-4 h-4" />
-                          <span>Resigner</span>
-                        </button>
-                      </div>
-                      <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
-                        <p className="text-xs text-green-800 flex items-center space-x-2">
-                          <CheckCircle className="w-3 h-3" />
-                          <span>Signature validée et visible dans l'aperçu. Vous pouvez maintenant télécharger le mandat.</span>
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-          </div>
 
             {/* Right Column: Order Form */}
             <div>
@@ -2488,34 +2291,7 @@ export default function CarteGrisePage() {
                           </div>
                         </div>
 
-                        {/* MANDAT */}
-                        <div className="mb-4">
-                          <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
-                            † MANDAT *
-                            <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
-                              <Info className="w-3 h-3 text-gray-600" />
-                            </div>
-                          </label>
-                          <div className="flex items-center space-x-3">
-                            <label className="cursor-pointer">
-                              <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
-                                <Upload className="w-4 h-4" />
-                                <span>Choisir un fichier</span>
-                              </span>
-                              <input
-                                type="file"
-                                onChange={handleFileChange(setMandatFile)}
-                                className="hidden"
-                                accept="image/*,.pdf"
-                                required
-                              />
-                            </label>
-                            <span className="text-sm text-gray-500">
-                              {mandatFile ? mandatFile.name : 'Aucun fichier choisi'}
-                            </span>
-                          </div>
-                        </div>
-
+                        
                         {/* CERFA N°13750*05 */}
                         <div className="mb-4">
                           <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
@@ -2526,10 +2302,9 @@ export default function CarteGrisePage() {
                           </label>
                           <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
                             <label className="cursor-pointer">
-                              <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
-                                <Upload className="w-4 h-4" />
-                                <span>Choisir un fichier</span>
-                              </span>
+                              <div className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors">
+                                Choisir un fichier
+                              </div>
                               <input
                                 type="file"
                                 onChange={handleFileChange(setCerfa13750File)}
@@ -2683,34 +2458,7 @@ export default function CarteGrisePage() {
                           </div>
                         </div>
 
-                        {/* Demande de certificat d'immatriculation et mandat d'immatriculation */}
-                        <div className="mb-4">
-                          <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
-                            2. Demande de certificat d'immatriculation et mandat d'immatriculation (préremplis et signés automatiquement sur Eplaque) *
-                            <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
-                              <Info className="w-3 h-3 text-gray-600" />
-                            </div>
-                          </label>
-                          <div className="flex items-center space-x-3">
-                            <label className="cursor-pointer">
-                              <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
-                                <Upload className="w-4 h-4" />
-                                <span>Choisir un fichier</span>
-                              </span>
-                              <input
-                                type="file"
-                                onChange={handleFileChange(setDemandeCertificatMandatFile)}
-                                className="hidden"
-                                accept="image/*,.pdf"
-                                required
-                              />
-                            </label>
-                            <span className="text-sm text-gray-500">
-                              {demandeCertificatMandatFile ? demandeCertificatMandatFile.name : 'Aucun fichier choisi'}
-                            </span>
-                          </div>
-                        </div>
-
+                        
                         {/* Achat depuis un garage */}
                         <div className="mb-4">
                           <label className="block text-sm font-medium text-gray-900 mb-3">
@@ -3047,7 +2795,7 @@ export default function CarteGrisePage() {
                             </div>
                           </label>
                           <div className="flex items-center space-x-3">
-                            <label className="cursor-pointer">
+                            <label className="cursor-pointer flex-1">
                               <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
                                 <Upload className="w-4 h-4" />
                                 <span>Choisir un fichier</span>
@@ -3063,37 +2811,17 @@ export default function CarteGrisePage() {
                             <span className="text-sm text-gray-500">
                               {wwCertificatConformiteFile ? wwCertificatConformiteFile.name : 'Aucun fichier choisi'}
                             </span>
+                            <Link
+                              href="/notre-mission"
+                              className="inline-flex items-center px-4 py-2.5 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors flex items-center space-x-2"
+                            >
+                              <FileCheck className="w-4 h-4" />
+                              <span>Commander un COC</span>
+                            </Link>
                           </div>
                         </div>
 
-                        {/* Demande de certificat d'immatriculation et mandat d'immatriculation */}
-                        <div className="mb-4">
-                          <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
-                            Demande de certificat d'immatriculation et mandat d'immatriculation (les cerfas sont préremplis et signés automatiquement dès validation de votre commande sur notre site) *
-                            <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
-                              <Info className="w-3 h-3 text-gray-600" />
-                            </div>
-                          </label>
-                          <div className="flex items-center space-x-3">
-                            <label className="cursor-pointer">
-                              <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
-                                <Upload className="w-4 h-4" />
-                                <span>Choisir un fichier</span>
-                              </span>
-                              <input
-                                type="file"
-                                onChange={handleFileChange(setWwDemandeCertificatMandatFile)}
-                                className="hidden"
-                                accept="image/*,.pdf"
-                                required
-                              />
-                            </label>
-                            <span className="text-sm text-gray-500">
-                              {wwDemandeCertificatMandatFile ? wwDemandeCertificatMandatFile.name : 'Aucun fichier choisi'}
-                            </span>
-                          </div>
-                        </div>
-
+                        
                         {/* Justificatif de propriété du véhicule */}
                         <div className="mb-4">
                           <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
@@ -3303,7 +3031,7 @@ export default function CarteGrisePage() {
                             </div>
                           </label>
                           <div className="flex items-center space-x-3">
-                            <label className="cursor-pointer">
+                            <label className="cursor-pointer flex-1">
                               <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
                                 <Upload className="w-4 h-4" />
                                 <span>Choisir un fichier</span>
@@ -3319,37 +3047,17 @@ export default function CarteGrisePage() {
                             <span className="text-sm text-gray-500">
                               {ueCertificatConformiteFile ? ueCertificatConformiteFile.name : 'Aucun fichier choisi'}
                             </span>
+                            <Link
+                              href="/notre-mission"
+                              className="inline-flex items-center px-4 py-2.5 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors flex items-center space-x-2"
+                            >
+                              <FileCheck className="w-4 h-4" />
+                              <span>Commander un COC</span>
+                            </Link>
                           </div>
                         </div>
 
-                        {/* Demande de certificat d'immatriculation et mandat d'immatriculation */}
-                        <div className="mb-4">
-                          <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
-                            Demande de certificat d'immatriculation et mandat d'immatriculation (les cerfas sont préremplis et signés automatiquement dès validation de votre commande sur notre site) *
-                            <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
-                              <Info className="w-3 h-3 text-gray-600" />
-                            </div>
-                          </label>
-                          <div className="flex items-center space-x-3">
-                            <label className="cursor-pointer">
-                              <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
-                                <Upload className="w-4 h-4" />
-                                <span>Choisir un fichier</span>
-                              </span>
-                              <input
-                                type="file"
-                                onChange={handleFileChange(setUeDemandeCertificatMandatFile)}
-                                className="hidden"
-                                accept="image/*,.pdf"
-                                required
-                              />
-                            </label>
-                            <span className="text-sm text-gray-500">
-                              {ueDemandeCertificatMandatFile ? ueDemandeCertificatMandatFile.name : 'Aucun fichier choisi'}
-                            </span>
-                          </div>
-                        </div>
-
+                        
                         {/* Justificatif de propriété du véhicule */}
                         <div className="mb-4">
                           <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
@@ -3753,33 +3461,7 @@ export default function CarteGrisePage() {
                             </div>
                           </div>
 
-                          {/* Mandat */}
-                          <div className="mb-4">
-                            <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
-                              Mandat
-                              <div className="w-4 h-4 ml-2 mt-2 sm:mt-0 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
-                                <Info className="w-3 h-3 text-gray-600" />
-                              </div>
-                            </label>
-                            <div className="flex items-center space-x-3">
-                              <label className="cursor-pointer">
-                                <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
-                                  <Upload className="w-4 h-4" />
-                                  <span>Choisir un fichier</span>
-                                </span>
-                                <input
-                                  type="file"
-                                  onChange={handleFileChange(setWGarageMandatFile)}
-                                  className="hidden"
-                                  accept="image/*,.pdf"
-                                />
-                              </label>
-                              <span className="text-sm text-gray-500">
-                                {wGarageMandatFile ? wGarageMandatFile.name : 'Aucun fichier choisi'}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
+                                                  </div>
                       </>
                     )}
 
@@ -3870,34 +3552,7 @@ export default function CarteGrisePage() {
                           </div>
                         </div>
 
-                        {/* Mandat */}
-                        <div className="mb-4">
-                          <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
-                            Mandat *
-                            <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
-                              <Info className="w-3 h-3 text-gray-600" />
-                            </div>
-                          </label>
-                          <div className="flex items-center space-x-3">
-                            <label className="cursor-pointer">
-                              <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
-                                <Upload className="w-4 h-4" />
-                                <span>Choisir un fichier</span>
-                              </span>
-                              <input
-                                type="file"
-                                onChange={handleFileChange(setCessionMandatFile)}
-                                className="hidden"
-                                accept="image/*,.pdf"
-                                required
-                              />
-                            </label>
-                            <span className="text-sm text-gray-500">
-                              {cessionMandatFile ? cessionMandatFile.name : 'Aucun fichier choisi'}
-                            </span>
-                          </div>
-                        </div>
-                      </>
+                                              </>
                     )}
 
                     {/* Documents for other document types */}
