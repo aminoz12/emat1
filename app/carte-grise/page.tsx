@@ -1310,10 +1310,10 @@ export default function CarteGrisePage() {
                           className="flex-shrink-0 flex items-center justify-center w-full sm:w-auto" 
                           style={{ 
                             width: '100%',
-                            maxWidth: '120px',
-                            minWidth: '80px',
-                            height: '60px',
-                            minHeight: '60px',
+                            maxWidth: (doc.value === 'changement-titulaire' || doc.value === 'fiche-identification') ? '114px' : '120px', // 5% smaller on mobile
+                            minWidth: (doc.value === 'changement-titulaire' || doc.value === 'fiche-identification') ? '76px' : '80px', // 5% smaller on mobile
+                            height: (doc.value === 'changement-titulaire' || doc.value === 'fiche-identification') ? '57px' : '60px', // 5% smaller on mobile
+                            minHeight: (doc.value === 'changement-titulaire' || doc.value === 'fiche-identification') ? '57px' : '60px', // 5% smaller on mobile
                             overflow: 'visible',
                             isolation: 'isolate'
                           }}
@@ -1996,9 +1996,9 @@ export default function CarteGrisePage() {
                             <a
                               href="/cerfa_15776-01.pdf"
                               download
-                              className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 active:translate-y-0"
+                              className="inline-flex items-center px-3 py-1.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-xs rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 active:translate-y-0"
                             >
-                              <Download className="w-4 h-4 mr-2" />
+                              <Download className="w-3 h-3 mr-1.5" />
                               Télécharger le formulaire
                             </a>
                             <span className="text-sm text-gray-500">
@@ -2540,9 +2540,9 @@ export default function CarteGrisePage() {
                             <a
                               href="/Formulaire de demande cerfa 13750-05.pdf"
                               download
-                              className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 active:translate-y-0"
+                              className="inline-flex items-center px-3 py-1.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-xs rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 active:translate-y-0"
                             >
-                              <Download className="w-4 h-4 mr-2" />
+                              <Download className="w-3 h-3 mr-1.5" />
                               Télécharger le formulaire
                             </a>
                             <span className="text-sm text-gray-500">
@@ -2607,9 +2607,9 @@ export default function CarteGrisePage() {
                               <a
                                 href="/cerfa-13753-02-declaration-perte-vol.pdf"
                                 download
-                                className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 active:translate-y-0"
+                                className="inline-flex items-center px-3 py-1.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-xs rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 active:translate-y-0"
                               >
-                                <Download className="w-4 h-4 mr-2" />
+                                <Download className="w-3 h-3 mr-1.5" />
                                 Télécharger le formulaire
                               </a>
                               <span className="text-sm text-gray-500">
