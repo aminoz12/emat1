@@ -828,6 +828,60 @@ export default function PlaqueImmatriculationPage() {
                   <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6">
                     Choisissez la région et le département
                   </h2>
+                  
+                  {/* Scrollable Department List */}
+                  <div className="border-2 border-gray-200 rounded-lg overflow-hidden">
+                    <div className="max-h-80 sm:max-h-96 overflow-y-auto">
+                      {departments.map((dept) => (
+                        <button
+                          key={dept.code}
+                          type="button"
+                          onClick={() => {
+                            setSelectedDepartment(dept.code)
+                            setRegionLogoError(false)
+                          }}
+                          className={`w-full px-3 sm:px-4 py-2 sm:py-3 flex items-center space-x-2 sm:space-x-3 border-b border-gray-100 last:border-b-0 transition-all hover:bg-gray-50 ${
+                          selectedDepartment === dept.code
+                            ? 'bg-primary-50 border-l-4 border-l-primary-600'
+                            : 'bg-white'
+                          }`}
+                        >
+                          {/* Department Logo (Region Logo) */}
+                          <div className="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 flex items-center justify-center bg-gray-50 rounded-lg border border-gray-200">
+                            <Image
+                              src={getRegionLogo(dept.code)}
+                              alt={`Logo ${dept.name}`}
+                              width={32}
+                              height={32}
+                              className="object-contain w-full h-full"
+                              onError={(e) => {
+                                // Hide image if it doesn't exist
+                                e.currentTarget.style.display = 'none'
+                              }}
+                            />
+                          </div>
+                          
+                          {/* Department Info */}
+                          <div className="flex-1 text-left min-w-0">
+                            <div className={`font-semibold text-xs sm:text-sm ${
+                              selectedDepartment === dept.code
+                                ? 'text-primary-600'
+                                : 'text-gray-900'
+                            }`}>
+                              <span className="hidden sm:inline">{dept.code} - </span>{dept.name}
+                            </div>
+                          </div>
+                          
+                          {/* Selection Indicator */}
+                          {selectedDepartment === dept.code && (
+                            <div className="flex-shrink-0">
+                              <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-primary-600" />
+                            </div>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
