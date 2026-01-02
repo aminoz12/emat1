@@ -3402,10 +3402,7 @@ export default function CarteGrisePage() {
                             </div>
                           </div>
                         </div>
-
-                        {/* Parfois demandés Section */}
-                        <div className="border-t border-gray-200 pt-6 mt-6">
-                          <h4 className="text-base font-semibold text-gray-900 mb-4">Parfois demandés</h4>
+  
                           
                           {/* Attestation de régularité fiscale */}
                           <div className="mb-4">
