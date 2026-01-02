@@ -1947,7 +1947,7 @@ export default function CarteGrisePage() {
                         <div className="mb-4">
                           <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
                             Carte Grise *
-                            <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help" title="Veuillez télécharger la carte grise du véhicule (certificat d'immatriculation) afin de confirmer que vous êtes le propriétaire du véhicule.">
+                            <div className="w-4 h-4 ml-2 mt-2 sm:mt-0 rounded-full bg-gray-300 flex items-center justify-center cursor-help" title="Veuillez télécharger la carte grise du véhicule (certificat d'immatriculation) afin de confirmer que vous êtes le propriétaire du véhicule.">
                               <Info className="w-3 h-3 text-gray-600" />
                             </div>
                           </label>
@@ -1975,7 +1975,7 @@ export default function CarteGrisePage() {
                         <div className="mb-4">
                           <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
                             3. Certificat de cession (Cerfa 15776) *
-                            <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help" title="Le certificat de cession est un document obligatoire lors de la vente d'un véhicule. Il doit être signé par l'ancien et le nouveau propriétaire.">
+                            <div className="w-4 h-4 ml-2 mt-2 sm:mt-0 rounded-full bg-gray-300 flex items-center justify-center cursor-help" title="Le certificat de cession est un document obligatoire lors de la vente d'un véhicule. Il doit être signé par l'ancien et le nouveau propriétaire.">
                               <Info className="w-3 h-3 text-gray-600" />
                             </div>
                           </label>
@@ -2011,7 +2011,7 @@ export default function CarteGrisePage() {
                         <div className="mb-4">
                           <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
                             Pièce d'identité *
-                            <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help" title="Une pièce d'identité en cours de validité est requise (carte nationale d'identité, passeport, ou permis de conduire).">
+                            <div className="w-4 h-4 ml-2 mt-2 sm:mt-0 rounded-full bg-gray-300 flex items-center justify-center cursor-help" title="Une pièce d'identité en cours de validité est requise (carte nationale d'identité, passeport, ou permis de conduire).">
                               <Info className="w-3 h-3 text-gray-600" />
                             </div>
                           </label>
@@ -2040,7 +2040,7 @@ export default function CarteGrisePage() {
                           <div className="mb-4">
                             <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
                               Justificatif de domicile (moins de 3 mois) *
-                              <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help" title="Un justificatif de domicile de moins de 3 mois est requis (facture d'électricité, gaz, eau, internet, ou quittance de loyer).">
+                              <div className="w-4 h-4 ml-2 mt-2 sm:mt-0 rounded-full bg-gray-300 flex items-center justify-center cursor-help" title="Un justificatif de domicile de moins de 3 mois est requis (facture d'électricité, gaz, eau, internet, ou quittance de loyer).">
                                 <Info className="w-3 h-3 text-gray-600" />
                               </div>
                             </label>
@@ -2069,7 +2069,7 @@ export default function CarteGrisePage() {
                         <div className="mb-4">
                           <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
                             Permis de conduire *
-                            <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help" title="Le permis de conduire est requis pour confirmer que vous êtes autorisé à conduire le véhicule.">
+                            <div className="w-4 h-4 ml-2 mt-2 sm:mt-0 rounded-full bg-gray-300 flex items-center justify-center cursor-help" title="Le permis de conduire est requis pour confirmer que vous êtes autorisé à conduire le véhicule.">
                               <Info className="w-3 h-3 text-gray-600" />
                             </div>
                           </label>
@@ -2097,7 +2097,7 @@ export default function CarteGrisePage() {
                         <div className="mb-4">
                           <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
                             Contrôle technique (moins de 6 mois) *
-                            <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help" title="Le contrôle technique est obligatoire pour les véhicules de plus de 4 ans, sauf exemption. Il doit daté de moins de 6 mois.">
+                            <div className="w-4 h-4 ml-2 mt-2 sm:mt-0 rounded-full bg-gray-300 flex items-center justify-center cursor-help" title="Le contrôle technique est obligatoire pour les véhicules de plus de 4 ans, sauf exemption. Il doit daté de moins de 6 mois.">
                               <Info className="w-3 h-3 text-gray-600" />
                             </div>
                           </label>
@@ -2126,7 +2126,7 @@ export default function CarteGrisePage() {
                           <div className="mb-4">
                             <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
                               Assurance *
-                              <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help" title="Une attestation d'assurance est requise pour prouver que le véhicule est assuré.">
+                              <div className="w-4 h-4 ml-2 mt-2 sm:mt-0 rounded-full bg-gray-300 flex items-center justify-center cursor-help" title="Une attestation d'assurance est requise pour prouver que le véhicule est assuré.">
                                 <Info className="w-3 h-3 text-gray-600" />
                               </div>
                             </label>
@@ -2163,7 +2163,7 @@ export default function CarteGrisePage() {
                           <div className="mb-4">
                             <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
                               Pièce d'identité de l'hébergeant *
-                              <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
+                              <div className="w-4 h-4 ml-2 mt-2 sm:mt-0 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
                                 <Info className="w-3 h-3 text-gray-600" />
                               </div>
                             </label>
@@ -2191,7 +2191,7 @@ export default function CarteGrisePage() {
                           <div className="mb-4">
                             <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
                               Justificatif de domicile de l'hébergeant à son nom *
-                              <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
+                              <div className="w-4 h-4 ml-2 mt-2 sm:mt-0 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
                                 <Info className="w-3 h-3 text-gray-600" />
                               </div>
                             </label>
@@ -2219,7 +2219,7 @@ export default function CarteGrisePage() {
                           <div className="mb-4">
                             <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
                               Attestation d'hébergement *
-                              <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
+                              <div className="w-4 h-4 ml-2 mt-2 sm:mt-0 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
                                 <Info className="w-3 h-3 text-gray-600" />
                               </div>
                             </label>
@@ -2247,7 +2247,7 @@ export default function CarteGrisePage() {
                           <div className="mb-4">
                             <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
                               Assurance *
-                              <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
+                              <div className="w-4 h-4 ml-2 mt-2 sm:mt-0 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
                                 <Info className="w-3 h-3 text-gray-600" />
                               </div>
                             </label>
@@ -2284,7 +2284,7 @@ export default function CarteGrisePage() {
                           <div className="mb-4">
                             <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
                               KBIS (moins de 3 mois) *
-                              <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
+                              <div className="w-4 h-4 ml-2 mt-2 sm:mt-0 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
                                 <Info className="w-3 h-3 text-gray-600" />
                               </div>
                             </label>
@@ -2312,7 +2312,7 @@ export default function CarteGrisePage() {
                           <div className="mb-4">
                             <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
                               Pièce d'identité du gérant *
-                              <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
+                              <div className="w-4 h-4 ml-2 mt-2 sm:mt-0 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
                                 <Info className="w-3 h-3 text-gray-600" />
                               </div>
                             </label>
@@ -2526,9 +2526,10 @@ export default function CarteGrisePage() {
                           </label>
                           <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
                             <label className="cursor-pointer">
-                              <div className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors">
-                                Choisir un fichier
-                              </div>
+                              <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
+                                <Upload className="w-4 h-4" />
+                                <span>Choisir un fichier</span>
+                              </span>
                               <input
                                 type="file"
                                 onChange={handleFileChange(setCerfa13750File)}
@@ -2587,7 +2588,7 @@ export default function CarteGrisePage() {
                           <div className="mb-4">
                             <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
                               CERFA N° 13753*02 (uniquement pour perte ou vol) *
-                              <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
+                              <div className="w-4 h-4 ml-2 mt-2 sm:mt-0 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
                                 <Info className="w-3 h-3 text-gray-600" />
                               </div>
                             </label>
@@ -2779,7 +2780,7 @@ export default function CarteGrisePage() {
                           <div className="mb-4">
                             <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
                               Récépissé de déclaration d'achat *
-                              <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
+                              <div className="w-4 h-4 ml-2 mt-2 sm:mt-0 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
                                 <Info className="w-3 h-3 text-gray-600" />
                               </div>
                             </label>
@@ -2904,7 +2905,7 @@ export default function CarteGrisePage() {
                           <div className="flex items-center space-x-3">
                             <label className="cursor-pointer">
                               <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
-                                <Upload className="w-4 h-4" />
+                                <Upload className="w-4 h-4 max-h-[170px] sm:max-h-none" />
                                 <span>Choisir un fichier</span>
                               </span>
                               <input
@@ -2932,7 +2933,7 @@ export default function CarteGrisePage() {
                           <div className="flex items-center space-x-3">
                             <label className="cursor-pointer">
                               <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
-                                <Upload className="w-4 h-4" />
+                                <Upload className="w-4 h-4 max-h-[170px] sm:max-h-none" />
                                 <span>Choisir un fichier</span>
                               </span>
                               <input
@@ -2960,7 +2961,7 @@ export default function CarteGrisePage() {
                           <div className="flex items-center space-x-3">
                             <label className="cursor-pointer">
                               <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
-                                <Upload className="w-4 h-4" />
+                                <Upload className="w-4 h-4 max-h-[170px] sm:max-h-none" />
                                 <span>Choisir un fichier</span>
                               </span>
                               <input
@@ -2987,7 +2988,7 @@ export default function CarteGrisePage() {
                           <div className="flex items-center space-x-3">
                             <label className="cursor-pointer">
                               <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
-                                <Upload className="w-4 h-4" />
+                                <Upload className="w-4 h-4 max-h-[170px] sm:max-h-none" />
                                 <span>Choisir un fichier</span>
                               </span>
                               <input
@@ -3529,7 +3530,7 @@ export default function CarteGrisePage() {
                           <div className="mb-4">
                             <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
                               Kbis *
-                              <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
+                              <div className="w-4 h-4 ml-2 mt-2 sm:mt-0 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
                                 <Info className="w-3 h-3 text-gray-600" />
                               </div>
                             </label>
@@ -3557,7 +3558,7 @@ export default function CarteGrisePage() {
                           <div className="mb-4">
                             <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
                               SIREN *
-                              <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
+                              <div className="w-4 h-4 ml-2 mt-2 sm:mt-0 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
                                 <Info className="w-3 h-3 text-gray-600" />
                               </div>
                             </label>
@@ -3585,7 +3586,7 @@ export default function CarteGrisePage() {
                           <div className="mb-4">
                             <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
                               Justificatif domiciliation entreprise *
-                              <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
+                              <div className="w-4 h-4 ml-2 mt-2 sm:mt-0 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
                                 <Info className="w-3 h-3 text-gray-600" />
                               </div>
                             </label>
@@ -3613,7 +3614,7 @@ export default function CarteGrisePage() {
                           <div className="mb-4">
                             <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
                               CNI du gérant *
-                              <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
+                              <div className="w-4 h-4 ml-2 mt-2 sm:mt-0 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
                                 <Info className="w-3 h-3 text-gray-600" />
                               </div>
                             </label>
@@ -3641,7 +3642,7 @@ export default function CarteGrisePage() {
                           <div className="mb-4">
                             <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
                               Assurance W garage *
-                              <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
+                              <div className="w-4 h-4 ml-2 mt-2 sm:mt-0 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
                                 <Info className="w-3 h-3 text-gray-600" />
                               </div>
                             </label>
@@ -3669,7 +3670,7 @@ export default function CarteGrisePage() {
                           <div className="mb-4">
                             <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
                               Preuve activité automobile *
-                              <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
+                              <div className="w-4 h-4 ml-2 mt-2 sm:mt-0 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
                                 <Info className="w-3 h-3 text-gray-600" />
                               </div>
                             </label>
@@ -3702,7 +3703,7 @@ export default function CarteGrisePage() {
                           <div className="mb-4">
                             <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
                               Attestation de régularité fiscale
-                              <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
+                              <div className="w-4 h-4 ml-2 mt-2 sm:mt-0 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
                                 <Info className="w-3 h-3 text-gray-600" />
                               </div>
                             </label>
@@ -3729,7 +3730,7 @@ export default function CarteGrisePage() {
                           <div className="mb-4">
                             <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
                               Attestation URSSAF
-                              <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
+                              <div className="w-4 h-4 ml-2 mt-2 sm:mt-0 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
                                 <Info className="w-3 h-3 text-gray-600" />
                               </div>
                             </label>
@@ -3756,7 +3757,7 @@ export default function CarteGrisePage() {
                           <div className="mb-4">
                             <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
                               Mandat
-                              <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
+                              <div className="w-4 h-4 ml-2 mt-2 sm:mt-0 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
                                 <Info className="w-3 h-3 text-gray-600" />
                               </div>
                             </label>
