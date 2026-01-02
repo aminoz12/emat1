@@ -2075,7 +2075,7 @@ export default function CarteGrisePage() {
                           </label>
                           <div className="flex items-center space-x-3">
                             <label className="cursor-pointer">
-                              <span className="w-full mb-4 py-4 px-6 rounded-2xl font-bold text-base transition-all duration-300 flex items-center justify-center space-x-2 shadow-lg bg-gradient-to-r from-primary-600 to-primary-700 text-white hover:from-primary-700 hover:to-primary-800 hover:shadow-xl transform hover:-translate-y-0.5 active:translate-y-0">
+                              <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
                                 <Upload className="w-4 h-4" />
                                 <span>Choisir un fichier</span>
                               </span>
