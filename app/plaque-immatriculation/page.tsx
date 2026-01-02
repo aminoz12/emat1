@@ -885,7 +885,7 @@ export default function PlaqueImmatriculationPage() {
                 </div>
               </div>
             </div>
-            )
+            )}
 
             {/* Step 5: Fixing Mode (Step 4 when department selection is hidden) */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 md:p-8 relative">
