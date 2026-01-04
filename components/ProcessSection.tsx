@@ -773,7 +773,7 @@ const FAQSection = () => {
         answer: 'Une commande peut être annulée tant qu\'elle n\'a pas été traitée. Une fois la démarche administrative engagée, aucun remboursement n\'est possible (prestations administratives).',
       },
     ],
-    'Matricule': [
+    'Matriculation': [
       {
         question: 'Puis-je annuler ma commande ?',
         answer: 'Une commande peut être annulée tant qu\'elle n\'a pas été traitée. Une fois la démarche administrative engagée, aucun remboursement n\'est possible (prestations administratives).',
