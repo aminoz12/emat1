@@ -175,7 +175,6 @@ export default function CarteGrisePage() {
   const [ficheJustificatifIdentiteFile, setFicheJustificatifIdentiteFile] = useState<File | null>(null)
   const [fichePermisConduireFile, setFichePermisConduireFile] = useState<File | null>(null)
   const [ficheCopieCarteGriseFile, setFicheCopieCarteGriseFile] = useState<File | null>(null)
-  const [ficheMandatCerfa13757File, setFicheMandatCerfa13757File] = useState<File | null>(null)
   // Immatriculation provisoire WW documents
   const [wwCarteGriseEtrangereFile, setWwCarteGriseEtrangereFile] = useState<File | null>(null)
   const [wwCertificatConformiteFile, setWwCertificatConformiteFile] = useState<File | null>(null)
@@ -2725,33 +2724,7 @@ export default function CarteGrisePage() {
                           </div>
                         </div>
 
-                        {/* Mandat d'immatriculation Cerfa 13757 */}
-                        <div className="mb-4">
-                          <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
-                            Mandat d'immatriculation Cerfa 13757 (prérempli et signé automatiquement sur Ematricule.fr) *
-                            <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
-                              <Info className="w-3 h-3 text-gray-600" />
-                            </div>
-                          </label>
-                          <div className="flex items-center space-x-3">
-                            <label className="cursor-pointer">
-                              <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
-                                <Upload className="w-4 h-4 max-h-[170px] sm:max-h-none" />
-                                <span>Choisir un fichier</span>
-                              </span>
-                              <input
-                                type="file"
-                                onChange={handleFileChange(setFicheMandatCerfa13757File)}
-                                className="hidden"
-                                accept="image/*,.pdf"
-                                required
-                              />
-                            </label>
-                            <span className="text-sm text-gray-500">
-                              {ficheMandatCerfa13757File ? ficheMandatCerfa13757File.name : 'Aucun fichier choisi'}
-                            </span>
-                          </div>
-                        </div>
+
                       </>
                     )}
 
