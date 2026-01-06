@@ -151,6 +151,7 @@ export default function CarteGrisePage() {
   const [permisConduireFile, setPermisConduireFile] = useState<File | null>(null)
   const [controleTechniqueFile, setControleTechniqueFile] = useState<File | null>(null)
   const [assuranceFile, setAssuranceFile] = useState<File | null>(null)
+  const [declarationAchatFile, setDeclarationAchatFile] = useState<File | null>(null)
   // Hosted persons documents
   const [hostIdFile, setHostIdFile] = useState<File | null>(null)
   const [hostProofAddressFile, setHostProofAddressFile] = useState<File | null>(null)
@@ -1260,10 +1261,761 @@ export default function CarteGrisePage() {
             </p>
           </div>
 
-          {/* Main Content - Two Column Layout */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-12 mb-12">
-            {/* Left Column: Document Preview / Information */}
-            <div>
+          {/* Main Content - Mobile First Layout */}
+          <div className="space-y-6 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-12 mb-12">
+            {/* Mobile: Form Fields First */}
+            <div className="lg:hidden">
+              <div className="bg-white border border-gray-100 rounded-2xl p-6 md:p-8 shadow-lg relative overflow-hidden transition-all duration-300 hover:shadow-xl">
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary-600 to-primary-400"></div>
+                <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-8">
+                  Informations de commande
+                </h2>
+
+                {/* Document Type Display */}
+                {selectedDocument && (
+                  <div className="bg-gradient-to-br from-primary-50 to-primary-100/50 border-2 border-primary-200 rounded-2xl p-5 md:p-6 mb-6 shadow-sm">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-primary-700 font-semibold mb-1">Démarche sélectionnée</p>
+                        <p className="text-xl md:text-2xl font-bold text-primary-900">{selectedDocument.label}</p>
+                        {calculatedPrice && (
+                          <p className="text-xs text-primary-600 mt-1">
+                            Département {calculatedPrice.department} {calculatedPrice.departmentName && `(${calculatedPrice.departmentName})`}
+                          </p>
+                        )}
+                      </div>
+                      <div className="text-right">
+                        {documentType === 'changement-titulaire' ? (
+                          isCalculatingFraisDossier ? (
+                            <div className="flex items-center space-x-2">
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-600"></div>
+                              <span className="text-sm text-primary-600">Calcul...</span>
+                            </div>
+                          ) : calculatedPrice ? (
+                            <div>
+                              <div className="text-2xl font-bold text-primary-600">
+                                {calculatedPrice.totalPrice.toFixed(2)} €
+                              </div>
+                              <div className="text-xs text-primary-500 mt-1">
+                                Taxes: {calculatedPrice.taxes.total.toFixed(2)} € + Service: {calculatedPrice.serviceFee.toFixed(2)} €
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="text-2xl font-bold text-primary-600">
+                              {selectedDocument.price}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  {/* Vehicle Information - Mobile */}
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Informations du véhicule</h3>
+                    
+                    {/* Row 1: VIN and Registration */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                      <div>
+                        <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
+                          Numéro VIN (17 caractères) *
+                          <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help" title="Le numéro VIN se trouve sur votre carte grise au champ E. Il correspond au numéro d'identification du véhicule et contient 17 caractères (lettres et chiffres).">
+                            <Info className="w-3 h-3 text-gray-600" />
+                          </div>
+                        </label>
+                        <input
+                          type="text"
+                          value={vin}
+                          onChange={(e) => {
+                            const value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '')
+                            if (value.length <= 17) {
+                              setVin(value)
+                            }
+                          }}
+                          maxLength={17}
+                          minLength={17}
+                          required
+                          className="w-full px-5 py-3 border-2 border-gray-300 rounded-xl focus:ring-4 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all duration-200 bg-gray-50 focus:bg-white"
+                          placeholder="Ex: 1HGBH41JXMN109186"
+                          pattern="[A-Z0-9]{17}"
+                          title="Le VIN doit contenir exactement 17 caractères alphanumériques"
+                        />
+                        {vin && vin.length !== 17 && (
+                          <p className="text-sm text-red-600 mt-1">
+                            Le VIN doit contenir exactement 17 caractères ({vin.length}/17)
+                          </p>
+                        )}
+                      </div>
+                      <div>
+                        <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
+                          Numéro d'immatriculation *
+                          <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help" title="Le numéro d'immatriculation figure sur votre plaque et sur la carte grise (champ A).">
+                            <Info className="w-3 h-3 text-gray-600" />
+                          </div>
+                        </label>
+                        <input
+                          type="text"
+                          value={registrationNumber}
+                          onChange={handleRegistrationNumberChange}
+                          required
+                          maxLength={9} // AA-123-CD = 9 characters with dashes
+                          className={`w-full px-5 py-3 border-2 rounded-xl focus:ring-4 focus:ring-opacity-20 outline-none transition-all duration-200 ${
+                              registrationNumberError
+                              ? 'border-red-400 bg-red-50 focus:border-red-500 focus:ring-red-500' 
+                              : 'border-gray-300 bg-gray-50 focus:border-primary-500 focus:ring-primary-500 focus:bg-white'
+                          }`}
+                          placeholder="Ex: AB-123-CD"
+                        />
+                        {registrationNumberError && (
+                          <p className="text-sm text-red-600 mt-1">
+                            {registrationNumberError}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Row 2: Brand */}
+                    <div className="mb-4">
+                      <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
+                        Marque *
+                        <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help" title="Sélectionnez la marque du véhicule dans la liste déroulante.">
+                          <Info className="w-3 h-3 text-gray-600" />
+                        </div>
+                      </label>
+                      <select
+                        value={marque}
+                        onChange={(e) => setMarque(e.target.value)}
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded focus:ring-2 focus:ring-primary-600 focus:border-primary-600 outline-none"
+                        required
+                      >
+                        <option value="">Sélectionner une marque...</option>
+                        {CAR_BRANDS.map((brand) => (
+                          <option key={brand} value={brand}>
+                            {brand}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Personal Information - Mobile */}
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Informations personnelles</h3>
+                    
+                    {/* Row 1: First Name and Last Name */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                      <div>
+                        <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
+                          Prénom *
+                        </label>
+                        <input
+                          type="text"
+                          value={firstName}
+                          onChange={(e) => setFirstName(e.target.value)}
+                          className="w-full px-5 py-3 border-2 border-gray-300 rounded-xl focus:ring-4 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all duration-200 bg-gray-50 focus:bg-white"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
+                          Nom *
+                        </label>
+                        <input
+                          type="text"
+                          value={lastName}
+                          onChange={(e) => setLastName(e.target.value)}
+                          className="w-full px-5 py-3 border-2 border-gray-300 rounded-xl focus:ring-4 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all duration-200 bg-gray-50 focus:bg-white"
+                          required
+                        />
+                    </div>
+
+                    {/* Row 2: Email and Phone */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                      <div>
+                        <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
+                          Email *
+                        </label>
+                        <input
+                          type="email"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          className="w-full px-5 py-3 border-2 border-gray-300 rounded-xl focus:ring-4 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all duration-200 bg-gray-50 focus:bg-white"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
+                          Téléphone *
+                        </label>
+                        <input
+                          type="tel"
+                          value={phone}
+                          onChange={(e) => setPhone(e.target.value)}
+                          className="w-full px-5 py-3 border-2 border-gray-300 rounded-xl focus:ring-4 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all duration-200 bg-gray-50 focus:bg-white"
+                          required
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Address Information - Mobile */}
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Domicilié(e) à</h3>
+                    
+                    {/* Row 1: Street Number and Type */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                      <div>
+                        <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
+                          Numéro de rue *
+                        </label>
+                        <input
+                          type="text"
+                          value={streetNumber}
+                          onChange={(e) => setStreetNumber(e.target.value)}
+                          className="w-full px-4 py-2.5 border border-gray-300 rounded focus:ring-2 focus:ring-primary-600 focus:border-primary-600 outline-none"
+                          required
+                          placeholder="Ex: 123"
+                        />
+                      </div>
+                      <div>
+                        <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
+                          Type de rue *
+                        </label>
+                        <select
+                          value={streetType}
+                          onChange={(e) => setStreetType(e.target.value)}
+                          className="w-full px-5 py-3 border-2 border-gray-300 rounded-xl focus:ring-4 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all duration-200 bg-gray-50 focus:bg-white"
+                          required
+                        >
+                          <option value="">Sélectionner...</option>
+                          {STREET_TYPES.map((type) => (
+                            <option key={type} value={type}>
+                              {type}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Row 2: Street Name */}
+                    <div className="mb-4">
+                      <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
+                        Nom de la rue *
+                      </label>
+                      <input
+                        type="text"
+                        value={streetName}
+                        onChange={(e) => setStreetName(e.target.value)}
+                        className="w-full px-5 py-3 border-2 border-gray-300 rounded-xl focus:ring-4 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all duration-200 bg-gray-50 focus:bg-white"
+                        required
+                        placeholder="Ex: de la République"
+                      />
+                    </div>
+
+                    {/* Row 3: Postal Code and City */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                      <div>
+                        <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
+                          Code postal *
+                        </label>
+                        <input
+                          type="text"
+                          value={postalCode}
+                          onChange={(e) => setPostalCode(e.target.value)}
+                          className="w-full px-5 py-3 border-2 border-gray-300 rounded-xl focus:ring-4 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all duration-200 bg-gray-50 focus:bg-white"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
+                          Ville *
+                        </label>
+                        <input
+                          type="text"
+                          value={city}
+                          onChange={(e) => setCity(e.target.value)}
+                          className="w-full px-5 py-3 border-2 border-gray-300 rounded-xl focus:ring-4 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all duration-200 bg-gray-50 focus:bg-white"
+                          required
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Client Type Selection for Changement de Titulaire - Mobile */}
+                  {documentType === 'changement-titulaire' && (
+                    <div className="mb-6">
+                      <label className="block text-sm font-medium text-gray-900 mb-3">
+                        Type de client
+                      </label>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <button
+                          type="button"
+                          onClick={() => setClientType('normal')}
+                          className={`px-4 py-3 rounded-lg border-2 transition-all text-left ${
+                            clientType === 'normal'
+                              ? 'border-primary-600 bg-primary-50 text-primary-900'
+                              : 'border-gray-200 bg-white hover:border-gray-300 text-gray-700'
+                          }`}
+                        >
+                          <div className="font-semibold">Personne normale</div>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setClientType('hosted')}
+                          className={`px-4 py-3 rounded-lg border-2 transition-all text-left ${
+                            clientType === 'hosted'
+                              ? 'border-primary-600 bg-primary-50 text-primary-900'
+                              : 'border-gray-200 bg-white hover:border-gray-300 text-gray-700'
+                          }`}
+                        >
+                          <div className="font-semibold">Personnes hébergées</div>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setClientType('company')}
+                          className={`px-4 py-3 rounded-lg border-2 transition-all text-left ${
+                            clientType === 'company'
+                              ? 'border-primary-600 bg-primary-50 text-primary-900'
+                              : 'border-gray-200 bg-white hover:border-gray-300 text-gray-700'
+                          }`}
+                        >
+                          <div className="font-semibold">Sociétés</div>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* SIRET for Company - Mobile */}
+                  {clientType === 'company' && (
+                    <div className="mb-6">
+                      <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
+                        Numéro SIRET *
+                        <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help" title="Le numéro SIRET est un identifiant unique de 14 chiffres pour les entreprises françaises.">
+                          <Info className="w-3 h-3 text-gray-600" />
+                        </div>
+                      </label>
+                      <input
+                        type="text"
+                        value={siret}
+                        onChange={(e) => setSiret(e.target.value.replace(/\D/g, ''))}
+                        maxLength={14}
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded focus:ring-2 focus:ring-primary-600 focus:border-primary-600 outline-none"
+                        required={clientType === 'company'}
+                        placeholder="Ex: 12345678901234"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">14 chiffres</p>
+                    </div>
+                  )}
+                </form>
+              </div>
+            </div>
+
+            {/* Mobile: Documents Section */}
+            <div className="lg:hidden">
+              <div className="bg-white border border-gray-100 rounded-2xl p-6 md:p-8 shadow-lg relative overflow-hidden transition-all duration-300 hover:shadow-xl">
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary-600 to-primary-400"></div>
+                <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6">
+                  Documents requis
+                </h2>
+
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  {/* Documents for Normal Client or Hosted/Company */}
+                  {documentType === 'changement-titulaire' && (clientType === 'normal' || clientType === 'hosted' || clientType === 'company') && (
+                    <>
+                      {/* Carte Grise */}
+                      <div className="mb-4">
+                        <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
+                          Carte Grise *
+                          <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help" title="Veuillez télécharger la carte grise du véhicule (certificat d'immatriculation) afin de confirmer que vous êtes le propriétaire du véhicule.">
+                            <Info className="w-3 h-3 text-gray-600" />
+                          </div>
+                        </label>
+                        <div className="flex items-center space-x-3">
+                          <label className="cursor-pointer">
+                            <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
+                              <Upload className="w-4 h-4" />
+                              <span>Choisir un fichier</span>
+                            </span>
+                            <input
+                              type="file"
+                              name="carteGrise"
+                              onChange={handleFileChange(setCurrentCardFile)}
+                              className="hidden"
+                              accept="image/*,.pdf"
+                              required
+                            />
+                          </label>
+                          <span className="text-sm text-gray-500">
+                            {currentCardFile ? currentCardFile.name : 'Aucun fichier choisi'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Certificat de cession (Cerfa 15776) */}
+                      <div className="mb-4">
+                        <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
+                          3. Certificat de cession (Cerfa 15776) *
+                          <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help" title="Le certificat de cession est un document obligatoire lors de la vente d'un véhicule. Il doit être signé par l'ancien et le nouveau propriétaire.">
+                            <Info className="w-3 h-3 text-gray-600" />
+                          </div>
+                        </label>
+                        <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
+                          <label className="cursor-pointer">
+                            <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
+                              <Upload className="w-4 h-4" />
+                              <span>Choisir un fichier</span>
+                            </span>
+                            <input
+                              type="file"
+                              name="certificatCession"
+                              onChange={handleFileChange(setCertificatCessionCerfa15776File)}
+                              className="hidden"
+                              accept="image/*,.pdf"
+                              required
+                            />
+                          </label>
+                          <a
+                            href="/cerfa_15776-01.pdf"
+                            download
+                            className="inline-flex items-center px-3 py-1.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-xs rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 active:translate-y-0"
+                          >
+                            <Download className="w-3 h-3 mr-1.5" />
+                            Télécharger le formulaire
+                          </a>
+                          <span className="text-sm text-gray-500">
+                            {certificatCessionCerfa15776File ? certificatCessionCerfa15776File.name : 'Aucun fichier choisi'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Pièce d'identité */}
+                      <div className="mb-4">
+                        <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
+                          Pièce d'identité *
+                          <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help" title="Une pièce d'identité en cours de validité est requise (carte nationale d'identité, passeport, ou permis de conduire).">
+                            <Info className="w-3 h-3 text-gray-600" />
+                          </div>
+                        </label>
+                        <div className="flex items-center space-x-3">
+                          <label className="cursor-pointer">
+                            <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
+                              <Upload className="w-4 h-4" />
+                              <span>Choisir un fichier</span>
+                            </span>
+                            <input
+                              type="file"
+                              name="pieceIdentite"
+                              onChange={handleFileChange(setIdFile)}
+                              className="hidden"
+                              accept="image/*,.pdf"
+                              required
+                            />
+                          </label>
+                          <span className="text-sm text-gray-500">
+                            {idFile ? idFile.name : 'Aucun fichier choisi'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Justificatif de domicile - only for normal and hosted */}
+                      {(clientType === 'normal' || clientType === 'hosted') && (
+                        <div className="mb-4">
+                          <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
+                            Justificatif de domicile (moins de 3 mois) *
+                            <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help" title="Un justificatif de domicile de moins de 3 mois est requis (facture d'électricité, gaz, eau, internet, ou quittance de loyer).">
+                              <Info className="w-3 h-3 text-gray-600" />
+                            </div>
+                          </label>
+                          <div className="flex items-center space-x-3">
+                            <label className="cursor-pointer">
+                              <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
+                                <Upload className="w-4 h-4" />
+                                <span>Choisir un fichier</span>
+                              </span>
+                              <input
+                                type="file"
+                                name="proofAddress"
+                                onChange={handleFileChange(setProofAddressFile)}
+                                className="hidden"
+                                accept="image/*,.pdf"
+                                required
+                              />
+                            </label>
+                            <span className="text-sm text-gray-500">
+                              {proofAddressFile ? proofAddressFile.name : 'Aucun fichier choisi'}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Permis de conduire */}
+                      <div className="mb-4">
+                        <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
+                          Permis de conduire *
+                          <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help" title="Le permis de conduire est requis pour confirmer que vous êtes autorisé à conduire le véhicule.">
+                            <Info className="w-3 h-3 text-gray-600" />
+                          </div>
+                        </label>
+                        <div className="flex items-center space-x-3">
+                          <label className="cursor-pointer">
+                            <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
+                              <Upload className="w-4 h-4" />
+                              <span>Choisir un fichier</span>
+                            </span>
+                            <input
+                              type="file"
+                              name="permisConduire"
+                              onChange={handleFileChange(setPermisConduireFile)}
+                              className="hidden"
+                              accept="image/*,.pdf"
+                              required
+                            />
+                          </label>
+                          <span className="text-sm text-gray-500">
+                            {permisConduireFile ? permisConduireFile.name : 'Aucun fichier choisi'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Contrôle technique */}
+                      <div className="mb-4">
+                        <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
+                          Contrôle technique (moins de 6 mois) *
+                          <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help" title="Le contrôle technique est obligatoire pour les véhicules de plus de 4 ans, sauf exemption. Il doit daté de moins de 6 mois.">
+                            <Info className="w-3 h-3 text-gray-600" />
+                          </div>
+                        </label>
+                        <div className="flex items-center space-x-3">
+                          <label className="cursor-pointer">
+                            <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
+                              <Upload className="w-4 h-4" />
+                              <span>Choisir un fichier</span>
+                            </span>
+                            <input
+                              type="file"
+                              name="controleTechnique"
+                              onChange={handleFileChange(setControleTechniqueFile)}
+                              className="hidden"
+                              accept="image/*,.pdf"
+                              required
+                            />
+                          </label>
+                          <span className="text-sm text-gray-500">
+                            {controleTechniqueFile ? controleTechniqueFile.name : 'Aucun fichier choisi'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Assurance - Normal and Company */}
+                      {(clientType === 'normal' || clientType === 'company') && (
+                        <div className="mb-4">
+                          <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
+                            Assurance *
+                            <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help" title="Une attestation d'assurance est requise pour prouver que le véhicule est assuré.">
+                              <Info className="w-3 h-3 text-gray-600" />
+                            </div>
+                          </label>
+                          <div className="flex items-center space-x-3">
+                            <label className="cursor-pointer">
+                              <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
+                                <Upload className="w-4 h-4" />
+                                <span>Choisir un fichier</span>
+                              </span>
+                              <input
+                                type="file"
+                                name="assurance"
+                                onChange={handleFileChange(clientType === 'normal' ? setAssuranceFile : setCompanyAssuranceFile)}
+                                className="hidden"
+                                accept="image/*,.pdf"
+                                required
+                              />
+                            </label>
+                            <span className="text-sm text-gray-500">
+                              {(clientType === 'normal' ? assuranceFile : companyAssuranceFile) ? (clientType === 'normal' ? assuranceFile!.name : companyAssuranceFile!.name) : 'Aucun fichier choisi'}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Certificat de déclaration d'achat (Cerfa 13751) */}
+                      <div className="mb-4">
+                        <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
+                          4. Certificat de déclaration d'achat (Cerfa 13751)
+                          <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help" title="Le certificat de déclaration d'achat (Cerfa 13751) est un document optionnel qui peut être requis pour certaines transactions de véhicules d'occasion.">
+                            <Info className="w-3 h-3 text-gray-600" />
+                          </div>
+                        </label>
+                        <div className="flex items-center space-x-3">
+                          <label className="cursor-pointer">
+                            <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
+                              <Upload className="w-4 h-4" />
+                              <span>Choisir un fichier</span>
+                            </span>
+                            <input
+                              type="file"
+                              name="certificatDeclarationAchat"
+                              onChange={handleFileChange(setDeclarationAchatFile)}
+                              className="hidden"
+                              accept="image/*,.pdf"
+                            />
+                          </label>
+                          <span className="text-sm text-gray-500">
+                            {declarationAchatFile ? declarationAchatFile.name : 'Aucun fichier choisi'}
+                          </span>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </form>
+              </div>
+            </div>
+
+            {/* Mobile: Mandat Preview & Signature */}
+            <div className="lg:hidden">
+              <div className="bg-white border border-gray-100 rounded-2xl p-6 md:p-8 shadow-lg relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary-600 to-primary-400"></div>
+                <div className="mb-4">
+                  <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-3">
+                    Aperçu du mandat
+                  </h3>
+                    <p className="text-sm text-gray-600 mb-4">
+                      Le mandat sera prérempli automatiquement avec vos informations. Merci de le télécharger, le signer, puis de l'ajouter avec les documents requis.
+                    </p>
+                    
+                    {/* Button to generate mandat */}
+                    <button
+                      type="button"
+                      onClick={handleGenerateMandat}
+                      disabled={isGeneratingMandat || !firstName || !lastName || !email || !streetNumber || !streetType || !streetName || !postalCode || !city || !vin || vin.length !== 17 || !registrationNumber || !validateRegistrationNumber(registrationNumber) || !marque || (clientType === 'company' && !siret)}
+                      className={`w-full mb-4 py-4 px-6 rounded-2xl font-bold text-base transition-all duration-300 flex items-center justify-center space-x-2 shadow-lg ${
+                        !isGeneratingMandat && firstName && lastName && email && streetNumber && streetType && streetName && postalCode && city && vin && vin.length === 17 && registrationNumber && validateRegistrationNumber(registrationNumber) && marque && (clientType !== 'company' || siret)
+                          ? 'bg-gradient-to-r from-primary-600 to-primary-700 text-white hover:from-primary-700 hover:to-primary-800 hover:shadow-xl transform hover:-translate-y-0.5 active:translate-y-0'
+                          : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      }`}
+                    >
+                      {isGeneratingMandat ? (
+                        <>
+                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                          <span>Génération en cours...</span>
+                        </>
+                      ) : (
+                        <>
+                          <FileText className="w-5 h-5" />
+                          <span>Générer le mandat</span>
+                        </>
+                      )}
+                    </button>
+
+                    {/* Download button (shown only when PDF is generated) */}
+                    {mandatPreviewUrl && (
+                      <button
+                        type="button"
+                        onClick={handleDownloadMandat}
+                        className="w-full mb-4 py-3 px-4 rounded-lg font-semibold bg-green-600 text-white hover:bg-green-700 transition-colors flex items-center justify-center space-x-2"
+                      >
+                        <Download className="w-5 h-5" />
+                        <span>Télécharger le mandat</span>
+                      </button>
+                    )}
+                </div>
+                
+                {/* PDF Preview - Full space without controls - Responsive height */}
+                <div className="relative w-full bg-white border border-gray-300 rounded overflow-auto h-[600px] sm:h-[700px] md:h-[calc(100vh-200px)] lg:h-[calc(100vh-150px)] min-h-[500px] sm:min-h-[600px] md:min-h-[700px] max-h-[900px] md:max-h-[1200px]">
+                  {mandatPreviewUrl ? (
+                    <PDFViewer url={mandatPreviewUrlWithSignature || mandatPreviewUrl} useCanvas={false} />
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <div className="text-gray-200 text-xs opacity-20 transform -rotate-45">
+                        EMATRICULE.FR
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Signature électronique */}
+                <div className="mt-4 pt-4 border-t border-gray-200">
+                  <div className="flex items-center space-x-2 mb-3">
+                    <Pen className="w-4 h-4 text-primary-600" />
+                    <h4 className="text-base font-semibold text-gray-900">
+                      Signature électronique
+                    </h4>
+                  </div>
+                  <p className="text-xs text-gray-600 mb-4">
+                    {isSignatureValidated 
+                      ? 'Signature validée et intégrée dans le mandat.' 
+                      : 'Signez ci-dessous avec votre souris ou votre doigt. Votre signature sera automatiquement intégrée à l\'emplacement prévu sur le mandat.'}
+                  </p>
+                  
+                  {!isSignatureValidated ? (
+                    <>
+                      <div className="flex justify-center mb-4">
+                        <SignaturePad
+                          onSignatureChange={(dataUrl) => {
+                            setSignatureDataUrl(dataUrl)
+                            console.log('Signature mise à jour:', dataUrl ? 'Signature présente' : 'Signature effacée')
+                          }}
+                          width={500}
+                          height={150}
+                        />
+              </div>
+                      
+                      {signatureDataUrl && mandatPreviewUrl && (
+                        <div className="flex justify-center space-x-3 mb-3">
+                          <button
+                            type="button"
+                            onClick={handleValidateSignature}
+                            className="px-6 py-3 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-2xl font-bold hover:from-primary-700 hover:to-primary-800 transition-all duration-300 flex items-center space-x-2 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 active:translate-y-0"
+                          >
+                            <CheckCircle className="w-4 h-4" />
+                            <span>Valider la signature</span>
+                          </button>
+                        </div>
+                      )}
+                      
+                      {signatureDataUrl && !mandatPreviewUrl && (
+                        <div className="text-center">
+                          <p className="text-xs text-orange-600 mb-2">
+                            ⚠️ Veuillez d'abord générer le mandat avant de valider votre signature
+                          </p>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div>
+                      <div className="flex justify-center mb-4">
+                        <div className="w-full max-w-md h-20 border-2 border-green-300 rounded-lg bg-green-50 flex items-center justify-center">
+                          <div className="text-green-600 text-center">
+                            <CheckCircle className="w-8 h-8 mx-auto mb-1" />
+                            <p className="text-sm font-semibold">Signature validée</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex justify-center">
+                        <button
+                          type="button"
+                          onClick={handleResign}
+                          className="px-6 py-2.5 bg-gray-600 text-white rounded-lg font-semibold hover:bg-gray-700 transition-colors flex items-center space-x-2"
+                        >
+                          <RotateCcw className="w-4 h-4" />
+                          <span>Resigner</span>
+                        </button>
+                      </div>
+                      <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                        <p className="text-xs text-green-800 flex items-center space-x-2">
+                          <CheckCircle className="w-3 h-3" />
+                          <span>Signature validée et visible dans l'aperçu. Vous pouvez maintenant télécharger le mandat.</span>
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Desktop: Left Column - Document Preview / Information */}
+            <div className="hidden lg:block">
               {/* Document Type Selection */}
               <div className="bg-white border border-gray-100 rounded-2xl p-6 md:p-8 mb-6 shadow-lg relative overflow-hidden transition-all duration-300 hover:shadow-xl">
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary-600 to-primary-400"></div>
@@ -2157,6 +2909,34 @@ export default function CarteGrisePage() {
                             </div>
                           </div>
                         )}
+
+                        {/* Certificat de déclaration d'achat (Cerfa 13751) */}
+                        <div className="mb-4">
+                          <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
+                            4. Certificat de déclaration d'achat (Cerfa 13751)
+                            <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help" title="Le certificat de déclaration d'achat (Cerfa 13751) est un document optionnel qui peut être requis pour certaines transactions de véhicules d'occasion.">
+                              <Info className="w-3 h-3 text-gray-600" />
+                            </div>
+                          </label>
+                          <div className="flex items-center space-x-3">
+                            <label className="cursor-pointer">
+                              <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
+                                <Upload className="w-4 h-4" />
+                                <span>Choisir un fichier</span>
+                              </span>
+                              <input
+                                type="file"
+                                name="certificatDeclarationAchat"
+                                onChange={handleFileChange(setDeclarationAchatFile)}
+                                className="hidden"
+                                accept="image/*,.pdf"
+                              />
+                            </label>
+                            <span className="text-sm text-gray-500">
+                              {declarationAchatFile ? declarationAchatFile.name : 'Aucun fichier choisi'}
+                            </span>
+                          </div>
+                        </div>
                       </>
                     )}
 
