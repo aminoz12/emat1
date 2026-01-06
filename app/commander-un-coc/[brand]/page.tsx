@@ -192,10 +192,10 @@ const allProducts = [
   },
   {
     id: 19,
-    brand: 'Mini',
-    brandName: 'Mini',
-    title: 'Document COC pour Mini',
-    price: '324,00',
+      brand: 'Mini',
+      brandName: 'Mini',
+      title: 'Document COC pour Mini',
+      price: '240,00',
     rating: 4.6,
     reviews: 112,
     logoImage: '/mini.png',
@@ -325,15 +325,11 @@ export default function ProductDetailPage() {
     )
   }
 
-  // Get image paths
+  // Get image paths - only show main image, remove empty thumbnails
   const brandName = product.brand.toLowerCase().replace('ë', 'e').replace('é', 'e')
   const mainImage = product.logoImage
-  const thumbnails = [
-    `/${brandName}1.png`,
-    `/${brandName}2.png`,
-    `/${brandName}3.png`,
-  ]
-  const allImages = [mainImage, ...thumbnails]
+  // Only include main image - thumbnails are removed as they're empty
+  const allImages = [mainImage]
 
   // Render stars
   const renderStars = (rating: number) => {
@@ -560,32 +556,7 @@ export default function ProductDetailPage() {
                 </div>
               </div>
 
-              {/* Thumbnails - Horizontal layout under main image */}
-              <div className="flex space-x-3">
-                {thumbnails.map((thumb, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setSelectedImage(index + 1)}
-                    className={`relative flex-1 aspect-square border-2 rounded-lg overflow-hidden transition-all bg-white ${
-                      selectedImage === index + 1
-                        ? 'border-gray-900'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    <Image
-                      src={thumb}
-                      alt={`${product.brandName} - Thumbnail ${index + 1}`}
-                      width={100}
-                      height={100}
-                      className="object-contain w-full h-full p-3"
-                      onError={(e) => {
-                        // Fallback to main logo if thumbnail doesn't exist
-                        e.currentTarget.src = mainImage
-                      }}
-                    />
-                  </button>
-                ))}
-              </div>
+              {/* Thumbnails removed - only showing main image */}
             </div>
 
             {/* Right Column: Product Details */}

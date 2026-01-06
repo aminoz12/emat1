@@ -6,7 +6,7 @@ const CTASection = () => {
       <div className="container">
         <div className="max-w-5xl mx-auto text-center">
           {/* Main Text */}
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-8 leading-tight px-4">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-8 leading-tight px-4 uppercase">
             Votre carte grise & vos plaques<br className="hidden sm:block" /> d'immatriculation en 2 minutes
           </h2>
 
