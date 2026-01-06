@@ -1959,6 +1959,7 @@ export default function CarteGrisePage() {
                               </span>
                               <input
                                 type="file"
+                                name="carteGrise"
                                 onChange={handleFileChange(setCurrentCardFile)}
                                 className="hidden"
                                 accept="image/*,.pdf"
@@ -1987,6 +1988,7 @@ export default function CarteGrisePage() {
                               </span>
                               <input
                                 type="file"
+                                name="certificatCession"
                                 onChange={handleFileChange(setCertificatCessionCerfa15776File)}
                                 className="hidden"
                                 accept="image/*,.pdf"
@@ -2023,6 +2025,7 @@ export default function CarteGrisePage() {
                               </span>
                               <input
                                 type="file"
+                                name="pieceIdentite"
                                 onChange={handleFileChange(setIdFile)}
                                 className="hidden"
                                 accept="image/*,.pdf"
@@ -2052,6 +2055,7 @@ export default function CarteGrisePage() {
                                 </span>
                                 <input
                                   type="file"
+                                  name="proofAddress"
                                   onChange={handleFileChange(setProofAddressFile)}
                                   className="hidden"
                                   accept="image/*,.pdf"
@@ -2081,6 +2085,7 @@ export default function CarteGrisePage() {
                               </span>
                               <input
                                 type="file"
+                                name="permisConduire"
                                 onChange={handleFileChange(setPermisConduireFile)}
                                 className="hidden"
                                 accept="image/*,.pdf"
@@ -2109,6 +2114,7 @@ export default function CarteGrisePage() {
                               </span>
                               <input
                                 type="file"
+                                name="controleTechnique"
                                 onChange={handleFileChange(setControleTechniqueFile)}
                                 className="hidden"
                                 accept="image/*,.pdf"
@@ -2138,6 +2144,7 @@ export default function CarteGrisePage() {
                                 </span>
                                 <input
                                   type="file"
+                                  name="assurance"
                                   onChange={handleFileChange(clientType === 'normal' ? setAssuranceFile : setCompanyAssuranceFile)}
                                   className="hidden"
                                   accept="image/*,.pdf"
@@ -2175,6 +2182,7 @@ export default function CarteGrisePage() {
                                 </span>
                                 <input
                                   type="file"
+                                  name="hostId"
                                   onChange={handleFileChange(setHostIdFile)}
                                   className="hidden"
                                   accept="image/*,.pdf"
@@ -2203,6 +2211,7 @@ export default function CarteGrisePage() {
                                 </span>
                                 <input
                                   type="file"
+                                  name="hostProofAddress"
                                   onChange={handleFileChange(setHostProofAddressFile)}
                                   className="hidden"
                                   accept="image/*,.pdf"
@@ -2231,6 +2240,7 @@ export default function CarteGrisePage() {
                                 </span>
                                 <input
                                   type="file"
+                                  name="attestationHebergement"
                                   onChange={handleFileChange(setAttestationHebergementFile)}
                                   className="hidden"
                                   accept="image/*,.pdf"
@@ -2259,6 +2269,7 @@ export default function CarteGrisePage() {
                                 </span>
                                 <input
                                   type="file"
+                                  name="hostedAssurance"
                                   onChange={handleFileChange(setAssuranceFile)}
                                   className="hidden"
                                   accept="image/*,.pdf"
@@ -2296,6 +2307,7 @@ export default function CarteGrisePage() {
                                 </span>
                                 <input
                                   type="file"
+                                  name="kbis"
                                   onChange={handleFileChange(setKbisFile)}
                                   className="hidden"
                                   accept="image/*,.pdf"
@@ -2324,6 +2336,7 @@ export default function CarteGrisePage() {
                                 </span>
                                 <input
                                   type="file"
+                                  name="gerantId"
                                   onChange={handleFileChange(setGerantIdFile)}
                                   className="hidden"
                                   accept="image/*,.pdf"
@@ -2359,6 +2372,7 @@ export default function CarteGrisePage() {
                               </span>
                               <input
                                 type="file"
+                                name="carteGriseAdresse"
                                 onChange={handleFileChange(setCurrentCardFile)}
                                 className="hidden"
                                 accept="image/*,.pdf"
@@ -2387,6 +2401,7 @@ export default function CarteGrisePage() {
                               </span>
                               <input
                                 type="file"
+                                name="pieceIdentiteAdresse"
                                 onChange={handleFileChange(setIdFile)}
                                 className="hidden"
                                 accept="image/*,.pdf"
@@ -2415,6 +2430,7 @@ export default function CarteGrisePage() {
                               </span>
                               <input
                                 type="file"
+                                name="justificatifDomicileNouvelle"
                                 onChange={handleFileChange(setProofAddressFile)}
                                 className="hidden"
                                 accept="image/*,.pdf"
@@ -2448,6 +2464,7 @@ export default function CarteGrisePage() {
                               </span>
                               <input
                                 type="file"
+                                name="justificatifIdentiteDuplicata"
                                 onChange={handleFileChange(setIdFile)}
                                 className="hidden"
                                 accept="image/*,.pdf"
@@ -2476,6 +2493,7 @@ export default function CarteGrisePage() {
                               </span>
                               <input
                                 type="file"
+                                name="justificatifDomicileDuplicata"
                                 onChange={handleFileChange(setProofAddressFile)}
                                 className="hidden"
                                 accept="image/*,.pdf"
@@ -2503,6 +2521,7 @@ export default function CarteGrisePage() {
                               </div>
                               <input
                                 type="file"
+                                name="cerfa13750"
                                 onChange={handleFileChange(setCerfa13750File)}
                                 className="hidden"
                                 accept="image/*,.pdf"
@@ -2570,6 +2589,7 @@ export default function CarteGrisePage() {
                                 </div>
                                 <input
                                   type="file"
+                                  name="cerfa13753"
                                   onChange={handleFileChange(setCerfa13753File)}
                                   className="hidden"
                                   accept="image/*,.pdf"

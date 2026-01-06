@@ -650,6 +650,7 @@ export default function ProductDetailPage() {
                       </span>
                       <input
                         type="file"
+                        name="recto"
                         onChange={handleFileChange(setRectoFile)}
                         className="hidden"
                         accept="image/*,.pdf"
@@ -676,6 +677,7 @@ export default function ProductDetailPage() {
                       </span>
                       <input
                         type="file"
+                        name="verso"
                         onChange={handleFileChange(setVersoFile)}
                         className="hidden"
                         accept="image/*,.pdf"
@@ -826,6 +828,7 @@ export default function ProductDetailPage() {
                         </span>
                         <input
                           type="file"
+                          name="carteGrise"
                           onChange={handleFileChange(setCarteGriseFile)}
                           className="hidden"
                           accept="image/*,.pdf"
