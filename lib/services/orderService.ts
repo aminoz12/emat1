@@ -64,15 +64,27 @@ export async function createOrder(data: OrderData): Promise<CreateOrderResponse>
       body: JSON.stringify(data),
     })
 
-    const result = await response.json()
-
     if (!response.ok) {
+      let errorMessage = 'Erreur lors de la création de la commande'
+      try {
+        const result = await response.json()
+        errorMessage = result.error || errorMessage
+      } catch (e) {
+        // If response is not JSON, use status text
+        errorMessage = response.statusText || errorMessage
+      }
+      console.error('Order creation failed:', {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorMessage
+      })
       return {
         success: false,
-        error: result.error || 'Erreur lors de la création de la commande'
+        error: errorMessage
       }
     }
 
+    const result = await response.json()
     return {
       success: true,
       order: result.order

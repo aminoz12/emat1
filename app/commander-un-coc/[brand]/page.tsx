@@ -764,7 +764,7 @@ export default function ProductDetailPage() {
                         required
                         className="px-4 py-2.5 border border-gray-300 rounded focus:ring-1 focus:ring-gray-900 focus:border-gray-900 outline-none"
                       >
-                        <option value="">Type</option>
+                        <option value="" disabled>Type</option>
                         <option value="Rue">Rue</option>
                         <option value="Avenue">Avenue</option>
                         <option value="Boulevard">Boulevard</option>
@@ -829,7 +829,6 @@ export default function ProductDetailPage() {
                           onChange={handleFileChange(setCarteGriseFile)}
                           className="hidden"
                           accept="image/*,.pdf"
-                          required
                         />
                       </label>
                       <span className="text-sm text-gray-500">
