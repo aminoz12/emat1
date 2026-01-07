@@ -165,7 +165,13 @@ export default function CheckoutSignupPage() {
       const createUserResult = await createUserResponse.json()
 
       if (!createUserResponse.ok) {
-        throw new Error(createUserResult.error || 'Erreur lors de la création du compte')
+        const errorMessage = createUserResult.error || 'Erreur lors de la création du compte'
+        console.error('Erreur création utilisateur:', {
+          status: createUserResponse.status,
+          error: errorMessage,
+          details: createUserResult.details
+        })
+        throw new Error(errorMessage)
       }
 
       // Maintenant se connecter avec le compte créé
@@ -184,15 +190,39 @@ export default function CheckoutSignupPage() {
         throw new Error('Impossible d\'établir la session. Veuillez réessayer.')
       }
 
-      // Attendre un peu pour que les cookies soient propagés au serveur
-      await new Promise(resolve => setTimeout(resolve, 500))
+      // Attendre un peu pour que les cookies soient propagés au serveur et que le profil soit créé
+      await new Promise(resolve => setTimeout(resolve, 1000))
 
       // Maintenant créer la commande avec l'utilisateur connecté
+      console.log('Création de la commande avec orderData:', {
+        type: orderData.type,
+        price: orderData.price,
+        hasVehicleData: !!orderData.vehicleData
+      })
+      
       const result = await createOrder(orderData)
 
       if (!result.success || !result.order) {
-        throw new Error(result.error || 'Erreur lors de la création de la commande')
+        console.error('Erreur création commande:', result.error)
+        console.error('Order data sent:', {
+          type: orderData.type,
+          price: orderData.price,
+          hasVehicleData: !!orderData.vehicleData,
+          hasMetadata: !!orderData.metadata
+        })
+        
+        // Show more detailed error to user
+        let errorMessage = result.error || 'Erreur lors de la création de la commande'
+        if (result.error?.includes('foreign key') || result.error?.includes('user_id')) {
+          errorMessage = 'Erreur de profil utilisateur. Veuillez rafraîchir la page et réessayer.'
+        } else if (result.error?.includes('constraint') || result.error?.includes('violation')) {
+          errorMessage = 'Erreur de validation des données. Veuillez vérifier vos informations.'
+        }
+        
+        throw new Error(errorMessage)
       }
+      
+      console.log('Commande créée avec succès:', result.order.id)
 
       // Uploader les documents
       const documentsToUpload: Array<{ file: File; documentType: string }> = []

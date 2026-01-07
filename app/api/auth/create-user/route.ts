@@ -41,8 +41,23 @@ export async function POST(request: NextRequest) {
 
     if (authError) {
       console.error('Erreur création utilisateur:', authError)
+      console.error('Détails erreur auth:', JSON.stringify(authError, null, 2))
+      
+      // Provide more specific error messages
+      let errorMessage = authError.message || 'Erreur lors de la création du compte'
+      if (authError.message?.includes('already registered') || authError.message?.includes('already exists')) {
+        errorMessage = 'Cet email est déjà utilisé. Veuillez vous connecter ou utiliser un autre email.'
+      } else if (authError.message?.includes('password')) {
+        errorMessage = 'Le mot de passe ne respecte pas les critères requis.'
+      } else if (authError.message?.includes('email')) {
+        errorMessage = 'L\'email fourni n\'est pas valide.'
+      }
+      
       return NextResponse.json(
-        { error: authError.message || 'Erreur lors de la création du compte' },
+        { 
+          error: errorMessage,
+          details: process.env.NODE_ENV === 'development' ? authError.message : undefined
+        },
         { status: 400 }
       )
     }

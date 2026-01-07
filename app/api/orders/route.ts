@@ -17,28 +17,66 @@ export async function POST(request: NextRequest) {
     }
 
     // Ensure profile exists (should be created by trigger, but check just in case)
+    // Wait a bit for trigger to create profile if it exists
+    await new Promise(resolve => setTimeout(resolve, 300))
+    
+    let profileExists = false
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('id')
       .eq('id', user.id)
       .single()
 
-    if (profileError || !profile) {
-      // Profile doesn't exist, create it
-      const { error: createProfileError } = await supabase
-        .from('profiles')
-        .insert({
-          id: user.id,
-          email: user.email || '',
-          role: 'USER'
-        })
+    if (profile && !profileError) {
+      profileExists = true
+    }
 
-      if (createProfileError) {
-        console.error('Erreur création profil:', createProfileError)
-        return NextResponse.json(
-          { error: 'Erreur lors de la création du profil utilisateur' },
-          { status: 500 }
-        )
+    if (!profileExists) {
+      // Profile doesn't exist, try to create it using admin client
+      try {
+        const { createAdminClient } = await import('@/lib/supabase/admin')
+        const supabaseAdmin = createAdminClient()
+        
+        // Use upsert to handle race conditions
+        const { error: upsertError } = await supabaseAdmin
+          .from('profiles')
+          .upsert({
+            id: user.id,
+            email: user.email || '',
+            role: 'USER'
+          }, {
+            onConflict: 'id'
+          })
+
+        if (upsertError) {
+          console.error('Erreur upsert profil:', upsertError)
+          console.error('Détails erreur:', JSON.stringify(upsertError, null, 2))
+          
+          // Try one more time with a simple insert
+          await new Promise(resolve => setTimeout(resolve, 200))
+          const { error: retryError } = await supabaseAdmin
+            .from('profiles')
+            .insert({
+              id: user.id,
+              email: user.email || '',
+              role: 'USER'
+            })
+            .select()
+            .single()
+          
+          if (retryError && !retryError.message?.includes('duplicate') && !retryError.code?.includes('23505')) {
+            return NextResponse.json(
+              { 
+                error: 'Erreur lors de la création du profil utilisateur',
+                details: process.env.NODE_ENV === 'development' ? upsertError.message : undefined
+              },
+              { status: 500 }
+            )
+          }
+        }
+      } catch (adminError: any) {
+        console.error('Erreur import/admin client:', adminError)
+        // Continue anyway - profile might exist from trigger
       }
     }
 
@@ -54,9 +92,18 @@ export async function POST(request: NextRequest) {
     } = body
 
     // Validate required fields
-    if (!type || !price) {
+    if (!type || price === undefined || price === null) {
       return NextResponse.json(
         { error: 'Type et prix sont requis' },
+        { status: 400 }
+      )
+    }
+
+    // Ensure price is a number
+    const numericPrice = typeof price === 'string' ? parseFloat(price.replace(',', '.')) : Number(price)
+    if (isNaN(numericPrice) || numericPrice <= 0) {
+      return NextResponse.json(
+        { error: 'Le prix doit être un nombre valide supérieur à 0' },
         { status: 400 }
       )
     }
@@ -103,19 +150,77 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Final verification: ensure profile exists before creating order
+    // This is critical because orders.user_id has a foreign key constraint to profiles.id
+    const { data: finalProfileCheck, error: finalProfileError } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('id', user.id)
+      .single()
+
+    if (finalProfileError || !finalProfileCheck) {
+      console.error('Profile verification failed before order creation:', finalProfileError)
+      console.error('User ID:', user.id)
+      
+      // Last attempt: try to create profile with admin client
+      try {
+        const { createAdminClient } = await import('@/lib/supabase/admin')
+        const supabaseAdmin = createAdminClient()
+        
+        const { error: finalCreateError } = await supabaseAdmin
+          .from('profiles')
+          .insert({
+            id: user.id,
+            email: user.email || '',
+            role: 'USER'
+          })
+          .select()
+          .single()
+        
+        if (finalCreateError && !finalCreateError.message?.includes('duplicate') && !finalCreateError.code?.includes('23505')) {
+          return NextResponse.json(
+            { 
+              error: 'Le profil utilisateur n\'existe pas et ne peut pas être créé. Veuillez contacter le support.',
+              details: process.env.NODE_ENV === 'development' ? finalCreateError.message : undefined
+            },
+            { status: 500 }
+          )
+        }
+        
+        // Wait a moment after creating profile
+        await new Promise(resolve => setTimeout(resolve, 200))
+      } catch (adminErr: any) {
+        console.error('Final profile creation attempt failed:', adminErr)
+        return NextResponse.json(
+          { 
+            error: 'Erreur lors de la vérification du profil utilisateur',
+            details: process.env.NODE_ENV === 'development' ? adminErr.message : undefined
+          },
+          { status: 500 }
+        )
+      }
+    }
+
     // Create the order
+    // Only include plaque_type for plaque orders
+    const orderData: any = {
+      user_id: user.id,
+      vehicle_id: vehicleId,
+      type: type,
+      status: 'pending',
+      reference: reference,
+      price: numericPrice,
+      metadata: metadata || {}
+    }
+    
+    // Only add plaque_type for plaque orders
+    if (type === 'plaque') {
+      orderData.plaque_type = plaqueType || metadata?.plaqueType || null
+    }
+    
     const { data: order, error: orderError } = await supabase
       .from('orders')
-      .insert({
-        user_id: user.id,
-        vehicle_id: vehicleId,
-        type: type,
-        status: 'pending',
-        reference: reference,
-        price: price,
-        metadata: metadata || {},
-        plaque_type: type === 'plaque' ? (plaqueType || metadata?.plaqueType || null) : null
-      })
+      .insert(orderData)
       .select()
       .single()
 
@@ -125,13 +230,29 @@ export async function POST(request: NextRequest) {
         user_id: user.id,
         vehicle_id: vehicleId,
         type: type,
-        price: price,
-        reference: reference
+        price: numericPrice,
+        reference: reference,
+        metadata: metadata ? 'present' : 'missing'
       })
+      console.error('Full error object:', JSON.stringify(orderError, null, 2))
+      
+      // Return more detailed error information
+      let errorMessage = 'Erreur lors de la création de la commande'
+      if (orderError.message) {
+        errorMessage = orderError.message
+      } else if (orderError.code) {
+        errorMessage = `Erreur base de données: ${orderError.code}`
+      }
+      
       return NextResponse.json(
         { 
-          error: 'Erreur lors de la création de la commande',
-          details: process.env.NODE_ENV === 'development' ? orderError.message : undefined
+          error: errorMessage,
+          details: process.env.NODE_ENV === 'development' ? {
+            message: orderError.message,
+            code: orderError.code,
+            details: orderError.details,
+            hint: orderError.hint
+          } : undefined
         },
         { status: 500 }
       )

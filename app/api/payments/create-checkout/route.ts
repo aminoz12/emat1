@@ -32,7 +32,7 @@ export async function POST(request: Request) {
     }
 
     // Get order details from database
-    const { data: order, error: orderError } = await (await supabase)
+    const { data: order, error: orderError } = await supabase
       .from('orders')
       .select('*')
       .eq('id', orderId)
@@ -56,20 +56,46 @@ export async function POST(request: Request) {
     })
     
     // Call the backend service to create a checkout
-    const response = await fetch(backendEndpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': request.headers.get('Authorization') || ''
-      },
-      body: JSON.stringify({
-        orderId,
-        amount: parseFloat(amount),
-        currency: currency.toLowerCase(),
-      }),
-    })
+    let response: Response
+    let responseData: any = {}
+    
+    try {
+      response = await fetch(backendEndpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': request.headers.get('Authorization') || ''
+        },
+        body: JSON.stringify({
+          orderId,
+          amount: parseFloat(amount),
+          currency: currency.toLowerCase(),
+        }),
+      })
 
-    const responseData = await response.json().catch(() => ({}))
+      try {
+        responseData = await response.json()
+      } catch (parseError) {
+        console.error('Failed to parse backend response:', parseError)
+        const text = await response.text()
+        console.error('Response text:', text)
+        throw new Error('Réponse invalide du backend')
+      }
+    } catch (fetchError: any) {
+      console.error('Failed to call backend service:', fetchError)
+      console.error('Backend URL:', backendEndpoint)
+      console.error('Error details:', {
+        message: fetchError.message,
+        cause: fetchError.cause,
+        stack: fetchError.stack
+      })
+      
+      // If backend is not available, return a helpful error
+      if (fetchError.message?.includes('fetch failed') || fetchError.code === 'ECONNREFUSED') {
+        throw new Error('Le service de paiement n\'est pas disponible. Veuillez réessayer plus tard ou contacter le support.')
+      }
+      throw fetchError
+    }
     
     if (!response.ok) {
       console.error('Backend error:', {
@@ -77,7 +103,7 @@ export async function POST(request: Request) {
         statusText: response.statusText,
         error: responseData
       })
-      throw new Error(responseData.message || 'Erreur lors de la création du paiement')
+      throw new Error(responseData.message || responseData.error || `Erreur ${response.status}: ${response.statusText}`)
     }
     
     console.log('Backend response:', responseData)
@@ -85,7 +111,7 @@ export async function POST(request: Request) {
     const { checkoutUrl, checkoutId } = responseData
 
     // Update order with checkout ID
-    const { error: updateError } = await (await supabase)
+    const { error: updateError } = await supabase
       .from('orders')
       .update({ payment_intent_id: checkoutId })
       .eq('id', orderId)
