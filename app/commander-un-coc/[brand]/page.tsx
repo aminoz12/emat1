@@ -908,44 +908,6 @@ export default function ProductDetailPage() {
             </div>
           </div>
 
-          {/* Example Documents Section */}
-          <div className="mt-20">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="relative border border-gray-200 rounded overflow-hidden bg-white">
-                <div className="aspect-[4/3] bg-gray-50 flex items-center justify-center relative">
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="text-center text-gray-400">
-                      <p className="text-xs">Exemple de document COC</p>
-                    </div>
-                  </div>
-                  {/* Watermark */}
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <div className="text-gray-300 text-xs opacity-30 transform -rotate-45">
-                      COC Online-Service.de SAMPLE
-                    </div>
-                  </div>
-                  {/* Red stamps/markings on left document */}
-                  <div className="absolute top-4 left-4 w-16 h-16 bg-red-500 opacity-20 rounded"></div>
-                  <div className="absolute bottom-8 right-8 w-12 h-12 bg-red-500 opacity-20 rounded"></div>
-                </div>
-              </div>
-              <div className="relative border border-gray-200 rounded overflow-hidden bg-white">
-                <div className="aspect-[4/3] bg-gray-50 flex items-center justify-center relative">
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="text-center text-gray-400">
-                      <p className="text-xs">Exemple de document COC</p>
-                    </div>
-                  </div>
-                  {/* Watermark */}
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <div className="text-gray-300 text-xs opacity-30 transform -rotate-45">
-                      COC Online-Service.de SAMPLE
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </div>
