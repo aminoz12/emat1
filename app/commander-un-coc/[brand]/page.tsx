@@ -430,64 +430,27 @@ export default function ProductDetailPage() {
       
       localStorage.setItem('pendingOrderData', JSON.stringify(formDataToStore))
       
-      // Convert files to base64 and store in sessionStorage
-      const convertFileToBase64 = (file: File): Promise<string> => {
-        return new Promise((resolve, reject) => {
-          const reader = new FileReader()
-          reader.readAsDataURL(file)
-          reader.onload = () => {
-            const base64 = (reader.result as string).split(',')[1]
-            resolve(base64)
-          }
-          reader.onerror = reject
-        })
-      }
-      
-      const filesToStore: { [key: string]: { name: string; type: string; base64: string } } = {}
-      
-      if (carteGriseFile) {
-        const base64 = await convertFileToBase64(carteGriseFile)
-        filesToStore.carteGriseFile = { name: carteGriseFile.name, type: carteGriseFile.type, base64 }
-      }
-      if (rectoFile) {
-        const base64 = await convertFileToBase64(rectoFile)
-        filesToStore.rectoFile = { name: rectoFile.name, type: rectoFile.type, base64 }
-      }
-      if (versoFile) {
-        const base64 = await convertFileToBase64(versoFile)
-        filesToStore.versoFile = { name: versoFile.name, type: versoFile.type, base64 }
-      }
-      
       // Check if user is already logged in
       if (user && !sessionLoading) {
         // User is logged in - create order directly and redirect to payment
+        // Use File objects directly, no need for base64 conversion
         try {
-          const base64ToFile = (base64: string, filename: string, mimeType: string): File => {
-            const byteCharacters = atob(base64)
-            const byteNumbers = new Array(byteCharacters.length)
-            for (let i = 0; i < byteCharacters.length; i++) {
-              byteNumbers[i] = byteCharacters.charCodeAt(i)
-            }
-            const byteArray = new Uint8Array(byteNumbers)
-            return new File([byteArray], filename, { type: mimeType })
-          }
-          
           const filesToUpload: Array<{ file: File; documentType: string }> = []
-          if (filesToStore.carteGriseFile) {
+          if (carteGriseFile) {
             filesToUpload.push({ 
-              file: base64ToFile(filesToStore.carteGriseFile.base64, filesToStore.carteGriseFile.name, filesToStore.carteGriseFile.type), 
+              file: carteGriseFile, 
               documentType: 'carte_grise' 
             })
           }
-          if (filesToStore.rectoFile) {
+          if (rectoFile) {
             filesToUpload.push({ 
-              file: base64ToFile(filesToStore.rectoFile.base64, filesToStore.rectoFile.name, filesToStore.rectoFile.type), 
+              file: rectoFile, 
               documentType: 'carte_identite_recto' 
             })
           }
-          if (filesToStore.versoFile) {
+          if (versoFile) {
             filesToUpload.push({ 
-              file: base64ToFile(filesToStore.versoFile.base64, filesToStore.versoFile.name, filesToStore.versoFile.type), 
+              file: versoFile, 
               documentType: 'carte_identite_verso' 
             })
           }
@@ -519,9 +482,61 @@ export default function ProductDetailPage() {
         }
       }
       
-      // User is not logged in - store data and redirect to checkout-signup
-      sessionStorage.setItem('pendingOrderFiles', JSON.stringify(filesToStore))
-      window.location.href = '/checkout-signup'
+      // User is not logged in - need to store files temporarily
+      // Check total file size first (sessionStorage limit is ~5-10MB)
+      const MAX_STORAGE_SIZE = 4 * 1024 * 1024 // 4MB safe limit
+      let totalSize = 0
+      const filesToCheck = [carteGriseFile, rectoFile, versoFile].filter(Boolean) as File[]
+      
+      for (const file of filesToCheck) {
+        totalSize += file.size
+      }
+      
+      if (totalSize > MAX_STORAGE_SIZE) {
+        alert(`Les fichiers sont trop volumineux (${(totalSize / 1024 / 1024).toFixed(2)} MB). Veuillez réduire la taille des fichiers ou vous connecter pour continuer.`)
+        return
+      }
+      
+      // Convert files to base64 and store in sessionStorage
+      const convertFileToBase64 = (file: File): Promise<string> => {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader()
+          reader.readAsDataURL(file)
+          reader.onload = () => {
+            const base64 = (reader.result as string).split(',')[1]
+            resolve(base64)
+          }
+          reader.onerror = reject
+        })
+      }
+      
+      const filesToStore: { [key: string]: { name: string; type: string; base64: string } } = {}
+      
+      try {
+        if (carteGriseFile) {
+          const base64 = await convertFileToBase64(carteGriseFile)
+          filesToStore.carteGriseFile = { name: carteGriseFile.name, type: carteGriseFile.type, base64 }
+        }
+        if (rectoFile) {
+          const base64 = await convertFileToBase64(rectoFile)
+          filesToStore.rectoFile = { name: rectoFile.name, type: rectoFile.type, base64 }
+        }
+        if (versoFile) {
+          const base64 = await convertFileToBase64(versoFile)
+          filesToStore.versoFile = { name: versoFile.name, type: versoFile.type, base64 }
+        }
+        
+        // Try to store in sessionStorage
+        sessionStorage.setItem('pendingOrderFiles', JSON.stringify(filesToStore))
+        window.location.href = '/checkout-signup'
+      } catch (storageError: any) {
+        if (storageError.name === 'QuotaExceededError' || storageError.message?.includes('quota')) {
+          alert('Les fichiers sont trop volumineux pour être stockés temporairement. Veuillez vous connecter ou réduire la taille des fichiers.')
+        } else {
+          alert('Erreur lors du stockage des fichiers: ' + (storageError.message || 'Une erreur est survenue'))
+        }
+        return
+      }
 
     } catch (error: any) {
       console.error('Erreur soumission:', error)
