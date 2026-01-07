@@ -42,6 +42,7 @@ export interface CreateOrderResponse {
     createdAt: string
   }
   error?: string
+  details?: any
 }
 
 export interface GetOrdersResponse {
