@@ -999,6 +999,7 @@ export default function CarteGrisePage() {
         }
       }
     }
+    }
 
     // Délai pour éviter trop d'appels API (debounce)
     timeoutId = setTimeout(() => {
@@ -1098,6 +1099,7 @@ export default function CarteGrisePage() {
           setIsCalculatingFraisDossier(false)
         }
       }
+    }
     }
 
     // Délai pour éviter trop d'appels API (debounce)
