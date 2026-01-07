@@ -1221,7 +1221,6 @@ export default function CarteGrisePage() {
       iconImage: '/g8.png'
     },
   ]
-  }
 
   const selectedDocument = documentTypes.find(doc => doc.value === documentType)
 
