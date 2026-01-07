@@ -55,6 +55,17 @@ export async function POST(request: Request) {
       currency,
     })
     
+    // Get session token for backend authorization
+    const { data: sessionData } = await supabase.auth.getSession()
+    const accessToken = sessionData?.session?.access_token
+    
+    if (!accessToken) {
+      return NextResponse.json(
+        { error: 'Session expirée. Veuillez vous reconnecter.' },
+        { status: 401 }
+      )
+    }
+    
     // Call the backend service to create a checkout
     let response: Response
     let responseData: any = {}
@@ -64,7 +75,7 @@ export async function POST(request: Request) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': request.headers.get('Authorization') || ''
+          'Authorization': `Bearer ${accessToken}`
         },
         body: JSON.stringify({
           orderId,
