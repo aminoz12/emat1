@@ -214,8 +214,8 @@ export default function CookiesPage() {
                   75008 Paris, France
                 </p>
                 <p className="text-gray-700 mt-2">
-                  <a href="mailto:contact@ematricule.fr" className="text-primary-600 hover:text-primary-700 underline">
-                    contact@ematricule.fr
+                  <a href="mailto:ematricule.info@gmail.com" className="text-primary-600 hover:text-primary-700 underline">
+                    ematricule.info@gmail.com
                   </a>
                 </p>
               </div>

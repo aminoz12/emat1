@@ -999,7 +999,6 @@ export default function CarteGrisePage() {
         }
       }
     }
-    }
 
     // Délai pour éviter trop d'appels API (debounce)
     timeoutId = setTimeout(() => {
@@ -1099,7 +1098,6 @@ export default function CarteGrisePage() {
           setIsCalculatingFraisDossier(false)
         }
       }
-    }
     }
 
     // Délai pour éviter trop d'appels API (debounce)
@@ -1223,6 +1221,7 @@ export default function CarteGrisePage() {
       iconImage: '/g8.png'
     },
   ]
+  }
 
   const selectedDocument = documentTypes.find(doc => doc.value === documentType)
 

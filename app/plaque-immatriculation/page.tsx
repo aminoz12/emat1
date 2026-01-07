@@ -321,7 +321,7 @@ export default function PlaqueImmatriculationPage() {
 
     try {
       // Calculate price based on plaque type
-      const basePrice = plaqueType === 'ww-provisoire' ? 20.00 : plaqueType === 'permanente' ? 10.00 : 15.90
+      const basePrice = plaqueType === 'ww-provisoire' ? 15.00 : plaqueType === 'permanente' ? 10.00 : 15.90
       let totalPrice = basePrice
       
       if (textOption === 'website') {
@@ -465,7 +465,7 @@ export default function PlaqueImmatriculationPage() {
   // Calculate plate price (without delivery)
   const calculatePlatePrice = () => {
     // Base price based on plaque type
-    const basePrice = plaqueType === 'ww-provisoire' ? 20.00 : plaqueType === 'permanente' ? 10.00 : 15.90
+    const basePrice = plaqueType === 'ww-provisoire' ? 15.00 : plaqueType === 'permanente' ? 10.00 : 15.90
     let platePrice = basePrice
     
     // Text option adjustments

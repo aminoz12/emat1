@@ -708,9 +708,9 @@ const ProPage = () => {
                 <Phone className="w-4 h-4" />
                 <span className="font-semibold text-sm">01 47 85 10 00</span>
               </a>
-              <a href="mailto:contact@ematricule.fr" className="flex items-center space-x-2 text-gray-700 hover:text-[#0d6962] transition-colors">
+              <a href="mailto:ematricule.info@gmail.com" className="flex items-center space-x-2 text-gray-700 hover:text-[#0d6962] transition-colors">
                 <Mail className="w-4 h-4" />
-                <span className="font-semibold text-sm">contact@ematricule.fr</span>
+                <span className="font-semibold text-sm">ematricule.info@gmail.com</span>
               </a>
               <a href="#" className="flex items-center space-x-2 text-gray-700 hover:text-[#0d6962] transition-colors">
                 <MessageCircle className="w-4 h-4" />

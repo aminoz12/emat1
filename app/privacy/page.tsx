@@ -144,8 +144,8 @@ export default function PrivacyPage() {
                 </p>
                 <p className="text-gray-700">
                   <strong>Email de contact :</strong>{' '}
-                  <a href="mailto:contact@ematricule.fr" className="text-primary-600 hover:text-primary-700 underline">
-                    contact@ematricule.fr
+                  <a href="mailto:ematricule.info@gmail.com" className="text-primary-600 hover:text-primary-700 underline">
+                    ematricule.info@gmail.com
                   </a>
                 </p>
               </div>
