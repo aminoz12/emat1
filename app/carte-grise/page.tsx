@@ -1297,15 +1297,19 @@ export default function CarteGrisePage() {
                                 {calculatedPrice.totalPrice.toFixed(2)} €
                               </div>
                               <div className="text-xs text-primary-500 mt-1">
-                                Taxes: {calculatedPrice.taxes.total.toFixed(2)} € + Service: {calculatedPrice.serviceFee.toFixed(2)} €
+                                Taxes: {calculatedPrice.taxes.total.toFixed(2)} € {'+'} Service: {calculatedPrice.serviceFee.toFixed(2)} €
                               </div>
                             </div>
                           ) : (
                             <div className="text-2xl font-bold text-primary-600">
                               {selectedDocument.price}
                             </div>
-                          )}
-                        </div>
+                          )
+                        ) : (
+                          <div className="text-2xl font-bold text-primary-600">
+                            {selectedDocument.price}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -1429,6 +1433,7 @@ export default function CarteGrisePage() {
                           className="w-full px-5 py-3 border-2 border-gray-300 rounded-xl focus:ring-4 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all duration-200 bg-gray-50 focus:bg-white"
                           required
                         />
+                      </div>
                     </div>
 
                     {/* Row 2: Email and Phone */}
@@ -2380,7 +2385,7 @@ export default function CarteGrisePage() {
                                 {calculatedPrice.totalPrice.toFixed(2)} €
                               </div>
                               <div className="text-xs text-primary-500 mt-1">
-                                Taxes: {calculatedPrice.taxes.total.toFixed(2)} € + Service: {calculatedPrice.serviceFee.toFixed(2)} €
+                                Taxes: {calculatedPrice.taxes.total.toFixed(2)} € {'+'} Service: {calculatedPrice.serviceFee.toFixed(2)} €
                               </div>
                             </div>
                           ) : (
@@ -4697,3 +4702,4 @@ export default function CarteGrisePage() {
     </div>
   )
 }
+
