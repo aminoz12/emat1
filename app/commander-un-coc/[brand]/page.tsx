@@ -587,7 +587,7 @@ export default function ProductDetailPage() {
                 {/* VIN Number */}
                 <div>
                   <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
-                    Numéro d'identification du véhicule (NIV) à 17 chiffres
+                    Numéro d'identification du véhicule (VIN) à 17 chiffres
                     <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
                       <Info className="w-3 h-3 text-gray-600" />
                     </div>
@@ -884,7 +884,7 @@ export default function ProductDetailPage() {
               {/* Additional Information */}
               <div className="text-sm text-gray-700 space-y-3 leading-relaxed">
                 <p>
-                  Veuillez saisir le numéro de châssis (NIV) à 17 chiffres de votre véhicule dans le champ de saisie ci-dessus. Cette information est suffisante pour identifier votre véhicule. Veillez à ce que le numéro soit correct.
+                  Veuillez saisir le numéro de châssis (VIN) à 17 chiffres de votre véhicule dans le champ de saisie ci-dessus. Cette information est suffisante pour identifier votre véhicule. Veillez à ce que le numéro soit correct.
                 </p>
                 <p>
                   Vous pouvez également indiquer l'année de construction en option, mais ce n'est pas nécessaire pour la commande.
