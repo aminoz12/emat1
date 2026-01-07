@@ -16,6 +16,32 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Ensure profile exists (should be created by trigger, but check just in case)
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('id', user.id)
+      .single()
+
+    if (profileError || !profile) {
+      // Profile doesn't exist, create it
+      const { error: createProfileError } = await supabase
+        .from('profiles')
+        .insert({
+          id: user.id,
+          email: user.email || '',
+          role: 'USER'
+        })
+
+      if (createProfileError) {
+        console.error('Erreur création profil:', createProfileError)
+        return NextResponse.json(
+          { error: 'Erreur lors de la création du profil utilisateur' },
+          { status: 500 }
+        )
+      }
+    }
+
     const body = await request.json()
     
     const {
@@ -95,8 +121,18 @@ export async function POST(request: NextRequest) {
 
     if (orderError) {
       console.error('Erreur création commande:', orderError)
+      console.error('Order data attempted:', {
+        user_id: user.id,
+        vehicle_id: vehicleId,
+        type: type,
+        price: price,
+        reference: reference
+      })
       return NextResponse.json(
-        { error: 'Erreur lors de la création de la commande' },
+        { 
+          error: 'Erreur lors de la création de la commande',
+          details: process.env.NODE_ENV === 'development' ? orderError.message : undefined
+        },
         { status: 500 }
       )
     }
