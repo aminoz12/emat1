@@ -202,7 +202,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create the order
-    // Only include plaque_type for plaque orders
+    // Build orderData object conditionally to avoid including plaque_type for non-plaque orders
     const orderData: any = {
       user_id: user.id,
       vehicle_id: vehicleId,
@@ -214,13 +214,35 @@ export async function POST(request: NextRequest) {
     }
     
     // Only add plaque_type for plaque orders
+    // IMPORTANT: Only include plaque_type if type is 'plaque' to avoid schema cache errors
+    // This prevents Supabase from trying to validate plaque_type for non-plaque orders
     if (type === 'plaque') {
-      orderData.plaque_type = plaqueType || metadata?.plaqueType || null
+      const finalPlaqueType = plaqueType || metadata?.plaqueType
+      if (finalPlaqueType) {
+        // Only add if we have a valid value
+        orderData.plaque_type = finalPlaqueType
+      }
+      // If no plaqueType provided, don't include the field at all (let DB use default NULL)
+    }
+    // For non-plaque orders, plaque_type is NEVER included in the object
+    
+    console.log('Creating order with data:', {
+      type,
+      hasPlaqueType: type === 'plaque' ? !!orderData.plaque_type : false,
+      plaqueType: type === 'plaque' ? (orderData.plaque_type || 'not provided') : 'N/A (not a plaque order)',
+      orderDataKeys: Object.keys(orderData)
+    })
+    
+    // Create a clean object without any undefined/null plaque_type for non-plaque orders
+    // This helps avoid Supabase schema cache issues
+    const cleanOrderData = { ...orderData }
+    if (type !== 'plaque' && 'plaque_type' in cleanOrderData) {
+      delete cleanOrderData.plaque_type
     }
     
     const { data: order, error: orderError } = await supabase
       .from('orders')
-      .insert(orderData)
+      .insert(cleanOrderData)
       .select()
       .single()
 
