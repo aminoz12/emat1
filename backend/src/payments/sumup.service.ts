@@ -11,6 +11,7 @@ type CheckoutResponse = {
   checkout_reference: string;
   status: string;
   return_url: string;
+  hosted_checkout_url?: string; // Public checkout URL when hosted_checkout is enabled
   links: Array<{ href: string; rel: string; method: string }>;
 };
 
@@ -45,14 +46,42 @@ export class SumUpService {
     }
 
     try {
-      // Create a checkout with SumUp
-      const checkout = await this.sumup.checkouts.create({
+      // Create a hosted checkout with SumUp (public payment enabled)
+      const checkoutData = {
         checkout_reference: orderId,
         amount: amount.toFixed(2), // Fix: Properly format amount as decimal string
         currency: currency.toUpperCase(),
         description: `Payment for order ${order.id}`,
         return_url: redirectUrl || `${this.configService.get('FRONTEND_URL')}/payment-callback`,
+        hosted_checkout: {
+          enabled: true  // CRITICAL: Enables public/guest payment without SumUp account
+        }
+      };
+
+      console.log('Creating SumUp hosted checkout with public payment enabled:', {
+        hosted_checkout: { enabled: true }
       });
+
+      const checkout = await this.sumup.checkouts.create(checkoutData);
+
+      // Log all links returned by SumUp for debugging
+      console.log('SumUp checkout created:', {
+        id: checkout.id,
+        status: checkout.status,
+        hosted_checkout_url: checkout.hosted_checkout_url,
+        links: checkout.links
+      });
+
+      if (checkout.links && checkout.links.length > 0) {
+        console.log('=== SUMUP LINKS DETAILS ===');
+        checkout.links.forEach((link: any, index: number) => {
+          console.log(`Link ${index + 1}:`, {
+            href: link.href,
+            rel: link.rel,
+            method: link.method
+          });
+        });
+      }
 
       // Update payment record with SumUp checkout ID
       const { data: payment, error: paymentError } = await this.supabase
@@ -72,8 +101,11 @@ export class SumUpService {
         throw new Error('Failed to save payment record');
       }
 
+      // Get the public checkout URL
+      const checkoutUrl = this.getCheckoutWidgetUrl(checkout);
+      
       return {
-        checkoutUrl: this.getCheckoutWidgetUrl(checkout),
+        checkoutUrl: checkoutUrl,
         checkoutId: checkout.id,  // Added: Make sure we return the checkoutId as expected by frontend
       };
     } catch (error) {
@@ -83,8 +115,53 @@ export class SumUpService {
   }
 
   private getCheckoutWidgetUrl(checkout: CheckoutResponse): string {
-    // This URL will be used to load the SumUp widget
-    return `https://checkout.sumup.com/b/${checkout.id}`;
+    // PRIORITY 1: Use hosted_checkout_url if available (direct public checkout URL)
+    if (checkout.hosted_checkout_url) {
+      console.log('✅ Found hosted_checkout_url directly in response (PUBLIC CHECKOUT URL):', checkout.hosted_checkout_url);
+      return checkout.hosted_checkout_url;
+    }
+
+    // PRIORITY 2: Extract from links array
+    if (checkout.links && checkout.links.length > 0) {
+      // Look for a link that seems to be a public checkout URL
+      // Prefer links with 'checkout' in rel or href, and avoid API/internal URLs
+      const publicCheckoutLink = checkout.links.find((link: any) => {
+        const href = link.href?.toLowerCase() || '';
+        const rel = link.rel?.toLowerCase() || '';
+        
+        // Avoid API/internal URLs
+        if (href.includes('/api/') || href.includes('/login') || href.includes('/auth') || href.includes('/merchant') || href.includes('/dashboard')) {
+          return false;
+        }
+        
+        // Prefer URLs with 'checkout' or 'pay' in them
+        return (href.includes('checkout') || href.includes('pay') || rel.includes('checkout')) && 
+               (href.includes('me.sumup.com') || href.includes('pay.sumup.com') || href.includes('checkout.sumup.com'));
+      });
+
+      if (publicCheckoutLink?.href) {
+        console.log('✅ Using URL from links (PUBLIC CHECKOUT URL):', publicCheckoutLink.href);
+        return publicCheckoutLink.href;
+      }
+
+      // Fallback: Use first link that's not an API URL
+      const fallbackLink = checkout.links.find((link: any) => {
+        const href = link.href?.toLowerCase() || '';
+        return !href.includes('/api/') && !href.includes('/login') && !href.includes('/auth');
+      });
+
+      if (fallbackLink?.href) {
+        console.log('⚠️ Using fallback link from links:', fallbackLink.href);
+        return fallbackLink.href;
+      }
+
+      console.log('⚠️ No suitable link found in checkout.links, using default format');
+    }
+
+    // PRIORITY 3: Fallback to default format (may not work for hosted checkouts)
+    const fallbackUrl = `https://checkout.sumup.com/b/${checkout.id}`;
+    console.log('⚠️ No hosted_checkout_url found, using default format:', fallbackUrl);
+    return fallbackUrl;
   }
 
   async verifyPayment(checkoutId: string): Promise<{ status: string }> {
