@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Call backend API to create SumUp checkout
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || process.env.BACKEND_URL || 'http://localhost:3001';
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || process.env.BACKEND_URL || 'https://emat1.onrender.com';
     const response = await fetch(`${backendUrl}/payments/create-payment-intent`, {
       method: 'POST',
       headers: {

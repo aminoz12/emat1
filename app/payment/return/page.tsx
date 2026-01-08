@@ -27,7 +27,7 @@ export default function PaymentReturnPage() {
 
       try {
         // Verify payment status with backend
-        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001'
+        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://emat1.onrender.com'
         const supabase = createClient()
         const { data: { session } } = await supabase.auth.getSession()
         

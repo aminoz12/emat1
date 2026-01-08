@@ -46,7 +46,7 @@ export async function POST(request: Request) {
     }
 
     // Prepare backend URL
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001'
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://emat1.onrender.com'
     const backendEndpoint = `${backendUrl}/payments/create-checkout`
     
     console.log('Calling backend service:', backendEndpoint, {
@@ -98,12 +98,20 @@ export async function POST(request: Request) {
       console.error('Error details:', {
         message: fetchError.message,
         cause: fetchError.cause,
+        code: fetchError.code,
+        errno: fetchError.errno,
         stack: fetchError.stack
       })
       
-      // If backend is not available, return a helpful error
-      if (fetchError.message?.includes('fetch failed') || fetchError.code === 'ECONNREFUSED') {
-        throw new Error('Le service de paiement n\'est pas disponible. Veuillez réessayer plus tard ou contacter le support.')
+      // If backend is not available, return a helpful error with more details
+      if (fetchError.message?.includes('fetch failed') || 
+          fetchError.code === 'ECONNREFUSED' || 
+          fetchError.code === 'ENOTFOUND' ||
+          fetchError.errno === 'ECONNREFUSED') {
+        const errorMessage = process.env.NODE_ENV === 'development' 
+          ? `Le service de paiement backend n'est pas disponible à ${backendUrl}. Veuillez démarrer le backend ou configurer NEXT_PUBLIC_BACKEND_URL.`
+          : 'Le service de paiement n\'est pas disponible. Veuillez réessayer plus tard ou contacter le support.'
+        throw new Error(errorMessage)
       }
       throw fetchError
     }
