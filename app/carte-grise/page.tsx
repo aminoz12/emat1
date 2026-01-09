@@ -2329,7 +2329,7 @@ export default function CarteGrisePage() {
           </div>
 
             {/* Right Column: Order Form */}
-            <div>
+            <div className="hidden lg:block">
               <div className="bg-white border border-gray-100 rounded-2xl p-6 md:p-8 lg:p-10 shadow-lg relative overflow-hidden transition-all duration-300 hover:shadow-xl">
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary-600 to-primary-400"></div>
               <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-8">
