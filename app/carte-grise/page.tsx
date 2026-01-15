@@ -1364,6 +1364,7 @@ export default function CarteGrisePage() {
                   <div className="space-y-3">
                     {documentTypes.map((doc) => {
                       const isSelected = documentType === doc.value
+                      const hasIconImage = 'iconImage' in doc && doc.iconImage
                       const IconComponent = doc.icon
                       return (
                         <button
@@ -1378,11 +1379,24 @@ export default function CarteGrisePage() {
                         >
                           <div className="flex items-center justify-between gap-3">
                             <div className="flex items-center gap-3">
-                              <span className={`inline-flex w-9 h-9 items-center justify-center rounded-lg ${
-                                isSelected ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-600'
-                              }`}>
-                                <IconComponent className="w-5 h-5" />
-                              </span>
+                              {hasIconImage ? (
+                                <div className="w-14 h-10 flex items-center justify-center">
+                                  <Image
+                                    src={doc.iconImage as string}
+                                    alt={doc.label}
+                                    width={80}
+                                    height={40}
+                                    className="w-auto h-auto"
+                                    loading="lazy"
+                                  />
+                                </div>
+                              ) : (
+                                <span className={`inline-flex w-9 h-9 items-center justify-center rounded-lg ${
+                                  isSelected ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-600'
+                                }`}>
+                                  <IconComponent className="w-5 h-5" />
+                                </span>
+                              )}
                               <span className="font-semibold text-gray-900">
                                 {doc.label}
                               </span>
