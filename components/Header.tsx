@@ -169,7 +169,7 @@ const Header = () => {
                     <div>
                       <h4 className="text-xs font-semibold text-gray-500 mb-2 flex items-center">
                         <Star className="w-3 h-3 text-yellow-500 mr-1" />
-                        Les plus populaires (6)
+                        Les plus populaires (7)
                       </h4>
                       <div className="space-y-1">
                         <Link 
@@ -198,6 +198,15 @@ const Header = () => {
                           onMouseEnter={() => router.prefetch('/carte-grise?type=immatriculation-provisoire-ww')}
                         >
                           Immatriculation provisoire WW
+                        </Link>
+                        <Link 
+                          href="/carte-grise?type=carte-grise-vehicule-etranger-ue" 
+                          prefetch={true}
+                          className="block text-sm text-gray-600 hover:text-primary-600 transition-colors" 
+                          onClick={() => setIsMenuOpen(false)}
+                          onMouseEnter={() => router.prefetch('/carte-grise?type=carte-grise-vehicule-etranger-ue')}
+                        >
+                          Carte grise véhicule étranger (UE)
                         </Link>
                         <Link 
                           href="/carte-grise?type=enregistrement-cession" 

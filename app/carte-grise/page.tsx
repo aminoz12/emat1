@@ -59,34 +59,51 @@ export default function CarteGrisePage() {
   const [registrationNumber, setRegistrationNumber] = useState('')
   const [registrationNumberError, setRegistrationNumberError] = useState('')
   
-  // Format and validate French registration number (AA-123-AB format)
+  const normalizeRegistrationNumber = (value: string): string =>
+    value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase()
+
+  // Format and validate French registration number (AA-123-AA or 123 ABC 12)
   const formatRegistrationNumber = (value: string): string => {
-    // Remove all non-alphanumeric characters and convert to uppercase
-    const cleaned = value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, 7)
-    
-    // Format as AA-123-AB (2 letters, 3 digits, 2 letters)
-    if (cleaned.length <= 2) {
-      return cleaned
-    } else if (cleaned.length <= 5) {
-      return `${cleaned.slice(0, 2)}-${cleaned.slice(2)}`
-    } else {
-      return `${cleaned.slice(0, 2)}-${cleaned.slice(2, 5)}-${cleaned.slice(5, 7)}`
+    const cleaned = normalizeRegistrationNumber(value)
+
+    if (!cleaned) {
+      return ''
     }
+
+    // Old format: 123ABC12
+    if (/^\d/.test(cleaned)) {
+      const trimmed = cleaned.slice(0, 8)
+      if (trimmed.length <= 3) {
+        return trimmed
+      } else if (trimmed.length <= 6) {
+        return `${trimmed.slice(0, 3)} ${trimmed.slice(3)}`
+      }
+      return `${trimmed.slice(0, 3)} ${trimmed.slice(3, 6)} ${trimmed.slice(6, 8)}`
+    }
+
+    // New format: AA123AA
+    const trimmed = cleaned.slice(0, 7)
+    if (trimmed.length <= 2) {
+      return trimmed
+    } else if (trimmed.length <= 5) {
+      return `${trimmed.slice(0, 2)}-${trimmed.slice(2)}`
+    }
+    return `${trimmed.slice(0, 2)}-${trimmed.slice(2, 5)}-${trimmed.slice(5, 7)}`
   }
   
   // Validate registration number format
   const validateRegistrationNumber = (value: string): boolean => {
-    // Remove dashes for validation
-    const cleaned = value.replace(/[^a-zA-Z0-9]/g, '')
-    
-    // Must be exactly 7 characters: 2 letters, 3 digits, 2 letters
-    if (cleaned.length !== 7) {
-      return false
+    const cleaned = normalizeRegistrationNumber(value)
+    const newFormatPattern = /^[A-Z]{2}[0-9]{3}[A-Z]{2}$/
+    const oldFormatPattern = /^[0-9]{3}[A-Z]{3}[0-9]{2}$/
+
+    if (cleaned.length === 7) {
+      return newFormatPattern.test(cleaned)
     }
-    
-    // Check format: AA-123-AB (2 letters, 3 digits, 2 letters)
-    const pattern = /^[A-Z]{2}[0-9]{3}[A-Z]{2}$/
-    return pattern.test(cleaned)
+    if (cleaned.length === 8) {
+      return oldFormatPattern.test(cleaned)
+    }
+    return false
   }
   
   const handleRegistrationNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -94,15 +111,17 @@ export default function CarteGrisePage() {
     const formatted = formatRegistrationNumber(value)
     setRegistrationNumber(formatted)
     
-    // Validate format
-    if (formatted.replace(/[^a-zA-Z0-9]/g, '').length === 7) {
-      if (validateRegistrationNumber(formatted)) {
-        setRegistrationNumberError('')
+    const cleaned = normalizeRegistrationNumber(formatted)
+    if (cleaned.length > 0) {
+      if (cleaned.length === 7 || cleaned.length === 8) {
+        if (validateRegistrationNumber(formatted)) {
+          setRegistrationNumberError('')
+        } else {
+          setRegistrationNumberError('Format invalide. Utilisez AA-123-AA ou 123 ABC 12.')
+        }
       } else {
-        setRegistrationNumberError('Format invalide. Utilisez le format AA-123-CD (2 lettres, 3 chiffres, 2 lettres)')
+        setRegistrationNumberError('Le numéro doit contenir 7 ou 8 caractères (AA-123-AA ou 123 ABC 12).')
       }
-    } else if (formatted.replace(/[^a-zA-Z0-9]/g, '').length > 0) {
-      setRegistrationNumberError('Le numéro doit contenir 7 caractères (2 lettres, 3 chiffres, 2 lettres)')
     } else {
       setRegistrationNumberError('')
     }
@@ -263,7 +282,7 @@ export default function CarteGrisePage() {
     
     // Vérifier le format du numéro d'immatriculation
     if (!validateRegistrationNumber(registrationNumber)) {
-      alert('Le numéro d\'immatriculation doit être au format AA-123-CD (2 lettres, 3 chiffres, 2 lettres).')
+      alert('Le numéro d\'immatriculation doit être au format AA-123-AA ou 123 ABC 12.')
       return
     }
 
@@ -304,7 +323,7 @@ export default function CarteGrisePage() {
         type: 'carte-grise' as const,
         vehicleData: {
           vin: vin.trim().toUpperCase(),
-          registrationNumber: registrationNumber.trim().toUpperCase(),
+          registrationNumber: normalizeRegistrationNumber(registrationNumber),
           marque: marque || undefined,
         },
         serviceType: documentType,
@@ -618,7 +637,7 @@ export default function CarteGrisePage() {
       
       // Vérifier le format du numéro d'immatriculation
       if (!validateRegistrationNumber(registrationNumber)) {
-        alert('Le numéro d\'immatriculation doit être au format AA-123-CD (2 lettres, 3 chiffres, 2 lettres).')
+        alert('Le numéro d\'immatriculation doit être au format AA-123-AA ou 123 ABC 12.')
         setIsGeneratingMandat(false)
         return
       }
@@ -640,7 +659,7 @@ export default function CarteGrisePage() {
         postalCode,
         city,
         vin: vin.trim().toUpperCase(),
-        registrationNumber: registrationNumber.trim().toUpperCase(),
+        registrationNumber: normalizeRegistrationNumber(registrationNumber),
         marque: marque || '',
         siret: clientType === 'company' ? (siret || '').trim() : '',
         demarcheType: documentType,
@@ -1048,7 +1067,7 @@ export default function CarteGrisePage() {
 
       try {
         // Format: remove spaces but keep dashes (API expects format like FN-954-ER)
-        const formattedPlaque = registrationNumber.replace(/\s/g, '')
+        const formattedPlaque = normalizeRegistrationNumber(registrationNumber)
         const response = await fetch(
           `/api/calculate-frais-dossier?plaque=${encodeURIComponent(formattedPlaque)}&code_postal=${postalCode}`
         )
@@ -1224,6 +1243,28 @@ export default function CarteGrisePage() {
 
   const selectedDocument = documentTypes.find(doc => doc.value === documentType)
 
+  const handleDocumentTypeSelect = (value: string) => {
+    startTransition(() => {
+      setDocumentType(value)
+      setUserChangedType(true) // Mark that user manually changed the type
+
+      // Update URL to reflect the selected type
+      const params = new URLSearchParams(searchParams.toString())
+      params.set('type', value)
+      router.push(`${pathname}?${params.toString()}`, { scroll: false })
+
+      if (value !== 'changement-titulaire') {
+        setClientType('normal')
+      }
+      if (value !== 'duplicata') {
+        setDuplicataReason(null)
+      }
+      if (value !== 'declaration-achat') {
+        setAchatGarage(false)
+      }
+    })
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
       {/* Top Header Bar */}
@@ -1315,6 +1356,50 @@ export default function CarteGrisePage() {
                   </div>
                 )}
 
+                {/* Mobile: Choose document type */}
+                <div className="mb-6">
+                  <p className="text-sm font-semibold text-gray-700 mb-3">
+                    Choisissez votre démarche
+                  </p>
+                  <div className="space-y-3">
+                    {documentTypes.map((doc) => {
+                      const isSelected = documentType === doc.value
+                      const IconComponent = doc.icon
+                      return (
+                        <button
+                          key={doc.value}
+                          type="button"
+                          onClick={() => handleDocumentTypeSelect(doc.value)}
+                          className={`w-full text-left border-2 rounded-xl p-4 transition-all ${
+                            isSelected
+                              ? 'border-primary-600 bg-primary-50'
+                              : 'border-gray-200 bg-white hover:border-primary-300'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-3">
+                              <span className={`inline-flex w-9 h-9 items-center justify-center rounded-lg ${
+                                isSelected ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-600'
+                              }`}>
+                                <IconComponent className="w-5 h-5" />
+                              </span>
+                              <span className="font-semibold text-gray-900">
+                                {doc.label}
+                              </span>
+                            </div>
+                            <span className="text-sm font-bold text-primary-600">
+                              {doc.price}
+                            </span>
+                          </div>
+                          <p className="text-xs text-gray-600 mt-2 leading-snug">
+                            {doc.description}
+                          </p>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+
                 <form onSubmit={handleSubmit} className="space-y-6">
                   {/* Vehicle Information - Mobile */}
                   <div>
@@ -1364,13 +1449,13 @@ export default function CarteGrisePage() {
                           value={registrationNumber}
                           onChange={handleRegistrationNumberChange}
                           required
-                          maxLength={9} // AA-123-CD = 9 characters with dashes
+                          maxLength={10} // AA-123-AA (9) or 123 ABC 12 (10)
                           className={`w-full px-5 py-3 border-2 rounded-xl focus:ring-4 focus:ring-opacity-20 outline-none transition-all duration-200 ${
                               registrationNumberError
                               ? 'border-red-400 bg-red-50 focus:border-red-500 focus:ring-red-500' 
                               : 'border-gray-300 bg-gray-50 focus:border-primary-500 focus:ring-primary-500 focus:bg-white'
                           }`}
-                          placeholder="Ex: AB-123-CD"
+                          placeholder="Ex: AB-123-CD ou 123 ABC 12"
                         />
                         {registrationNumberError && (
                           <p className="text-sm text-red-600 mt-1">
@@ -2035,27 +2120,7 @@ export default function CarteGrisePage() {
                       <button
                         key={doc.value}
                         type="button"
-                        onClick={() => {
-                        startTransition(() => {
-                          setDocumentType(doc.value)
-                          setUserChangedType(true) // Mark that user manually changed the type
-                          
-                          // Update URL to reflect the selected type
-                          const params = new URLSearchParams(searchParams.toString())
-                          params.set('type', doc.value)
-                          router.push(`${pathname}?${params.toString()}`, { scroll: false })
-                          
-                          if (doc.value !== 'changement-titulaire') {
-                            setClientType('normal')
-                          }
-                          if (doc.value !== 'duplicata') {
-                            setDuplicataReason(null)
-                          }
-                          if (doc.value !== 'declaration-achat') {
-                            setAchatGarage(false)
-                          }
-                        })
-                      }}
+                        onClick={() => handleDocumentTypeSelect(doc.value)}
                         className={`w-full p-4 sm:p-5 rounded-2xl border-2 transition-all duration-300 text-left flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 hover:shadow-lg relative transform hover:scale-[1.01] ${
                           documentType === doc.value
                             ? 'border-primary-500 bg-gradient-to-br from-primary-50 to-primary-100/50 shadow-lg ring-2 ring-primary-200'
@@ -2446,13 +2511,13 @@ export default function CarteGrisePage() {
                           value={registrationNumber}
                           onChange={handleRegistrationNumberChange}
                           required
-                          maxLength={9} // AA-123-CD = 9 characters with dashes
+                          maxLength={10} // AA-123-AA (9) or 123 ABC 12 (10)
                           className={`w-full px-5 py-3 border-2 rounded-xl focus:ring-4 focus:ring-opacity-20 outline-none transition-all duration-200 ${
                               registrationNumberError
                               ? 'border-red-400 bg-red-50 focus:border-red-500 focus:ring-red-500' 
                               : 'border-gray-300 bg-gray-50 focus:border-primary-500 focus:ring-primary-500 focus:bg-white'
                           }`}
-                          placeholder="Ex: AB-123-CD"
+                          placeholder="Ex: AB-123-CD ou 123 ABC 12"
                         />
                         {registrationNumberError && (
                           <p className="text-xs text-red-600 mt-1">
