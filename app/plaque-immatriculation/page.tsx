@@ -226,28 +226,24 @@ export default function PlaqueImmatriculationPage() {
     { id: 'kit-pose', name: 'Kit pose', additional: '+ 2 rivets premium', size: '', price: '14,90 €', image: '/kitpose.png' },
   ]
 
-  const normalizeRegistrationNumber = (value: string): string =>
-    value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase()
-
   const handleRegistrationNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = normalizeRegistrationNumber(e.target.value)
-    const isOldFormat = /^\d/.test(value)
-    const cleaned = value.slice(0, isOldFormat ? 8 : 7)
+    // Remove all non-alphanumeric characters (including dashes) and convert to uppercase
+    const value = e.target.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase()
+    
+    // Allow up to 7 characters
+    const cleaned = value.slice(0, 7)
     
     setRegistrationNumber(cleaned)
     
+    // Validate format: AA123AA (2 letters, 3 digits, 2 letters)
     if (cleaned.length > 0) {
-      const newFormatRegex = /^[A-Z]{2}[0-9]{3}[A-Z]{2}$/
-      const oldFormatRegex = /^[0-9]{3}[A-Z]{3}[0-9]{2}$/
-      if (
-        (cleaned.length === 7 && newFormatRegex.test(cleaned)) ||
-        (cleaned.length === 8 && oldFormatRegex.test(cleaned))
-      ) {
+      const formatRegex = /^[A-Z]{2}[0-9]{3}[A-Z]{2}$/
+      if (cleaned.length === 7 && formatRegex.test(cleaned)) {
         setRegistrationNumberError(null)
-      } else if (cleaned.length === 7 || cleaned.length === 8) {
-        setRegistrationNumberError('Le format doit être AA-123-AA ou 123 ABC 12.')
+      } else if (cleaned.length === 7) {
+        setRegistrationNumberError('Le format doit être AA-123-AA (2 lettres, 3 chiffres, 2 lettres)')
       } else {
-        setRegistrationNumberError('Le numéro doit contenir 7 ou 8 caractères (AA-123-AA ou 123 ABC 12).')
+        setRegistrationNumberError('Le numéro doit contenir 7 caractères (2 lettres, 3 chiffres, 2 lettres)')
       }
     } else {
       setRegistrationNumberError(null)
@@ -258,25 +254,19 @@ export default function PlaqueImmatriculationPage() {
     setEuFlagError(false)
   }
 
-  // Format registration number for display (AA-123-AA or 123 ABC 12)
+  // Format registration number for display (AA-123-AB)
   const formatRegistrationNumber = (num: string): string => {
-    if (!num) return 'AA-123-AA'
-    const cleaned = normalizeRegistrationNumber(num)
-    if (/^\d/.test(cleaned)) {
-      const trimmed = cleaned.slice(0, 8)
-      if (trimmed.length <= 3) {
-        return trimmed
-      } else if (trimmed.length <= 6) {
-        return `${trimmed.slice(0, 3)} ${trimmed.slice(3)}`
-      }
-      return `${trimmed.slice(0, 3)} ${trimmed.slice(3, 6)} ${trimmed.slice(6, 8)}`
-    }
+    if (!num) return 'AA-123-AB'
+    // Remove all non-alphanumeric characters
+    const cleaned = num.replace(/[^a-zA-Z0-9]/g, '').toUpperCase()
+    // Format as AA-123-AB (2 letters, 3 digits, 2 letters)
     if (cleaned.length <= 2) {
       return cleaned
     } else if (cleaned.length <= 5) {
       return `${cleaned.slice(0, 2)}-${cleaned.slice(2)}`
+    } else {
+      return `${cleaned.slice(0, 2)}-${cleaned.slice(2, 5)}-${cleaned.slice(5, 7)}`
     }
-    return `${cleaned.slice(0, 2)}-${cleaned.slice(2, 5)}-${cleaned.slice(5, 7)}`
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -289,15 +279,12 @@ export default function PlaqueImmatriculationPage() {
       return
     }
     
-    // Validate format: AA-123-AA or 123 ABC 12
-    const cleaned = normalizeRegistrationNumber(registrationNumber)
-    const newFormatRegex = /^[A-Z]{2}[0-9]{3}[A-Z]{2}$/
-    const oldFormatRegex = /^[0-9]{3}[A-Z]{3}[0-9]{2}$/
-    const isValid = (cleaned.length === 7 && newFormatRegex.test(cleaned)) ||
-      (cleaned.length === 8 && oldFormatRegex.test(cleaned))
-    if (!isValid) {
-      setRegistrationNumberError('Le numéro d\'immatriculation doit être au format AA-123-AA ou 123 ABC 12.')
-      alert('Le numéro d\'immatriculation doit être au format AA-123-AA ou 123 ABC 12.')
+    // Validate format: must be exactly 7 characters (2 letters, 3 digits, 2 letters)
+    const cleaned = registrationNumber.replace(/[^a-zA-Z0-9]/g, '').toUpperCase()
+    const formatRegex = /^[A-Z]{2}[0-9]{3}[A-Z]{2}$/
+    if (cleaned.length !== 7 || !formatRegex.test(cleaned)) {
+      setRegistrationNumberError('Le numéro d\'immatriculation doit être au format AA-123-AA (2 lettres, 3 chiffres, 2 lettres).')
+      alert('Le numéro d\'immatriculation doit être au format AA-123-AA (2 lettres, 3 chiffres, 2 lettres).')
       return
     }
     
@@ -360,7 +347,7 @@ export default function PlaqueImmatriculationPage() {
       const orderData = {
         type: 'plaque' as const,
         vehicleData: {
-          registrationNumber: normalizeRegistrationNumber(registrationNumber),
+          registrationNumber: registrationNumber.trim().toUpperCase().replace(/\s+/g, ''),
         },
         serviceType: 'plaque-immatriculation',
         price: totalPrice,
@@ -376,7 +363,7 @@ export default function PlaqueImmatriculationPage() {
           address: fullAddress,
           postalCode,
           city,
-          registrationNumber: normalizeRegistrationNumber(registrationNumber),
+          registrationNumber: registrationNumber.trim().toUpperCase().replace(/\s+/g, ''),
           plaqueType,
           material,
           department: plaqueType !== 'ww-provisoire' ? selectedDepartment : null,
@@ -593,8 +580,8 @@ export default function PlaqueImmatriculationPage() {
                         type="text"
                         value={formatRegistrationNumber(registrationNumber)}
                         onChange={handleRegistrationNumberChange}
-                        placeholder="AA-123-AA ou 123 ABC 12"
-                        maxLength={10}
+                        placeholder="AA-123-AA"
+                        maxLength={9}
                         className={`w-full px-6 py-4 md:py-5 text-lg border-2 rounded-xl focus:ring-4 focus:ring-opacity-20 outline-none transition-all duration-200 placeholder:text-gray-400 uppercase tracking-wider font-semibold ${
                           registrationNumberError
                             ? 'border-red-400 bg-red-50 focus:border-red-500 focus:ring-red-500'
@@ -611,7 +598,7 @@ export default function PlaqueImmatriculationPage() {
                         </p>
                       ) : (
                         <p className="text-xs text-gray-500 mt-2">
-                          Format: AA-123-AA ou 123 ABC 12
+                          Format: 2 lettres, 3 chiffres, 2 lettres (ex: AA-123-AA)
                         </p>
                       )}
                     </div>
