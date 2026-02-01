@@ -59,34 +59,51 @@ export default function CarteGrisePage() {
   const [registrationNumber, setRegistrationNumber] = useState('')
   const [registrationNumberError, setRegistrationNumberError] = useState('')
   
-  // Format and validate French registration number (AA-123-AB format)
+  const normalizeRegistrationNumber = (value: string): string =>
+    value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase()
+
+  // Format and validate French registration number (AA-123-AA or 123 ABC 12)
   const formatRegistrationNumber = (value: string): string => {
-    // Remove all non-alphanumeric characters and convert to uppercase
-    const cleaned = value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, 7)
-    
-    // Format as AA-123-AB (2 letters, 3 digits, 2 letters)
-    if (cleaned.length <= 2) {
-      return cleaned
-    } else if (cleaned.length <= 5) {
-      return `${cleaned.slice(0, 2)}-${cleaned.slice(2)}`
-    } else {
-      return `${cleaned.slice(0, 2)}-${cleaned.slice(2, 5)}-${cleaned.slice(5, 7)}`
+    const cleaned = normalizeRegistrationNumber(value)
+
+    if (!cleaned) {
+      return ''
     }
+
+    // Old format: 123ABC12
+    if (/^\d/.test(cleaned)) {
+      const trimmed = cleaned.slice(0, 8)
+      if (trimmed.length <= 3) {
+        return trimmed
+      } else if (trimmed.length <= 6) {
+        return `${trimmed.slice(0, 3)} ${trimmed.slice(3)}`
+      }
+      return `${trimmed.slice(0, 3)} ${trimmed.slice(3, 6)} ${trimmed.slice(6, 8)}`
+    }
+
+    // New format: AA123AA
+    const trimmed = cleaned.slice(0, 7)
+    if (trimmed.length <= 2) {
+      return trimmed
+    } else if (trimmed.length <= 5) {
+      return `${trimmed.slice(0, 2)}-${trimmed.slice(2)}`
+    }
+    return `${trimmed.slice(0, 2)}-${trimmed.slice(2, 5)}-${trimmed.slice(5, 7)}`
   }
   
   // Validate registration number format
   const validateRegistrationNumber = (value: string): boolean => {
-    // Remove dashes for validation
-    const cleaned = value.replace(/[^a-zA-Z0-9]/g, '')
-    
-    // Must be exactly 7 characters: 2 letters, 3 digits, 2 letters
-    if (cleaned.length !== 7) {
-      return false
+    const cleaned = normalizeRegistrationNumber(value)
+    const newFormatPattern = /^[A-Z]{2}[0-9]{3}[A-Z]{2}$/
+    const oldFormatPattern = /^[0-9]{3}[A-Z]{3}[0-9]{2}$/
+
+    if (cleaned.length === 7) {
+      return newFormatPattern.test(cleaned)
     }
-    
-    // Check format: AA-123-AB (2 letters, 3 digits, 2 letters)
-    const pattern = /^[A-Z]{2}[0-9]{3}[A-Z]{2}$/
-    return pattern.test(cleaned)
+    if (cleaned.length === 8) {
+      return oldFormatPattern.test(cleaned)
+    }
+    return false
   }
   
   const handleRegistrationNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -94,15 +111,17 @@ export default function CarteGrisePage() {
     const formatted = formatRegistrationNumber(value)
     setRegistrationNumber(formatted)
     
-    // Validate format
-    if (formatted.replace(/[^a-zA-Z0-9]/g, '').length === 7) {
-      if (validateRegistrationNumber(formatted)) {
-        setRegistrationNumberError('')
+    const cleaned = normalizeRegistrationNumber(formatted)
+    if (cleaned.length > 0) {
+      if (cleaned.length === 7 || cleaned.length === 8) {
+        if (validateRegistrationNumber(formatted)) {
+          setRegistrationNumberError('')
+        } else {
+          setRegistrationNumberError('Format invalide. Utilisez AA-123-AA ou 123 ABC 12.')
+        }
       } else {
-        setRegistrationNumberError('Format invalide. Utilisez le format AA-123-CD (2 lettres, 3 chiffres, 2 lettres)')
+        setRegistrationNumberError('Le numéro doit contenir 7 ou 8 caractères (AA-123-AA ou 123 ABC 12).')
       }
-    } else if (formatted.replace(/[^a-zA-Z0-9]/g, '').length > 0) {
-      setRegistrationNumberError('Le numéro doit contenir 7 caractères (2 lettres, 3 chiffres, 2 lettres)')
     } else {
       setRegistrationNumberError('')
     }
@@ -263,7 +282,7 @@ export default function CarteGrisePage() {
     
     // Vérifier le format du numéro d'immatriculation
     if (!validateRegistrationNumber(registrationNumber)) {
-      alert('Le numéro d\'immatriculation doit être au format AA-123-CD (2 lettres, 3 chiffres, 2 lettres).')
+      alert('Le numéro d\'immatriculation doit être au format AA-123-AA ou 123 ABC 12.')
       return
     }
 
@@ -304,7 +323,7 @@ export default function CarteGrisePage() {
         type: 'carte-grise' as const,
         vehicleData: {
           vin: vin.trim().toUpperCase(),
-          registrationNumber: registrationNumber.trim().toUpperCase(),
+          registrationNumber: normalizeRegistrationNumber(registrationNumber),
           marque: marque || undefined,
         },
         serviceType: documentType,
@@ -618,7 +637,7 @@ export default function CarteGrisePage() {
       
       // Vérifier le format du numéro d'immatriculation
       if (!validateRegistrationNumber(registrationNumber)) {
-        alert('Le numéro d\'immatriculation doit être au format AA-123-CD (2 lettres, 3 chiffres, 2 lettres).')
+        alert('Le numéro d\'immatriculation doit être au format AA-123-AA ou 123 ABC 12.')
         setIsGeneratingMandat(false)
         return
       }
@@ -640,7 +659,7 @@ export default function CarteGrisePage() {
         postalCode,
         city,
         vin: vin.trim().toUpperCase(),
-        registrationNumber: registrationNumber.trim().toUpperCase(),
+        registrationNumber: normalizeRegistrationNumber(registrationNumber),
         marque: marque || '',
         siret: clientType === 'company' ? (siret || '').trim() : '',
         demarcheType: documentType,
@@ -1048,7 +1067,7 @@ export default function CarteGrisePage() {
 
       try {
         // Format: remove spaces but keep dashes (API expects format like FN-954-ER)
-        const formattedPlaque = registrationNumber.replace(/\s/g, '')
+        const formattedPlaque = normalizeRegistrationNumber(registrationNumber)
         const response = await fetch(
           `/api/calculate-frais-dossier?plaque=${encodeURIComponent(formattedPlaque)}&code_postal=${postalCode}`
         )
@@ -1224,6 +1243,28 @@ export default function CarteGrisePage() {
 
   const selectedDocument = documentTypes.find(doc => doc.value === documentType)
 
+  const handleDocumentTypeSelect = (value: string) => {
+    startTransition(() => {
+      setDocumentType(value)
+      setUserChangedType(true) // Mark that user manually changed the type
+
+      // Update URL to reflect the selected type
+      const params = new URLSearchParams(searchParams.toString())
+      params.set('type', value)
+      router.push(`${pathname}?${params.toString()}`, { scroll: false })
+
+      if (value !== 'changement-titulaire') {
+        setClientType('normal')
+      }
+      if (value !== 'duplicata') {
+        setDuplicataReason(null)
+      }
+      if (value !== 'declaration-achat') {
+        setAchatGarage(false)
+      }
+    })
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
       {/* Top Header Bar */}
@@ -1315,6 +1356,64 @@ export default function CarteGrisePage() {
                   </div>
                 )}
 
+                {/* Mobile: Choose document type */}
+                <div className="mb-6">
+                  <p className="text-sm font-semibold text-gray-700 mb-3">
+                    Choisissez votre démarche
+                  </p>
+                  <div className="space-y-3">
+                    {documentTypes.map((doc) => {
+                      const isSelected = documentType === doc.value
+                      const hasIconImage = 'iconImage' in doc && doc.iconImage
+                      const IconComponent = doc.icon
+                      return (
+                        <button
+                          key={doc.value}
+                          type="button"
+                          onClick={() => handleDocumentTypeSelect(doc.value)}
+                          className={`w-full text-left border-2 rounded-xl p-4 transition-all ${
+                            isSelected
+                              ? 'border-primary-600 bg-primary-50'
+                              : 'border-gray-200 bg-white hover:border-primary-300'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-3">
+                              {hasIconImage ? (
+                                <div className="w-14 h-10 flex items-center justify-center">
+                                  <Image
+                                    src={doc.iconImage as string}
+                                    alt={doc.label}
+                                    width={80}
+                                    height={40}
+                                    className="w-auto h-auto"
+                                    loading="lazy"
+                                  />
+                                </div>
+                              ) : (
+                                <span className={`inline-flex w-9 h-9 items-center justify-center rounded-lg ${
+                                  isSelected ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-600'
+                                }`}>
+                                  <IconComponent className="w-5 h-5" />
+                                </span>
+                              )}
+                              <span className="font-semibold text-gray-900">
+                                {doc.label}
+                              </span>
+                            </div>
+                            <span className="text-sm font-bold text-primary-600">
+                              {doc.price}
+                            </span>
+                          </div>
+                          <p className="text-xs text-gray-600 mt-2 leading-snug">
+                            {doc.description}
+                          </p>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+
                 <form onSubmit={handleSubmit} className="space-y-6">
                   {/* Vehicle Information - Mobile */}
                   <div>
@@ -1364,13 +1463,13 @@ export default function CarteGrisePage() {
                           value={registrationNumber}
                           onChange={handleRegistrationNumberChange}
                           required
-                          maxLength={9} // AA-123-CD = 9 characters with dashes
+                          maxLength={10} // AA-123-AA (9) or 123 ABC 12 (10)
                           className={`w-full px-5 py-3 border-2 rounded-xl focus:ring-4 focus:ring-opacity-20 outline-none transition-all duration-200 ${
                               registrationNumberError
                               ? 'border-red-400 bg-red-50 focus:border-red-500 focus:ring-red-500' 
                               : 'border-gray-300 bg-gray-50 focus:border-primary-500 focus:ring-primary-500 focus:bg-white'
                           }`}
-                          placeholder="Ex: AB-123-CD"
+                          placeholder="Ex: AB-123-CD ou 123 ABC 12"
                         />
                         {registrationNumberError && (
                           <p className="text-sm text-red-600 mt-1">
@@ -1873,1046 +1972,6 @@ export default function CarteGrisePage() {
                       </div>
                     </>
                   )}
-
-                  {/* Documents for Changement d'Adresse - Mobile */}
-                  {documentType === 'changement-adresse' && (
-                    <>
-                      <div className="mb-4">
-                        <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
-                           carte grise *
-                          <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
-                            <Info className="w-3 h-3 text-gray-600" />
-                          </div>
-                        </label>
-                        <div className="flex items-center space-x-3">
-                          <label className="cursor-pointer">
-                            <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
-                              <Upload className="w-4 h-4" />
-                              <span>Choisir un fichier</span>
-                            </span>
-                            <input
-                              type="file"
-                              name="carteGriseAdresse"
-                              onChange={handleFileChange(setCurrentCardFile)}
-                              className="hidden"
-                              accept="image/*,.pdf"
-                              required
-                            />
-                          </label>
-                          <span className="text-sm text-gray-500">
-                            {currentCardFile ? currentCardFile.name : 'Aucun fichier choisi'}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="mb-4">
-                        <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
-                           Pièce d'identité *
-                          <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
-                            <Info className="w-3 h-3 text-gray-600" />
-                          </div>
-                        </label>
-                        <div className="flex items-center space-x-3">
-                          <label className="cursor-pointer">
-                            <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
-                              <Upload className="w-4 h-4" />
-                              <span>Choisir un fichier</span>
-                            </span>
-                            <input
-                              type="file"
-                              name="pieceIdentiteAdresse"
-                              onChange={handleFileChange(setIdFile)}
-                              className="hidden"
-                              accept="image/*,.pdf"
-                              required
-                            />
-                          </label>
-                          <span className="text-sm text-gray-500">
-                            {idFile ? idFile.name : 'Aucun fichier choisi'}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="mb-4">
-                        <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
-                           justificatif de domicile (nouvelle adresse) *
-                          <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
-                            <Info className="w-3 h-3 text-gray-600" />
-                          </div>
-                        </label>
-                        <div className="flex items-center space-x-3">
-                          <label className="cursor-pointer">
-                            <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
-                              <Upload className="w-4 h-4" />
-                              <span>Choisir un fichier</span>
-                            </span>
-                            <input
-                              type="file"
-                              name="justificatifDomicileNouvelle"
-                              onChange={handleFileChange(setProofAddressFile)}
-                              className="hidden"
-                              accept="image/*,.pdf"
-                              required
-                            />
-                          </label>
-                          <span className="text-sm text-gray-500">
-                            {proofAddressFile ? proofAddressFile.name : 'Aucun fichier choisi'}
-                          </span>
-                        </div>
-                      </div>
-                    </>
-                  )}
-
-                  {/* Documents for Demande de DUPLICATA - Mobile */}
-                  {documentType === 'duplicata' && (
-                    <>
-                      <div className="mb-4">
-                        <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
-                          Justificatif d'identité *
-                          <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
-                            <Info className="w-3 h-3 text-gray-600" />
-                          </div>
-                        </label>
-                        <div className="flex items-center space-x-3">
-                          <label className="cursor-pointer">
-                            <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
-                              <Upload className="w-4 h-4" />
-                              <span>Choisir un fichier</span>
-                            </span>
-                            <input
-                              type="file"
-                              name="justificatifIdentiteDuplicata"
-                              onChange={handleFileChange(setIdFile)}
-                              className="hidden"
-                              accept="image/*,.pdf"
-                              required
-                            />
-                          </label>
-                          <span className="text-sm text-gray-500">
-                            {idFile ? idFile.name : 'Aucun fichier choisi'}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="mb-4">
-                        <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
-                          Justificatif de domicile *
-                          <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
-                            <Info className="w-3 h-3 text-gray-600" />
-                          </div>
-                        </label>
-                        <div className="flex items-center space-x-3">
-                          <label className="cursor-pointer">
-                            <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
-                              <Upload className="w-4 h-4" />
-                              <span>Choisir un fichier</span>
-                            </span>
-                            <input
-                              type="file"
-                              name="justificatifDomicileDuplicata"
-                              onChange={handleFileChange(setProofAddressFile)}
-                              className="hidden"
-                              accept="image/*,.pdf"
-                              required
-                            />
-                          </label>
-                          <span className="text-sm text-gray-500">
-                            {proofAddressFile ? proofAddressFile.name : 'Aucun fichier choisi'}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="mb-4">
-                        <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
-                          ‡ CERFA N°13750*05 (case duplicata cochée) *
-                          <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
-                            <Info className="w-3 h-3 text-gray-600" />
-                          </div>
-                        </label>
-                        <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
-                          <label className="cursor-pointer">
-                            <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
-                              <Upload className="w-4 h-4" />
-                              <span>Choisir un fichier</span>
-                            </span>
-                            <input
-                              type="file"
-                              name="cerfa13750"
-                              onChange={handleFileChange(setCerfa13750File)}
-                              className="hidden"
-                              accept="image/*,.pdf"
-                              required
-                            />
-                          </label>
-                          <a
-                            href="/Formulaire de demande cerfa 13750-05.pdf"
-                            download
-                            className="inline-flex items-center px-3 py-1.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-xs rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 active:translate-y-0"
-                          >
-                            <Download className="w-3 h-3 mr-1.5" />
-                            Télécharger le formulaire
-                          </a>
-                          <span className="text-sm text-gray-500">
-                            {cerfa13750File ? cerfa13750File.name : 'Aucun fichier choisi'}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-900 mb-3">
-                          Raison de la demande de duplicata *
-                        </label>
-                        <div className="space-y-2">
-                          <button
-                            type="button"
-                            onClick={() => setDuplicataReason('perte-vol')}
-                            className={`w-full px-4 py-3 rounded-lg border-2 transition-all text-left ${
-                              duplicataReason === 'perte-vol'
-                                ? 'border-primary-600 bg-primary-50 text-primary-900'
-                                : 'border-gray-200 bg-white hover:border-gray-300 text-gray-700'
-                            }`}
-                          >
-                            <div className="font-semibold">Perte ou vol</div>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setDuplicataReason('autre')}
-                            className={`w-full px-4 py-3 rounded-lg border-2 transition-all text-left ${
-                              duplicataReason === 'autre'
-                                ? 'border-primary-600 bg-primary-50 text-primary-900'
-                                : 'border-gray-200 bg-white hover:border-gray-300 text-gray-700'
-                            }`}
-                          >
-                            <div className="font-semibold">Autre (usure, détérioration, etc.)</div>
-                          </button>
-                        </div>
-                      </div>
-                      {duplicataReason === 'perte-vol' && (
-                        <div className="mb-4">
-                          <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
-                            CERFA N° 13753*02 (uniquement pour perte ou vol) *
-                            <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
-                              <Info className="w-3 h-3 text-gray-600" />
-                            </div>
-                          </label>
-                          <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
-                            <label className="cursor-pointer">
-                              <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
-                                <Upload className="w-4 h-4" />
-                                <span>Choisir un fichier</span>
-                              </span>
-                              <input
-                                type="file"
-                                name="cerfa13753"
-                                onChange={handleFileChange(setCerfa13753File)}
-                                className="hidden"
-                                accept="image/*,.pdf"
-                                required
-                              />
-                            </label>
-                            <a
-                              href="/cerfa-13753-02-declaration-perte-vol.pdf"
-                              download
-                              className="inline-flex items-center px-3 py-1.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-xs rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 active:translate-y-0"
-                            >
-                              <Download className="w-3 h-3 mr-1.5" />
-                              Télécharger le formulaire
-                            </a>
-                            <span className="text-sm text-gray-500">
-                              {cerfa13753File ? cerfa13753File.name : 'Aucun fichier choisi'}
-                            </span>
-                          </div>
-                        </div>
-                      )}
-                      <div className="mb-4">
-                        <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
-                          Contrôle technique si applicable
-                          <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
-                            <Info className="w-3 h-3 text-gray-600" />
-                          </div>
-                        </label>
-                        <p className="text-xs text-gray-600 mb-2">
-                          S'il a expiré, vous devrez demander la fiche d'identification de votre voiture pour pouvoir la passer en carte grise.
-                        </p>
-                        <div className="flex items-center space-x-3">
-                          <label className="cursor-pointer">
-                            <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
-                              <Upload className="w-4 h-4" />
-                              <span>Choisir un fichier</span>
-                            </span>
-                            <input
-                              type="file"
-                              onChange={handleFileChange(setControleTechniqueFile)}
-                              className="hidden"
-                              accept="image/*,.pdf"
-                            />
-                          </label>
-                          <span className="text-sm text-gray-500">
-                            {controleTechniqueFile ? controleTechniqueFile.name : 'Aucun fichier choisi'}
-                          </span>
-                        </div>
-                      </div>
-                    </>
-                  )}
-
-                  {/* Documents for Déclaration d'achat - Mobile */}
-                  {documentType === 'declaration-achat' && (
-                    <>
-                      <div className="mb-4">
-                        <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
-                          1. Copie de la carte grise datée, barrée et signée par le vendeur *
-                          <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
-                            <Info className="w-3 h-3 text-gray-600" />
-                          </div>
-                        </label>
-                        <div className="flex items-center space-x-3">
-                          <label className="cursor-pointer">
-                            <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
-                              <Upload className="w-4 h-4" />
-                              <span>Choisir un fichier</span>
-                            </span>
-                            <input
-                              type="file"
-                              onChange={handleFileChange(setCarteGriseVendeurFile)}
-                              className="hidden"
-                              accept="image/*,.pdf"
-                              required
-                            />
-                          </label>
-                          <span className="text-sm text-gray-500">
-                            {carteGriseVendeurFile ? carteGriseVendeurFile.name : 'Aucun fichier choisi'}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="mb-4">
-                        <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
-                          2. Demande de certificat d'immatriculation et mandat d'immatriculation (préremplis et signés automatiquement sur Eplaque) *
-                          <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
-                            <Info className="w-3 h-3 text-gray-600" />
-                          </div>
-                        </label>
-                        <div className="flex items-center space-x-3">
-                          <label className="cursor-pointer">
-                            <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
-                              <Upload className="w-4 h-4" />
-                              <span>Choisir un fichier</span>
-                            </span>
-                            <input
-                              type="file"
-                              onChange={handleFileChange(setDemandeCertificatMandatFile)}
-                              className="hidden"
-                              accept="image/*,.pdf"
-                              required
-                            />
-                          </label>
-                          <span className="text-sm text-gray-500">
-                            {demandeCertificatMandatFile ? demandeCertificatMandatFile.name : 'Aucun fichier choisi'}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-900 mb-3">
-                          Le véhicule a-t-il été acheté à un garage ?
-                        </label>
-                        <div className="space-y-2">
-                          <button
-                            type="button"
-                            onClick={() => setAchatGarage(true)}
-                            className={`w-full px-4 py-3 rounded-lg border-2 transition-all text-left ${
-                              achatGarage === true
-                                ? 'border-primary-600 bg-primary-50 text-primary-900'
-                                : 'border-gray-200 bg-white hover:border-gray-300 text-gray-700'
-                            }`}
-                          >
-                            <div className="font-semibold">Oui</div>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setAchatGarage(false)}
-                            className={`w-full px-4 py-3 rounded-lg border-2 transition-all text-left ${
-                              achatGarage === false
-                                ? 'border-primary-600 bg-primary-50 text-primary-900'
-                                : 'border-gray-200 bg-white hover:border-gray-300 text-gray-700'
-                            }`}
-                          >
-                            <div className="font-semibold">Non</div>
-                          </button>
-                        </div>
-                      </div>
-                      <div className="mb-4">
-                        <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
-                          3. Certificat de cession (Cerfa 15776) *
-                          <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
-                            <Info className="w-3 h-3 text-gray-600" />
-                          </div>
-                        </label>
-                        {achatGarage && (
-                          <p className="text-xs text-gray-600 mb-2">
-                            Si le véhicule a été acheté à un garage, fournir le récépissé de déclaration d'achat également
-                          </p>
-                        )}
-                        <div className="flex items-center space-x-3">
-                          <label className="cursor-pointer">
-                            <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
-                              <Upload className="w-4 h-4" />
-                              <span>Choisir un fichier</span>
-                            </span>
-                            <input
-                              type="file"
-                              onChange={handleFileChange(setCertificatCessionCerfa15776File)}
-                              className="hidden"
-                              accept="image/*,.pdf"
-                              required
-                            />
-                          </label>
-                          <span className="text-sm text-gray-500">
-                            {certificatCessionCerfa15776File ? certificatCessionCerfa15776File.name : 'Aucun fichier choisi'}
-                          </span>
-                        </div>
-                      </div>
-                      {achatGarage && (
-                        <div className="mb-4">
-                          <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
-                            Récépissé de déclaration d'achat *
-                            <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
-                              <Info className="w-3 h-3 text-gray-600" />
-                            </div>
-                          </label>
-                          <div className="flex items-center space-x-3">
-                            <label className="cursor-pointer">
-                              <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
-                                <Upload className="w-4 h-4" />
-                                <span>Choisir un fichier</span>
-                              </span>
-                              <input
-                                type="file"
-                                onChange={handleFileChange(setRecepisseDeclarationAchatFile)}
-                                className="hidden"
-                                accept="image/*,.pdf"
-                                required
-                              />
-                            </label>
-                            <span className="text-sm text-gray-500">
-                              {recepisseDeclarationAchatFile ? recepisseDeclarationAchatFile.name : 'Aucun fichier choisi'}
-                            </span>
-                          </div>
-                        </div>
-                      )}
-                      <div className="mb-4">
-                        <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
-                          4. Certificat de déclaration d'achat (Cerfa 13751) *
-                          <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
-                            <Info className="w-3 h-3 text-gray-600" />
-                          </div>
-                        </label>
-                        <div className="flex items-center space-x-3">
-                          <label className="cursor-pointer">
-                            <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
-                              <Upload className="w-4 h-4" />
-                              <span>Choisir un fichier</span>
-                            </span>
-                            <input
-                              type="file"
-                              onChange={handleFileChange(setCertificatDeclarationAchatCerfa13751File)}
-                              className="hidden"
-                              accept="image/*,.pdf"
-                              required
-                            />
-                          </label>
-                          <span className="text-sm text-gray-500">
-                            {certificatDeclarationAchatCerfa13751File ? certificatDeclarationAchatCerfa13751File.name : 'Aucun fichier choisi'}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="mb-4">
-                        <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
-                          5. Justificatif d'identité en cours de validité *
-                          <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
-                            <Info className="w-3 h-3 text-gray-600" />
-                          </div>
-                        </label>
-                        <div className="flex items-center space-x-3">
-                          <label className="cursor-pointer">
-                            <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
-                              <Upload className="w-4 h-4" />
-                              <span>Choisir un fichier</span>
-                            </span>
-                            <input
-                              type="file"
-                              onChange={handleFileChange(setJustificatifIdentiteFile)}
-                              className="hidden"
-                              accept="image/*,.pdf"
-                              required
-                            />
-                          </label>
-                          <span className="text-sm text-gray-500">
-                            {justificatifIdentiteFile ? justificatifIdentiteFile.name : 'Aucun fichier choisi'}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="mb-4">
-                        <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
-                          6. Extrait Kbis du professionnel acquéreur *
-                          <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
-                            <Info className="w-3 h-3 text-gray-600" />
-                          </div>
-                        </label>
-                        <div className="flex items-center space-x-3">
-                          <label className="cursor-pointer">
-                            <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
-                              <Upload className="w-4 h-4" />
-                              <span>Choisir un fichier</span>
-                            </span>
-                            <input
-                              type="file"
-                              onChange={handleFileChange(setExtraitKbisFile)}
-                              className="hidden"
-                              accept="image/*,.pdf"
-                              required
-                            />
-                          </label>
-                          <span className="text-sm text-gray-500">
-                            {extraitKbisFile ? extraitKbisFile.name : 'Aucun fichier choisi'}
-                          </span>
-                        </div>
-                      </div>
-                    </>
-                  )}
-
-                  {/* Documents for Fiche d'identification - Mobile */}
-                  {documentType === 'fiche-identification' && (
-                    <>
-                      <div className="mb-4">
-                        <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
-                          Justificatif d'identité en cours de validité *
-                          <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
-                            <Info className="w-3 h-3 text-gray-600" />
-                          </div>
-                        </label>
-                        <div className="flex items-center space-x-3">
-                          <label className="cursor-pointer">
-                            <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
-                              <Upload className="w-4 h-4" />
-                              <span>Choisir un fichier</span>
-                            </span>
-                            <input
-                              type="file"
-                              onChange={handleFileChange(setFicheJustificatifIdentiteFile)}
-                              className="hidden"
-                              accept="image/*,.pdf"
-                              required
-                            />
-                          </label>
-                          <span className="text-sm text-gray-500">
-                            {ficheJustificatifIdentiteFile ? ficheJustificatifIdentiteFile.name : 'Aucun fichier choisi'}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="mb-4">
-                        <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
-                          Permis de conduire *
-                          <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
-                            <Info className="w-3 h-3 text-gray-600" />
-                          </div>
-                        </label>
-                        <div className="flex items-center space-x-3">
-                          <label className="cursor-pointer">
-                            <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
-                              <Upload className="w-4 h-4" />
-                              <span>Choisir un fichier</span>
-                            </span>
-                            <input
-                              type="file"
-                              onChange={handleFileChange(setFichePermisConduireFile)}
-                              className="hidden"
-                              accept="image/*,.pdf"
-                              required
-                            />
-                          </label>
-                          <span className="text-sm text-gray-500">
-                            {fichePermisConduireFile ? fichePermisConduireFile.name : 'Aucun fichier choisi'}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="mb-4">
-                        <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
-                          Copie de la carte grise perdue (facultative)
-                          <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
-                            <Info className="w-3 h-3 text-gray-600" />
-                          </div>
-                        </label>
-                        <div className="flex items-center space-x-3">
-                          <label className="cursor-pointer">
-                            <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
-                              <Upload className="w-4 h-4" />
-                              <span>Choisir un fichier</span>
-                            </span>
-                            <input
-                              type="file"
-                              onChange={handleFileChange(setFicheCopieCarteGriseFile)}
-                              className="hidden"
-                              accept="image/*,.pdf"
-                            />
-                          </label>
-                          <span className="text-sm text-gray-500">
-                            {ficheCopieCarteGriseFile ? ficheCopieCarteGriseFile.name : 'Aucun fichier choisi'}
-                          </span>
-                        </div>
-                      </div>
-                    </>
-                  )}
-
-                  {/* Documents for Immatriculation provisoire WW - Mobile */}
-                  {documentType === 'immatriculation-provisoire-ww' && (
-                    <>
-                      <div className="mb-4">
-                        <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
-                          Copie de la carte grise étrangère *
-                          <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
-                            <Info className="w-3 h-3 text-gray-600" />
-                          </div>
-                        </label>
-                        <div className="flex items-center space-x-3">
-                          <label className="cursor-pointer">
-                            <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
-                              <Upload className="w-4 h-4" />
-                              <span>Choisir un fichier</span>
-                            </span>
-                            <input type="file" onChange={handleFileChange(setWwCarteGriseEtrangereFile)} className="hidden" accept="image/*,.pdf" required />
-                          </label>
-                          <span className="text-sm text-gray-500">{wwCarteGriseEtrangereFile ? wwCarteGriseEtrangereFile.name : 'Aucun fichier choisi'}</span>
-                        </div>
-                      </div>
-                      <div className="mb-4">
-                        <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
-                          Certificat de conformité ou document de la DRIRE ou de non-conformité *
-                          <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help"><Info className="w-3 h-3 text-gray-600" /></div>
-                        </label>
-                        <div className="flex items-center space-x-3">
-                          <label className="cursor-pointer">
-                            <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
-                              <Upload className="w-4 h-4" /><span>Choisir un fichier</span>
-                            </span>
-                            <input type="file" onChange={handleFileChange(setWwCertificatConformiteFile)} className="hidden" accept="image/*,.pdf" required />
-                          </label>
-                          <span className="text-sm text-gray-500">{wwCertificatConformiteFile ? wwCertificatConformiteFile.name : 'Aucun fichier choisi'}</span>
-                        </div>
-                      </div>
-                      <div className="mb-4">
-                        <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
-                          Justificatif de propriété du véhicule (facture d'achat ou certificat de cession) *
-                          <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help"><Info className="w-3 h-3 text-gray-600" /></div>
-                        </label>
-                        <div className="flex items-center space-x-3">
-                          <label className="cursor-pointer">
-                            <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
-                              <Upload className="w-4 h-4" /><span>Choisir un fichier</span>
-                            </span>
-                            <input type="file" onChange={handleFileChange(setWwJustificatifProprieteFile)} className="hidden" accept="image/*,.pdf" required />
-                          </label>
-                          <span className="text-sm text-gray-500">{wwJustificatifProprieteFile ? wwJustificatifProprieteFile.name : 'Aucun fichier choisi'}</span>
-                        </div>
-                      </div>
-                      <div className="mb-4">
-                        <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
-                          Quitus fiscal des impôts (UE, ou preuve ANTS de demande de quitus) ou certificat 846A des douanes (hors UE) pour les véhicules importés *
-                          <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help"><Info className="w-3 h-3 text-gray-600" /></div>
-                        </label>
-                        <div className="flex items-center space-x-3">
-                          <label className="cursor-pointer">
-                            <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
-                              <Upload className="w-4 h-4" /><span>Choisir un fichier</span>
-                            </span>
-                            <input type="file" onChange={handleFileChange(setWwQuitusFiscalFile)} className="hidden" accept="image/*,.pdf" required />
-                          </label>
-                          <span className="text-sm text-gray-500">{wwQuitusFiscalFile ? wwQuitusFiscalFile.name : 'Aucun fichier choisi'}</span>
-                        </div>
-                      </div>
-                      <div className="mb-4">
-                        <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
-                          Permis de conduire
-                          <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help"><Info className="w-3 h-3 text-gray-600" /></div>
-                        </label>
-                        <div className="flex items-center space-x-3">
-                          <label className="cursor-pointer">
-                            <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
-                              <Upload className="w-4 h-4" /><span>Choisir un fichier</span>
-                            </span>
-                            <input type="file" onChange={handleFileChange(setWwPermisConduireFile)} className="hidden" accept="image/*,.pdf" />
-                          </label>
-                          <span className="text-sm text-gray-500">{wwPermisConduireFile ? wwPermisConduireFile.name : 'Aucun fichier choisi'}</span>
-                        </div>
-                      </div>
-                      <div className="mb-4">
-                        <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
-                          Justificatif de domicile de moins de 6 mois *
-                          <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help"><Info className="w-3 h-3 text-gray-600" /></div>
-                        </label>
-                        <div className="flex items-center space-x-3">
-                          <label className="cursor-pointer">
-                            <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
-                              <Upload className="w-4 h-4" /><span>Choisir un fichier</span>
-                            </span>
-                            <input type="file" onChange={handleFileChange(setWwJustificatifDomicileFile)} className="hidden" accept="image/*,.pdf" required />
-                          </label>
-                          <span className="text-sm text-gray-500">{wwJustificatifDomicileFile ? wwJustificatifDomicileFile.name : 'Aucun fichier choisi'}</span>
-                        </div>
-                      </div>
-                      <div className="mb-4">
-                        <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
-                          Justificatif d'identité en cours de validité *
-                          <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help"><Info className="w-3 h-3 text-gray-600" /></div>
-                        </label>
-                        <div className="flex items-center space-x-3">
-                          <label className="cursor-pointer">
-                            <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
-                              <Upload className="w-4 h-4" /><span>Choisir un fichier</span>
-                            </span>
-                            <input type="file" onChange={handleFileChange(setWwJustificatifIdentiteFile)} className="hidden" accept="image/*,.pdf" required />
-                          </label>
-                          <span className="text-sm text-gray-500">{wwJustificatifIdentiteFile ? wwJustificatifIdentiteFile.name : 'Aucun fichier choisi'}</span>
-                        </div>
-                      </div>
-                      <div className="mb-4">
-                        <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
-                          Contrôle technique de moins de 6 mois (français ou d'un pays membre de l'UE) *
-                          <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help"><Info className="w-3 h-3 text-gray-600" /></div>
-                        </label>
-                        <div className="flex items-center space-x-3">
-                          <label className="cursor-pointer">
-                            <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
-                              <Upload className="w-4 h-4" /><span>Choisir un fichier</span>
-                            </span>
-                            <input type="file" onChange={handleFileChange(setWwControleTechniqueFile)} className="hidden" accept="image/*,.pdf" required />
-                          </label>
-                          <span className="text-sm text-gray-500">{wwControleTechniqueFile ? wwControleTechniqueFile.name : 'Aucun fichier choisi'}</span>
-                        </div>
-                      </div>
-                    </>
-                  )}
-
-                  {/* Documents for Carte grise véhicule étranger (UE) - Mobile */}
-                  {documentType === 'carte-grise-vehicule-etranger-ue' && (
-                    <>
-                      <div className="mb-4">
-                        <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
-                          Copie de la carte grise étrangère *
-                          <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help"><Info className="w-3 h-3 text-gray-600" /></div>
-                        </label>
-                        <div className="flex items-center space-x-3">
-                          <label className="cursor-pointer">
-                            <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
-                              <Upload className="w-4 h-4" /><span>Choisir un fichier</span>
-                            </span>
-                            <input type="file" onChange={handleFileChange(setUeCarteGriseEtrangereFile)} className="hidden" accept="image/*,.pdf" required />
-                          </label>
-                          <span className="text-sm text-gray-500">{ueCarteGriseEtrangereFile ? ueCarteGriseEtrangereFile.name : 'Aucun fichier choisi'}</span>
-                        </div>
-                      </div>
-                      <div className="mb-4">
-                        <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
-                          Certificat de conformité ou document de la DRIRE ou de non-conformité *
-                          <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help"><Info className="w-3 h-3 text-gray-600" /></div>
-                        </label>
-                        <div className="flex items-center space-x-3">
-                          <label className="cursor-pointer">
-                            <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
-                              <Upload className="w-4 h-4" /><span>Choisir un fichier</span>
-                            </span>
-                            <input type="file" onChange={handleFileChange(setUeCertificatConformiteFile)} className="hidden" accept="image/*,.pdf" required />
-                          </label>
-                          <span className="text-sm text-gray-500">{ueCertificatConformiteFile ? ueCertificatConformiteFile.name : 'Aucun fichier choisi'}</span>
-                        </div>
-                      </div>
-                      <div className="mb-4">
-                        <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
-                          Justificatif de propriété du véhicule (facture d'achat ou certificat de cession) *
-                          <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help"><Info className="w-3 h-3 text-gray-600" /></div>
-                        </label>
-                        <div className="flex items-center space-x-3">
-                          <label className="cursor-pointer">
-                            <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
-                              <Upload className="w-4 h-4" /><span>Choisir un fichier</span>
-                            </span>
-                            <input type="file" onChange={handleFileChange(setUeJustificatifProprieteFile)} className="hidden" accept="image/*,.pdf" required />
-                          </label>
-                          <span className="text-sm text-gray-500">{ueJustificatifProprieteFile ? ueJustificatifProprieteFile.name : 'Aucun fichier choisi'}</span>
-                        </div>
-                      </div>
-                      <div className="mb-4">
-                        <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
-                          Quitus fiscal des impôts (UE, ou preuve ANTS de demande de quitus) ou certificat 846A des douanes (hors UE) pour les véhicules importés *
-                          <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help"><Info className="w-3 h-3 text-gray-600" /></div>
-                        </label>
-                        <div className="flex items-center space-x-3">
-                          <label className="cursor-pointer">
-                            <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
-                              <Upload className="w-4 h-4" /><span>Choisir un fichier</span>
-                            </span>
-                            <input type="file" onChange={handleFileChange(setUeQuitusFiscalFile)} className="hidden" accept="image/*,.pdf" required />
-                          </label>
-                          <span className="text-sm text-gray-500">{ueQuitusFiscalFile ? ueQuitusFiscalFile.name : 'Aucun fichier choisi'}</span>
-                        </div>
-                      </div>
-                      <div className="mb-4">
-                        <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
-                          Permis de conduire
-                          <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help"><Info className="w-3 h-3 text-gray-600" /></div>
-                        </label>
-                        <div className="flex items-center space-x-3">
-                          <label className="cursor-pointer">
-                            <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
-                              <Upload className="w-4 h-4" /><span>Choisir un fichier</span>
-                            </span>
-                            <input type="file" onChange={handleFileChange(setUePermisConduireFile)} className="hidden" accept="image/*,.pdf" />
-                          </label>
-                          <span className="text-sm text-gray-500">{uePermisConduireFile ? uePermisConduireFile.name : 'Aucun fichier choisi'}</span>
-                        </div>
-                      </div>
-                      <div className="mb-4">
-                        <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
-                          Justificatif de domicile de moins de 6 mois *
-                          <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help"><Info className="w-3 h-3 text-gray-600" /></div>
-                        </label>
-                        <div className="flex items-center space-x-3">
-                          <label className="cursor-pointer">
-                            <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
-                              <Upload className="w-4 h-4" /><span>Choisir un fichier</span>
-                            </span>
-                            <input type="file" onChange={handleFileChange(setUeJustificatifDomicileFile)} className="hidden" accept="image/*,.pdf" required />
-                          </label>
-                          <span className="text-sm text-gray-500">{ueJustificatifDomicileFile ? ueJustificatifDomicileFile.name : 'Aucun fichier choisi'}</span>
-                        </div>
-                      </div>
-                      <div className="mb-4">
-                        <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
-                          Justificatif d'identité en cours de validité *
-                          <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help"><Info className="w-3 h-3 text-gray-600" /></div>
-                        </label>
-                        <div className="flex items-center space-x-3">
-                          <label className="cursor-pointer">
-                            <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
-                              <Upload className="w-4 h-4" /><span>Choisir un fichier</span>
-                            </span>
-                            <input type="file" onChange={handleFileChange(setUeJustificatifIdentiteFile)} className="hidden" accept="image/*,.pdf" required />
-                          </label>
-                          <span className="text-sm text-gray-500">{ueJustificatifIdentiteFile ? ueJustificatifIdentiteFile.name : 'Aucun fichier choisi'}</span>
-                        </div>
-                      </div>
-                      <div className="mb-4">
-                        <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
-                          Contrôle technique de moins de 6 mois (français ou d'un pays membre de l'UE) *
-                          <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help"><Info className="w-3 h-3 text-gray-600" /></div>
-                        </label>
-                        <div className="flex items-center space-x-3">
-                          <label className="cursor-pointer">
-                            <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
-                              <Upload className="w-4 h-4" /><span>Choisir un fichier</span>
-                            </span>
-                            <input type="file" onChange={handleFileChange(setUeControleTechniqueFile)} className="hidden" accept="image/*,.pdf" required />
-                          </label>
-                          <span className="text-sm text-gray-500">{ueControleTechniqueFile ? ueControleTechniqueFile.name : 'Aucun fichier choisi'}</span>
-                        </div>
-                      </div>
-                    </>
-                  )}
-
-                  {/* Documents for W Garage - Mobile */}
-                  {documentType === 'w-garage' && (
-                    <>
-                      <div className="mb-6">
-                        <h4 className="text-base font-semibold text-gray-900 mb-4">Obligatoires</h4>
-                        <div className="mb-4">
-                          <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
-                            Kbis *
-                            <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help"><Info className="w-3 h-3 text-gray-600" /></div>
-                          </label>
-                          <div className="flex items-center space-x-3">
-                            <label className="cursor-pointer">
-                              <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
-                                <Upload className="w-4 h-4" /><span>Choisir un fichier</span>
-                              </span>
-                              <input type="file" onChange={handleFileChange(setWGarageKbisFile)} className="hidden" accept="image/*,.pdf" required />
-                            </label>
-                            <span className="text-sm text-gray-500">{wGarageKbisFile ? wGarageKbisFile.name : 'Aucun fichier choisi'}</span>
-                          </div>
-                        </div>
-                        <div className="mb-4">
-                          <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
-                            SIREN *
-                            <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help"><Info className="w-3 h-3 text-gray-600" /></div>
-                          </label>
-                          <div className="flex items-center space-x-3">
-                            <label className="cursor-pointer">
-                              <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
-                                <Upload className="w-4 h-4" /><span>Choisir un fichier</span>
-                              </span>
-                              <input type="file" onChange={handleFileChange(setWGarageSirenFile)} className="hidden" accept="image/*,.pdf" required />
-                            </label>
-                            <span className="text-sm text-gray-500">{wGarageSirenFile ? wGarageSirenFile.name : 'Aucun fichier choisi'}</span>
-                          </div>
-                        </div>
-                        <div className="mb-4">
-                          <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
-                            Justificatif domiciliation entreprise *
-                            <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help"><Info className="w-3 h-3 text-gray-600" /></div>
-                          </label>
-                          <div className="flex items-center space-x-3">
-                            <label className="cursor-pointer">
-                              <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
-                                <Upload className="w-4 h-4" /><span>Choisir un fichier</span>
-                              </span>
-                              <input type="file" onChange={handleFileChange(setWGarageJustificatifDomiciliationFile)} className="hidden" accept="image/*,.pdf" required />
-                            </label>
-                            <span className="text-sm text-gray-500">{wGarageJustificatifDomiciliationFile ? wGarageJustificatifDomiciliationFile.name : 'Aucun fichier choisi'}</span>
-                          </div>
-                        </div>
-                        <div className="mb-4">
-                          <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
-                            CNI du gérant *
-                            <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help"><Info className="w-3 h-3 text-gray-600" /></div>
-                          </label>
-                          <div className="flex items-center space-x-3">
-                            <label className="cursor-pointer">
-                              <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
-                                <Upload className="w-4 h-4" /><span>Choisir un fichier</span>
-                              </span>
-                              <input type="file" onChange={handleFileChange(setWGarageCniGerantFile)} className="hidden" accept="image/*,.pdf" required />
-                            </label>
-                            <span className="text-sm text-gray-500">{wGarageCniGerantFile ? wGarageCniGerantFile.name : 'Aucun fichier choisi'}</span>
-                          </div>
-                        </div>
-                        <div className="mb-4">
-                          <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
-                            Assurance W garage *
-                            <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help"><Info className="w-3 h-3 text-gray-600" /></div>
-                          </label>
-                          <div className="flex items-center space-x-3">
-                            <label className="cursor-pointer">
-                              <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
-                                <Upload className="w-4 h-4" /><span>Choisir un fichier</span>
-                              </span>
-                              <input type="file" onChange={handleFileChange(setWGarageAssuranceFile)} className="hidden" accept="image/*,.pdf" required />
-                            </label>
-                            <span className="text-sm text-gray-500">{wGarageAssuranceFile ? wGarageAssuranceFile.name : 'Aucun fichier choisi'}</span>
-                          </div>
-                        </div>
-                        <div className="mb-4">
-                          <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
-                            Preuve activité automobile *
-                            <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help"><Info className="w-3 h-3 text-gray-600" /></div>
-                          </label>
-                          <div className="flex items-center space-x-3">
-                            <label className="cursor-pointer">
-                              <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
-                                <Upload className="w-4 h-4" /><span>Choisir un fichier</span>
-                              </span>
-                              <input type="file" onChange={handleFileChange(setWGaragePreuveActiviteFile)} className="hidden" accept="image/*,.pdf" required />
-                            </label>
-                            <span className="text-sm text-gray-500">{wGaragePreuveActiviteFile ? wGaragePreuveActiviteFile.name : 'Aucun fichier choisi'}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </>
-                  )}
-
-                  {/* Documents for Enregistrement de cession - Mobile */}
-                  {documentType === 'enregistrement-cession' && (
-                    <>
-                      <div className="mb-4">
-                        <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
-                          Carte grise barrée *
-                          <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help"><Info className="w-3 h-3 text-gray-600" /></div>
-                        </label>
-                        <div className="flex items-center space-x-3">
-                          <label className="cursor-pointer">
-                            <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
-                              <Upload className="w-4 h-4" /><span>Choisir un fichier</span>
-                            </span>
-                            <input type="file" onChange={handleFileChange(setCessionCarteGriseBarreeFile)} className="hidden" accept="image/*,.pdf" required />
-                          </label>
-                          <span className="text-sm text-gray-500">{cessionCarteGriseBarreeFile ? cessionCarteGriseBarreeFile.name : 'Aucun fichier choisi'}</span>
-                        </div>
-                      </div>
-                      <div className="mb-4">
-                        <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
-                          Carte d'identité *
-                          <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help"><Info className="w-3 h-3 text-gray-600" /></div>
-                        </label>
-                        <div className="flex items-center space-x-3">
-                          <label className="cursor-pointer">
-                            <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
-                              <Upload className="w-4 h-4" /><span>Choisir un fichier</span>
-                            </span>
-                            <input type="file" onChange={handleFileChange(setCessionCarteIdentiteFile)} className="hidden" accept="image/*,.pdf" required />
-                          </label>
-                          <span className="text-sm text-gray-500">{cessionCarteIdentiteFile ? cessionCarteIdentiteFile.name : 'Aucun fichier choisi'}</span>
-                        </div>
-                      </div>
-                      <div className="mb-4">
-                        <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
-                          Certificat de vente *
-                          <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help"><Info className="w-3 h-3 text-gray-600" /></div>
-                        </label>
-                        <div className="flex items-center space-x-3">
-                          <label className="cursor-pointer">
-                            <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
-                              <Upload className="w-4 h-4" /><span>Choisir un fichier</span>
-                            </span>
-                            <input type="file" onChange={handleFileChange(setCessionCertificatVenteFile)} className="hidden" accept="image/*,.pdf" required />
-                          </label>
-                          <span className="text-sm text-gray-500">{cessionCertificatVenteFile ? cessionCertificatVenteFile.name : 'Aucun fichier choisi'}</span>
-                        </div>
-                      </div>
-                    </>
-                  )}
-
-                  {/* Documents for other document types - Mobile */}
-                  {documentType !== 'changement-titulaire' && documentType !== 'changement-adresse' && documentType !== 'duplicata' && documentType !== 'declaration-achat' && documentType !== 'fiche-identification' && documentType !== 'immatriculation-provisoire-ww' && documentType !== 'carte-grise-vehicule-etranger-ue' && documentType !== 'w-garage' && documentType !== 'enregistrement-cession' && (
-                    <>
-                      <div className="mb-4">
-                        <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
-                          Pièce d'identité *
-                          <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help"><Info className="w-3 h-3 text-gray-600" /></div>
-                        </label>
-                        <div className="flex items-center space-x-3">
-                          <label className="cursor-pointer">
-                            <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
-                              <Upload className="w-4 h-4" /><span>Choisir un fichier</span>
-                            </span>
-                            <input type="file" onChange={handleFileChange(setIdFile)} className="hidden" accept="image/*,.pdf" required />
-                          </label>
-                          <span className="text-sm text-gray-500">{idFile ? idFile.name : 'Aucun fichier choisi'}</span>
-                        </div>
-                      </div>
-                      <div className="mb-4">
-                        <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
-                          Justificatif de domicile *
-                          <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help"><Info className="w-3 h-3 text-gray-600" /></div>
-                        </label>
-                        <div className="flex items-center space-x-3">
-                          <label className="cursor-pointer">
-                            <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
-                              <Upload className="w-4 h-4" /><span>Choisir un fichier</span>
-                            </span>
-                            <input type="file" onChange={handleFileChange(setProofAddressFile)} className="hidden" accept="image/*,.pdf" required />
-                          </label>
-                          <span className="text-sm text-gray-500">{proofAddressFile ? proofAddressFile.name : 'Aucun fichier choisi'}</span>
-                        </div>
-                      </div>
-                      <div className="mb-4">
-                        <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
-                          Carte grise actuelle (si applicable)
-                          <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help"><Info className="w-3 h-3 text-gray-600" /></div>
-                        </label>
-                        <div className="flex items-center space-x-3">
-                          <label className="cursor-pointer">
-                            <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
-                              <Upload className="w-4 h-4" /><span>Choisir un fichier</span>
-                            </span>
-                            <input type="file" onChange={handleFileChange(setCurrentCardFile)} className="hidden" accept="image/*,.pdf" />
-                          </label>
-                          <span className="text-sm text-gray-500">{currentCardFile ? currentCardFile.name : 'Aucun fichier choisi'}</span>
-                        </div>
-                      </div>
-                    </>
-                  )}
-
                 </form>
               </div>
             </div>
@@ -3075,27 +2134,7 @@ export default function CarteGrisePage() {
                       <button
                         key={doc.value}
                         type="button"
-                        onClick={() => {
-                        startTransition(() => {
-                          setDocumentType(doc.value)
-                          setUserChangedType(true) // Mark that user manually changed the type
-                          
-                          // Update URL to reflect the selected type
-                          const params = new URLSearchParams(searchParams.toString())
-                          params.set('type', doc.value)
-                          router.push(`${pathname}?${params.toString()}`, { scroll: false })
-                          
-                          if (doc.value !== 'changement-titulaire') {
-                            setClientType('normal')
-                          }
-                          if (doc.value !== 'duplicata') {
-                            setDuplicataReason(null)
-                          }
-                          if (doc.value !== 'declaration-achat') {
-                            setAchatGarage(false)
-                          }
-                        })
-                      }}
+                        onClick={() => handleDocumentTypeSelect(doc.value)}
                         className={`w-full p-4 sm:p-5 rounded-2xl border-2 transition-all duration-300 text-left flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 hover:shadow-lg relative transform hover:scale-[1.01] ${
                           documentType === doc.value
                             ? 'border-primary-500 bg-gradient-to-br from-primary-50 to-primary-100/50 shadow-lg ring-2 ring-primary-200'
@@ -3486,13 +2525,13 @@ export default function CarteGrisePage() {
                           value={registrationNumber}
                           onChange={handleRegistrationNumberChange}
                           required
-                          maxLength={9} // AA-123-CD = 9 characters with dashes
+                          maxLength={10} // AA-123-AA (9) or 123 ABC 12 (10)
                           className={`w-full px-5 py-3 border-2 rounded-xl focus:ring-4 focus:ring-opacity-20 outline-none transition-all duration-200 ${
                               registrationNumberError
                               ? 'border-red-400 bg-red-50 focus:border-red-500 focus:ring-red-500' 
                               : 'border-gray-300 bg-gray-50 focus:border-primary-500 focus:ring-primary-500 focus:bg-white'
                           }`}
-                          placeholder="Ex: AB-123-CD"
+                          placeholder="Ex: AB-123-CD ou 123 ABC 12"
                         />
                         {registrationNumberError && (
                           <p className="text-xs text-red-600 mt-1">
