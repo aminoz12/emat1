@@ -9,13 +9,15 @@ import { useSupabaseSession } from '@/hooks/useSupabaseSession'
 import { createOrder, uploadDocuments, createCheckoutAndRedirect } from '@/lib/services/orderService'
 
 // Product data - matching the listing page
+// TEST MODE: All prices set to 1€ for payment testing
+// ORIGINAL PRICES commented next to each entry
 const allProducts = [
   {
     id: 1,
     brand: 'Volkswagen',
     brandName: 'VW Volkswagen',
     title: 'Document COC pour VW Volkswagen',
-    price: '264,00',
+    price: '1,00', // ORIGINAL: '264,00'
     rating: 5,
     reviews: 481,
     logoImage: '/vw.png',
@@ -25,7 +27,7 @@ const allProducts = [
     brand: 'Peugeot',
     brandName: 'Peugeot',
     title: 'Document COC pour Peugeot',
-    price: '336,00',
+    price: '1,00', // ORIGINAL: '336,00'
     rating: 4.5,
     reviews: 190,
     logoImage: '/peugeot.png',
@@ -35,7 +37,7 @@ const allProducts = [
     brand: 'Audi',
     brandName: 'Audi',
     title: 'Document COC pour Audi',
-    price: '264,00',
+    price: '1,00', // ORIGINAL: '264,00'
     rating: 4.5,
     reviews: 276,
     logoImage: '/audi.png',
@@ -45,7 +47,7 @@ const allProducts = [
     brand: 'Citroën',
     brandName: 'Citroën',
     title: 'Papiers COC pour Citroën',
-    price: '360,00',
+    price: '1,00', // ORIGINAL: '360,00'
     rating: 4,
     reviews: 113,
     logoImage: '/citroen.png',
@@ -55,7 +57,7 @@ const allProducts = [
     brand: 'Opel',
     brandName: 'OPEL',
     title: 'Document COC pour OPEL',
-    price: '311,00',
+    price: '1,00', // ORIGINAL: '311,00'
     rating: 4.5,
     reviews: 84,
     logoImage: '/opel.png',
@@ -65,7 +67,7 @@ const allProducts = [
     brand: 'Skoda',
     brandName: 'Skoda',
     title: 'Document COC pour Skoda',
-    price: '240,00',
+    price: '1,00', // ORIGINAL: '240,00'
     rating: 4,
     reviews: 54,
     logoImage: '/skoda.png',
@@ -75,7 +77,7 @@ const allProducts = [
     brand: 'Mercedes-Benz',
     brandName: 'Mercedes-Benz',
     title: 'Papiers COC pour Mercedes-Benz',
-    price: '360,00',
+    price: '1,00', // ORIGINAL: '360,00'
     rating: 3.5,
     reviews: 13,
     logoImage: '/mercedes.png',
@@ -85,7 +87,7 @@ const allProducts = [
     brand: 'SEAT',
     brandName: 'SEAT',
     title: 'Papiers COC pour SEAT',
-    price: '264,00',
+    price: '1,00', // ORIGINAL: '264,00'
     rating: 5,
     reviews: 9,
     logoImage: '/seat.png',
@@ -95,7 +97,7 @@ const allProducts = [
     brand: 'Renault',
     brandName: 'Renault',
     title: 'Document COC pour Renault',
-    price: '411,00',
+    price: '1,00', // ORIGINAL: '411,00'
     rating: 4.8,
     reviews: 342,
     logoImage: '/renault.png',
@@ -105,7 +107,7 @@ const allProducts = [
     brand: 'BMW',
     brandName: 'BMW',
     title: 'Document COC pour BMW',
-    price: '238,00',
+    price: '1,00', // ORIGINAL: '238,00'
     rating: 4.7,
     reviews: 267,
     logoImage: '/bmw.png',
@@ -115,7 +117,7 @@ const allProducts = [
     brand: 'Ford',
     brandName: 'Ford',
     title: 'Papiers COC pour Ford',
-    price: '360,00',
+    price: '1,00', // ORIGINAL: '360,00'
     rating: 4.3,
     reviews: 156,
     logoImage: '/ford.png',
@@ -125,7 +127,7 @@ const allProducts = [
     brand: 'Toyota',
     brandName: 'Toyota',
     title: 'Document COC pour Toyota',
-    price: '264,00',
+    price: '1,00', // ORIGINAL: '264,00'
     rating: 4.6,
     reviews: 198,
     logoImage: '/toyota.png',
@@ -135,7 +137,7 @@ const allProducts = [
     brand: 'Fiat',
     brandName: 'Fiat',
     title: 'Papiers COC pour Fiat',
-    price: '480,00',
+    price: '1,00', // ORIGINAL: '480,00'
     rating: 4.2,
     reviews: 87,
     logoImage: '/fiat.png',
@@ -145,7 +147,7 @@ const allProducts = [
     brand: 'Nissan',
     brandName: 'Nissan',
     title: 'Document COC pour Nissan',
-    price: '418,00',
+    price: '1,00', // ORIGINAL: '418,00'
     rating: 4.4,
     reviews: 124,
     logoImage: '/nissan.png',
@@ -155,7 +157,7 @@ const allProducts = [
     brand: 'Hyundai',
     brandName: 'Hyundai',
     title: 'Document COC pour Hyundai',
-    price: '300,00',
+    price: '1,00', // ORIGINAL: '300,00'
     rating: 4.1,
     reviews: 76,
     logoImage: '/hyundai.png',
@@ -165,7 +167,7 @@ const allProducts = [
     brand: 'Kia',
     brandName: 'Kia',
     title: 'Papiers COC pour Kia',
-    price: '364,00',
+    price: '1,00', // ORIGINAL: '364,00'
     rating: 4.3,
     reviews: 92,
     logoImage: '/kia.png',
@@ -175,7 +177,7 @@ const allProducts = [
     brand: 'Mazda',
     brandName: 'Mazda',
     title: 'Document COC pour Mazda',
-    price: '300,00',
+    price: '1,00', // ORIGINAL: '300,00'
     rating: 4.5,
     reviews: 68,
     logoImage: '/mazda.png',
@@ -185,17 +187,17 @@ const allProducts = [
     brand: 'Volvo',
     brandName: 'Volvo',
     title: 'Papiers COC pour Volvo',
-    price: '720,00',
+    price: '1,00', // ORIGINAL: '720,00'
     rating: 4.7,
     reviews: 145,
     logoImage: '/volvo.png',
   },
   {
     id: 19,
-      brand: 'Mini',
-      brandName: 'Mini',
-      title: 'Document COC pour Mini',
-      price: '240,00',
+    brand: 'Mini',
+    brandName: 'Mini',
+    title: 'Document COC pour Mini',
+    price: '1,00', // ORIGINAL: '240,00'
     rating: 4.6,
     reviews: 112,
     logoImage: '/mini.png',
@@ -205,7 +207,7 @@ const allProducts = [
     brand: 'Jaguar',
     brandName: 'Jaguar',
     title: 'Papiers COC pour Jaguar',
-    price: '324,00',
+    price: '1,00', // ORIGINAL: '324,00'
     rating: 4.8,
     reviews: 43,
     logoImage: '/jaguar.png',
@@ -215,7 +217,7 @@ const allProducts = [
     brand: 'Land Rover',
     brandName: 'Land Rover',
     title: 'Document COC pour Land Rover',
-    price: '324,00',
+    price: '1,00', // ORIGINAL: '324,00'
     rating: 4.7,
     reviews: 67,
     logoImage: '/landrover.png',
@@ -225,7 +227,7 @@ const allProducts = [
     brand: 'Porsche',
     brandName: 'Porsche',
     title: 'Papiers COC pour Porsche',
-    price: '600,00',
+    price: '1,00', // ORIGINAL: '600,00'
     rating: 4.9,
     reviews: 89,
     logoImage: '/Porsche.png',
@@ -235,7 +237,7 @@ const allProducts = [
     brand: 'Tesla',
     brandName: 'Tesla',
     title: 'Document COC pour Tesla',
-    price: '479,00',
+    price: '1,00', // ORIGINAL: '479,00'
     rating: 4.8,
     reviews: 156,
     logoImage: '/tesla.png',
@@ -245,7 +247,7 @@ const allProducts = [
     brand: 'Dacia',
     brandName: 'Dacia',
     title: 'Papiers COC pour Dacia',
-    price: '324,00',
+    price: '1,00', // ORIGINAL: '324,00'
     rating: 4.2,
     reviews: 234,
     logoImage: '/dacia.png',
@@ -255,7 +257,7 @@ const allProducts = [
     brand: 'Suzuki',
     brandName: 'Suzuki',
     title: 'Document COC pour Suzuki',
-    price: '324,00',
+    price: '1,00', // ORIGINAL: '324,00'
     rating: 4.3,
     reviews: 78,
     logoImage: '/suzuki.png',
@@ -265,7 +267,7 @@ const allProducts = [
     brand: 'Mitsubishi',
     brandName: 'Mitsubishi',
     title: 'Papiers COC pour Mitsubishi',
-    price: '330,00',
+    price: '1,00', // ORIGINAL: '330,00'
     rating: 4.1,
     reviews: 56,
     logoImage: '/Mitsubishi.png',
@@ -275,7 +277,7 @@ const allProducts = [
     brand: 'Alfa Romeo',
     brandName: 'Alfa Romeo',
     title: 'Document COC pour Alfa Romeo',
-    price: '480,00',
+    price: '1,00', // ORIGINAL: '480,00'
     rating: 4.4,
     reviews: 34,
     logoImage: '/alfa.png',

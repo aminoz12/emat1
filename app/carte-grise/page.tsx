@@ -1171,7 +1171,7 @@ export default function CarteGrisePage() {
       value: 'changement-titulaire', 
       label: 'Changement de titulaire', 
       description: 'Vous avez acheté un véhicule neuf ou d\'occasion, en France ou à l\'étranger.',
-      price: '35€',
+      price: '1€', // ORIGINAL: '35€'
       icon: Users,
       iconImage: '/g1.png'
     },
@@ -1179,7 +1179,7 @@ export default function CarteGrisePage() {
       value: 'duplicata', 
       label: 'Demande de duplicata', 
       description: 'Votre carte grise est perdue, volée ou détériorée.',
-      price: '60€',
+      price: '1€', // ORIGINAL: '60€'
       icon: Copy,
       iconImage: '/g2.png'
     },
@@ -1187,7 +1187,7 @@ export default function CarteGrisePage() {
       value: 'immatriculation-provisoire-ww', 
       label: 'Immatriculation provisoire WW', 
       description: 'Vous avez acheté un véhicule à l\'étranger et souhaitez obtenir une immatriculation provisoire WW valable 4 mois.',
-      price: '49€',
+      price: '1€', // ORIGINAL: '49€'
       icon: Car,
       iconImage: '/g3.png'
     },
@@ -1195,7 +1195,7 @@ export default function CarteGrisePage() {
       value: 'carte-grise-vehicule-etranger-ue', 
       label: 'Carte grise véhicule étranger (UE)', 
       description: 'À la suite de l\'achat d\'un véhicule à l\'étranger, avec ou sans immatriculation WW. Ce service concerne les véhicules en provenance de l\'Union Européenne. Le délai de traitement est estimé entre 1 et 5 semaines.',
-      price: '99€',
+      price: '1€', // ORIGINAL: '99€'
       icon: Car,
       iconImage: '/wwe.png'
     },
@@ -1203,7 +1203,7 @@ export default function CarteGrisePage() {
       value: 'enregistrement-cession', 
       label: 'Enregistrement de cession', 
       description: 'Vous avez vendu votre véhicule et souhaitez ne plus être tenu responsable en cas d\'amende ou d\'accident.',
-      price: '20€',
+      price: '1€', // ORIGINAL: '20€'
       icon: FileCheck,
       iconImage: '/g4.png'
     },
@@ -1211,7 +1211,7 @@ export default function CarteGrisePage() {
       value: 'changement-adresse', 
       label: 'Changement d\'adresse', 
       description: 'Vous avez changé d\'adresse ou votre rue a été renommée : mettez à jour votre carte grise.',
-      price: '15€',
+      price: '1€', // ORIGINAL: '15€'
       icon: Home,
       iconImage: '/g5.png'
     },
@@ -1219,7 +1219,7 @@ export default function CarteGrisePage() {
       value: 'fiche-identification', 
       label: 'Fiche d\'identification du véhicule', 
       description: 'Vous avez perdu votre carte grise et avez besoin d\'un document officiel pour réaliser un contrôle technique.',
-      price: '50€',
+      price: '1€', // ORIGINAL: '50€'
       icon: Search,
       iconImage: '/g6.png'
     },
@@ -1227,7 +1227,7 @@ export default function CarteGrisePage() {
       value: 'declaration-achat', 
       label: 'Déclaration d\'achat', 
       description: 'Vous êtes un professionnel de l\'automobile et souhaitez déclarer l\'achat d\'un véhicule.',
-      price: '25€',
+      price: '1€', // ORIGINAL: '25€'
       icon: Building2,
       iconImage: '/g7.png'
     },
@@ -1235,7 +1235,7 @@ export default function CarteGrisePage() {
       value: 'w-garage', 
       label: 'W Garage', 
       description: 'Vous êtes un professionnel de l\'automobile et souhaitez obtenir ou renouveler un certificat W Garage.',
-      price: '60€',
+      price: '1€', // ORIGINAL: '60€'
       icon: Building2,
       iconImage: '/g8.png'
     },

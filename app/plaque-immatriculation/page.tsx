@@ -320,26 +320,16 @@ export default function PlaqueImmatriculationPage() {
     }
 
     try {
-      // Calculate price based on plaque type
-      const basePrice = plaqueType === 'ww-provisoire' ? 15.00 : plaqueType === 'permanente' ? 10.00 : 15.90
-      let totalPrice = basePrice
-      
-      if (textOption === 'website') {
-        totalPrice -= 1.00
-      } else if (textOption === 'custom') {
-        totalPrice += 1.50
-      }
-      
-      if (fixingMode === 'rivets-premium' || fixingMode === 'rivets-premium-noirs') {
-        totalPrice += 1.90
-      } else if (fixingMode === 'kit-pose') {
-        totalPrice += 14.90
-      }
-      
-      totalPrice *= quantity
-      
-      // Add delivery fee
-      totalPrice += 5.00
+      // TEST MODE: Fixed price of 1€ for payment testing
+      // ORIGINAL PRICE CALCULATION:
+      // const basePrice = plaqueType === 'ww-provisoire' ? 15.00 : plaqueType === 'permanente' ? 10.00 : 15.90
+      // let totalPrice = basePrice
+      // if (textOption === 'website') { totalPrice -= 1.00 } else if (textOption === 'custom') { totalPrice += 1.50 }
+      // if (fixingMode === 'rivets-premium' || fixingMode === 'rivets-premium-noirs') { totalPrice += 1.90 } else if (fixingMode === 'kit-pose') { totalPrice += 14.90 }
+      // totalPrice *= quantity
+      // totalPrice += 5.00 // delivery fee
+      const basePrice = 1.00
+      let totalPrice = 1.00
 
       const fullAddress = `${streetNumber} ${streetType} ${streetName}`.trim()
       
@@ -472,37 +462,24 @@ export default function PlaqueImmatriculationPage() {
   }
 
   // Calculate plate price (without delivery)
+  // TEST MODE: Fixed price of 1€ for payment testing
+  // ORIGINAL:
+  // const calculatePlatePrice = () => {
+  //   const basePrice = plaqueType === 'ww-provisoire' ? 15.00 : plaqueType === 'permanente' ? 10.00 : 15.90
+  //   let platePrice = basePrice
+  //   if (textOption === 'website') { platePrice -= 1.00 } else if (textOption === 'custom') { platePrice += 1.50 }
+  //   if (fixingMode === 'rivets-premium' || fixingMode === 'rivets-premium-noirs') { platePrice += 1.90 } else if (fixingMode === 'kit-pose') { platePrice += 14.90 }
+  //   platePrice *= quantity
+  //   return platePrice
+  // }
   const calculatePlatePrice = () => {
-    // Base price based on plaque type
-    const basePrice = plaqueType === 'ww-provisoire' ? 15.00 : plaqueType === 'permanente' ? 10.00 : 15.90
-    let platePrice = basePrice
-    
-    // Text option adjustments
-    if (textOption === 'website') {
-      platePrice -= 1.00
-    } else if (textOption === 'custom') {
-      platePrice += 1.50
-    }
-    
-    // Fixing mode adjustments
-    if (fixingMode === 'rivets-premium' || fixingMode === 'rivets-premium-noirs') {
-      platePrice += 1.90
-    } else if (fixingMode === 'kit-pose') {
-      platePrice += 14.90
-    }
-    
-    // Multiply by quantity
-    platePrice *= quantity
-    
-    return platePrice
+    return 1.00
   }
 
   // Calculate total price
+  // ORIGINAL: const calculateTotal = () => { const platePrice = calculatePlatePrice(); const deliveryPrice = 5.00; return (platePrice + deliveryPrice).toFixed(2).replace('.', ',') }
   const calculateTotal = () => {
-    const platePrice = calculatePlatePrice()
-    const deliveryPrice = 5.00
-    const total = platePrice + deliveryPrice
-    return total.toFixed(2).replace('.', ',')
+    return '1,00'
   }
 
   return (
