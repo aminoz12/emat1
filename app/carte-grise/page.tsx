@@ -1725,6 +1725,17 @@ export default function CarteGrisePage() {
                 </h2>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
+                  {/* Client Type Selection for Changement de Titulaire - Mobile */}
+                  {documentType === 'changement-titulaire' && (
+                    <div className="mb-6">
+                      <label className="block text-sm font-medium text-gray-900 mb-3">Type de client</label>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <button type="button" onClick={() => setClientType('normal')} className={`px-4 py-3 rounded-lg border-2 transition-all text-left ${clientType === 'normal' ? 'border-primary-600 bg-primary-50 text-primary-900' : 'border-gray-200 bg-white hover:border-gray-300 text-gray-700'}`}><div className="font-semibold">Personne normale</div></button>
+                        <button type="button" onClick={() => setClientType('hosted')} className={`px-4 py-3 rounded-lg border-2 transition-all text-left ${clientType === 'hosted' ? 'border-primary-600 bg-primary-50 text-primary-900' : 'border-gray-200 bg-white hover:border-gray-300 text-gray-700'}`}><div className="font-semibold">Personnes hébergées</div></button>
+                        <button type="button" onClick={() => setClientType('company')} className={`px-4 py-3 rounded-lg border-2 transition-all text-left ${clientType === 'company' ? 'border-primary-600 bg-primary-50 text-primary-900' : 'border-gray-200 bg-white hover:border-gray-300 text-gray-700'}`}><div className="font-semibold">Sociétés</div></button>
+                      </div>
+                    </div>
+                  )}
                   {/* Documents for Normal Client or Hosted/Company */}
                   {documentType === 'changement-titulaire' && (clientType === 'normal' || clientType === 'hosted' || clientType === 'company') && (
                     <>
@@ -1972,6 +1983,222 @@ export default function CarteGrisePage() {
                       </div>
                     </>
                   )}
+
+                  {/* Documents for Hosted Persons - Mobile */}
+                  {documentType === 'changement-titulaire' && clientType === 'hosted' && (
+                    <>
+                      <div className="border-t border-gray-200 pt-6 mt-6">
+                        <h4 className="text-base font-semibold text-gray-900 mb-4">POUR LES PERSONNES HEBERGEES</h4>
+                        <div className="mb-4">
+                          <label className="flex items-center text-sm font-medium text-gray-900 mb-2">Pièce d'identité de l'hébergeant *</label>
+                          <div className="flex items-center space-x-3">
+                            <label className="cursor-pointer">
+                              <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2"><Upload className="w-4 h-4" /><span>Choisir un fichier</span></span>
+                              <input type="file" name="hostId" onChange={handleFileChange(setHostIdFile)} className="hidden" accept="image/*,.pdf" required />
+                            </label>
+                            <span className="text-sm text-gray-500">{hostIdFile ? hostIdFile.name : 'Aucun fichier choisi'}</span>
+                          </div>
+                        </div>
+                        <div className="mb-4">
+                          <label className="flex items-center text-sm font-medium text-gray-900 mb-2">Justificatif de domicile de l'hébergeant à son nom *</label>
+                          <div className="flex items-center space-x-3">
+                            <label className="cursor-pointer">
+                              <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2"><Upload className="w-4 h-4" /><span>Choisir un fichier</span></span>
+                              <input type="file" name="hostProofAddress" onChange={handleFileChange(setHostProofAddressFile)} className="hidden" accept="image/*,.pdf" required />
+                            </label>
+                            <span className="text-sm text-gray-500">{hostProofAddressFile ? hostProofAddressFile.name : 'Aucun fichier choisi'}</span>
+                          </div>
+                        </div>
+                        <div className="mb-4">
+                          <label className="flex items-center text-sm font-medium text-gray-900 mb-2">Attestation d'hébergement *</label>
+                          <div className="flex items-center space-x-3">
+                            <label className="cursor-pointer">
+                              <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2"><Upload className="w-4 h-4" /><span>Choisir un fichier</span></span>
+                              <input type="file" name="attestationHebergement" onChange={handleFileChange(setAttestationHebergementFile)} className="hidden" accept="image/*,.pdf" required />
+                            </label>
+                            <span className="text-sm text-gray-500">{attestationHebergementFile ? attestationHebergementFile.name : 'Aucun fichier choisi'}</span>
+                          </div>
+                        </div>
+                        <div className="mb-4">
+                          <label className="flex items-center text-sm font-medium text-gray-900 mb-2">Assurance *</label>
+                          <div className="flex items-center space-x-3">
+                            <label className="cursor-pointer">
+                              <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2"><Upload className="w-4 h-4" /><span>Choisir un fichier</span></span>
+                              <input type="file" name="hostedAssurance" onChange={handleFileChange(setAssuranceFile)} className="hidden" accept="image/*,.pdf" required />
+                            </label>
+                            <span className="text-sm text-gray-500">{assuranceFile ? assuranceFile.name : 'Aucun fichier choisi'}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Documents for Companies - Mobile */}
+                  {documentType === 'changement-titulaire' && clientType === 'company' && (
+                    <>
+                      <div className="border-t border-gray-200 pt-6 mt-6">
+                        <h4 className="text-base font-semibold text-gray-900 mb-4">POUR LES SOCIETES</h4>
+                        <div className="mb-4">
+                          <label className="flex items-center text-sm font-medium text-gray-900 mb-2">KBIS (moins de 3 mois) *</label>
+                          <div className="flex items-center space-x-3">
+                            <label className="cursor-pointer">
+                              <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2"><Upload className="w-4 h-4" /><span>Choisir un fichier</span></span>
+                              <input type="file" name="kbis" onChange={handleFileChange(setKbisFile)} className="hidden" accept="image/*,.pdf" required />
+                            </label>
+                            <span className="text-sm text-gray-500">{kbisFile ? kbisFile.name : 'Aucun fichier choisi'}</span>
+                          </div>
+                        </div>
+                        <div className="mb-4">
+                          <label className="flex items-center text-sm font-medium text-gray-900 mb-2">Pièce d'identité du gérant *</label>
+                          <div className="flex items-center space-x-3">
+                            <label className="cursor-pointer">
+                              <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2"><Upload className="w-4 h-4" /><span>Choisir un fichier</span></span>
+                              <input type="file" name="gerantId" onChange={handleFileChange(setGerantIdFile)} className="hidden" accept="image/*,.pdf" required />
+                            </label>
+                            <span className="text-sm text-gray-500">{gerantIdFile ? gerantIdFile.name : 'Aucun fichier choisi'}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Documents for Changement d'Adresse - Mobile */}
+                  {documentType === 'changement-adresse' && (
+                    <>
+                      <div className="mb-4">
+                        <label className="flex items-center text-sm font-medium text-gray-900 mb-2">carte grise *</label>
+                        <div className="flex items-center space-x-3">
+                          <label className="cursor-pointer">
+                            <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2"><Upload className="w-4 h-4" /><span>Choisir un fichier</span></span>
+                            <input type="file" name="carteGriseAdresse" onChange={handleFileChange(setCurrentCardFile)} className="hidden" accept="image/*,.pdf" required />
+                          </label>
+                          <span className="text-sm text-gray-500">{currentCardFile ? currentCardFile.name : 'Aucun fichier choisi'}</span>
+                        </div>
+                      </div>
+                      <div className="mb-4">
+                        <label className="flex items-center text-sm font-medium text-gray-900 mb-2">Pièce d'identité *</label>
+                        <div className="flex items-center space-x-3">
+                          <label className="cursor-pointer">
+                            <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2"><Upload className="w-4 h-4" /><span>Choisir un fichier</span></span>
+                            <input type="file" name="pieceIdentiteAdresse" onChange={handleFileChange(setIdFile)} className="hidden" accept="image/*,.pdf" required />
+                          </label>
+                          <span className="text-sm text-gray-500">{idFile ? idFile.name : 'Aucun fichier choisi'}</span>
+                        </div>
+                      </div>
+                      <div className="mb-4">
+                        <label className="flex items-center text-sm font-medium text-gray-900 mb-2">justificatif de domicile (nouvelle adresse) *</label>
+                        <div className="flex items-center space-x-3">
+                          <label className="cursor-pointer">
+                            <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2"><Upload className="w-4 h-4" /><span>Choisir un fichier</span></span>
+                            <input type="file" name="justificatifDomicileNouvelle" onChange={handleFileChange(setProofAddressFile)} className="hidden" accept="image/*,.pdf" required />
+                          </label>
+                          <span className="text-sm text-gray-500">{proofAddressFile ? proofAddressFile.name : 'Aucun fichier choisi'}</span>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Documents for Duplicata - Mobile */}
+                  {documentType === 'duplicata' && (
+                    <>
+                      <div className="mb-4">
+                        <label className="flex items-center text-sm font-medium text-gray-900 mb-2">Justificatif d'identité *</label>
+                        <div className="flex items-center space-x-3">
+                          <label className="cursor-pointer">
+                            <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2"><Upload className="w-4 h-4" /><span>Choisir un fichier</span></span>
+                            <input type="file" name="justificatifIdentiteDuplicata" onChange={handleFileChange(setIdFile)} className="hidden" accept="image/*,.pdf" required />
+                          </label>
+                          <span className="text-sm text-gray-500">{idFile ? idFile.name : 'Aucun fichier choisi'}</span>
+                        </div>
+                      </div>
+                      <div className="mb-4">
+                        <label className="flex items-center text-sm font-medium text-gray-900 mb-2">Justificatif de domicile *</label>
+                        <div className="flex items-center space-x-3">
+                          <label className="cursor-pointer">
+                            <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2"><Upload className="w-4 h-4" /><span>Choisir un fichier</span></span>
+                            <input type="file" name="justificatifDomicileDuplicata" onChange={handleFileChange(setProofAddressFile)} className="hidden" accept="image/*,.pdf" required />
+                          </label>
+                          <span className="text-sm text-gray-500">{proofAddressFile ? proofAddressFile.name : 'Aucun fichier choisi'}</span>
+                        </div>
+                      </div>
+                      <div className="mb-4">
+                        <label className="flex items-center text-sm font-medium text-gray-900 mb-2">‡ CERFA N°13750*05 (case duplicata cochée) *</label>
+                        <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
+                          <label className="cursor-pointer"><div className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors">Choisir un fichier</div>
+                            <input type="file" name="cerfa13750" onChange={handleFileChange(setCerfa13750File)} className="hidden" accept="image/*,.pdf" required />
+                          </label>
+                          <a href="/Formulaire de demande cerfa 13750-05.pdf" download className="inline-flex items-center px-3 py-1.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-xs rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 active:translate-y-0"><Download className="w-3 h-3 mr-1.5" />Télécharger le formulaire</a>
+                          <span className="text-sm text-gray-500">{cerfa13750File ? cerfa13750File.name : 'Aucun fichier choisi'}</span>
+                        </div>
+                      </div>
+                      <div className="mb-4">
+                        <label className="block text-sm font-medium text-gray-900 mb-3">Raison de la demande de duplicata *</label>
+                        <div className="space-y-2">
+                          <button type="button" onClick={() => setDuplicataReason('perte-vol')} className={`w-full px-4 py-3 rounded-lg border-2 transition-all text-left ${duplicataReason === 'perte-vol' ? 'border-primary-600 bg-primary-50 text-primary-900' : 'border-gray-200 bg-white hover:border-gray-300 text-gray-700'}`}><div className="font-semibold">Perte ou vol</div></button>
+                          <button type="button" onClick={() => setDuplicataReason('autre')} className={`w-full px-4 py-3 rounded-lg border-2 transition-all text-left ${duplicataReason === 'autre' ? 'border-primary-600 bg-primary-50 text-primary-900' : 'border-gray-200 bg-white hover:border-gray-300 text-gray-700'}`}><div className="font-semibold">Autre (usure, détérioration, etc.)</div></button>
+                        </div>
+                      </div>
+                      {duplicataReason === 'perte-vol' && (
+                        <div className="mb-4">
+                          <label className="flex items-center text-sm font-medium text-gray-900 mb-2">CERFA N° 13753*02 (uniquement pour perte ou vol) *</label>
+                          <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
+                            <label className="cursor-pointer"><div className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors">Choisir un fichier</div>
+                              <input type="file" name="cerfa13753" onChange={handleFileChange(setCerfa13753File)} className="hidden" accept="image/*,.pdf" required />
+                            </label>
+                            <a href="/cerfa-13753-02-declaration-perte-vol.pdf" download className="inline-flex items-center px-3 py-1.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-xs rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 active:translate-y-0"><Download className="w-3 h-3 mr-1.5" />Télécharger le formulaire</a>
+                            <span className="text-sm text-gray-500">{cerfa13753File ? cerfa13753File.name : 'Aucun fichier choisi'}</span>
+                          </div>
+                        </div>
+                      )}
+                      <div className="mb-4">
+                        <label className="flex items-center text-sm font-medium text-gray-900 mb-2">Contrôle technique si applicable</label>
+                        <div className="flex items-center space-x-3">
+                          <label className="cursor-pointer">
+                            <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2"><Upload className="w-4 h-4" /><span>Choisir un fichier</span></span>
+                            <input type="file" name="controleTechniqueDuplicata" onChange={handleFileChange(setControleTechniqueFile)} className="hidden" accept="image/*,.pdf" />
+                          </label>
+                          <span className="text-sm text-gray-500">{controleTechniqueFile ? controleTechniqueFile.name : 'Aucun fichier choisi'}</span>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Documents for all other démarches - Mobile: show ID, proof of address, optional carte grise */}
+                  {documentType !== 'changement-titulaire' && documentType !== 'changement-adresse' && documentType !== 'duplicata' && (
+                    <>
+                      <div className="mb-4">
+                        <label className="flex items-center text-sm font-medium text-gray-900 mb-2">Pièce d'identité *</label>
+                        <div className="flex items-center space-x-3">
+                          <label className="cursor-pointer">
+                            <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2"><Upload className="w-4 h-4" /><span>Choisir un fichier</span></span>
+                            <input type="file" name="pieceIdentiteOther" onChange={handleFileChange(setIdFile)} className="hidden" accept="image/*,.pdf" required />
+                          </label>
+                          <span className="text-sm text-gray-500">{idFile ? idFile.name : 'Aucun fichier choisi'}</span>
+                        </div>
+                      </div>
+                      <div className="mb-4">
+                        <label className="flex items-center text-sm font-medium text-gray-900 mb-2">Justificatif de domicile *</label>
+                        <div className="flex items-center space-x-3">
+                          <label className="cursor-pointer">
+                            <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2"><Upload className="w-4 h-4" /><span>Choisir un fichier</span></span>
+                            <input type="file" name="justificatifDomicileOther" onChange={handleFileChange(setProofAddressFile)} className="hidden" accept="image/*,.pdf" required />
+                          </label>
+                          <span className="text-sm text-gray-500">{proofAddressFile ? proofAddressFile.name : 'Aucun fichier choisi'}</span>
+                        </div>
+                      </div>
+                      <div className="mb-4">
+                        <label className="flex items-center text-sm font-medium text-gray-900 mb-2">Carte grise actuelle (si applicable)</label>
+                        <div className="flex items-center space-x-3">
+                          <label className="cursor-pointer">
+                            <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2"><Upload className="w-4 h-4" /><span>Choisir un fichier</span></span>
+                            <input type="file" name="carteGriseOther" onChange={handleFileChange(setCurrentCardFile)} className="hidden" accept="image/*,.pdf" />
+                          </label>
+                          <span className="text-sm text-gray-500">{currentCardFile ? currentCardFile.name : 'Aucun fichier choisi'}</span>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
                 </form>
               </div>
             </div>

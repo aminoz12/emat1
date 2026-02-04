@@ -320,16 +320,10 @@ export default function PlaqueImmatriculationPage() {
     }
 
     try {
-      // TEST MODE: Fixed price of 1€ for payment testing
-      // ORIGINAL PRICE CALCULATION:
-      // const basePrice = plaqueType === 'ww-provisoire' ? 15.00 : plaqueType === 'permanente' ? 10.00 : 15.90
-      // let totalPrice = basePrice
-      // if (textOption === 'website') { totalPrice -= 1.00 } else if (textOption === 'custom') { totalPrice += 1.50 }
-      // if (fixingMode === 'rivets-premium' || fixingMode === 'rivets-premium-noirs') { totalPrice += 1.90 } else if (fixingMode === 'kit-pose') { totalPrice += 14.90 }
-      // totalPrice *= quantity
-      // totalPrice += 5.00 // delivery fee
-      const basePrice = 1.00
-      let totalPrice = 1.00
+      // TEST MODE: Plate 1€; delivery 10€ normal / 15€ provisional
+      const basePrice = calculatePlatePrice()
+      const deliveryPrice = plaqueType === 'ww-provisoire' ? 15.00 : 10.00
+      const totalPrice = basePrice + deliveryPrice
 
       const fullAddress = `${streetNumber} ${streetType} ${streetName}`.trim()
       
@@ -476,10 +470,14 @@ export default function PlaqueImmatriculationPage() {
     return 1.00
   }
 
-  // Calculate total price
-  // ORIGINAL: const calculateTotal = () => { const platePrice = calculatePlatePrice(); const deliveryPrice = 5.00; return (platePrice + deliveryPrice).toFixed(2).replace('.', ',') }
+  // Delivery: 10€ normal plaque, 15€ provisional (WW)
+  const getDeliveryPrice = () => (plaqueType === 'ww-provisoire' ? 15.00 : 10.00)
+
+  // Calculate total price (plate + delivery)
   const calculateTotal = () => {
-    return '1,00'
+    const platePrice = calculatePlatePrice()
+    const deliveryPrice = getDeliveryPrice()
+    return (platePrice + deliveryPrice).toFixed(2).replace('.', ',')
   }
 
   return (
@@ -1406,7 +1404,7 @@ export default function PlaqueImmatriculationPage() {
                   <div className="flex items-center justify-between">
                     <span className="text-lg md:text-xl font-medium text-gray-700">Frais de livraison</span>
                     <div className="text-xl md:text-2xl font-semibold text-gray-800">
-                      5,00 €
+                      {getDeliveryPrice().toFixed(2).replace('.', ',')} €
                     </div>
                   </div>
                   <div className="flex items-center justify-between border-t-2 border-primary-300 pt-3">
