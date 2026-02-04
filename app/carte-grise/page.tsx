@@ -1724,7 +1724,7 @@ export default function CarteGrisePage() {
                   Documents requis
                 </h2>
 
-                <form onSubmit={handleSubmit} className="space-y-6">
+                <form id="carte-grise-mobile-form" onSubmit={handleSubmit} className="space-y-6">
                   {/* Client Type Selection for Changement de Titulaire - Mobile */}
                   {documentType === 'changement-titulaire' && (
                     <div className="mb-6">
@@ -2342,6 +2342,84 @@ export default function CarteGrisePage() {
                     </div>
                   )}
                 </div>
+              </div>
+            </div>
+
+            {/* Mobile: Acceptance, Payment Info & Submit - below signature so client completes all steps then pays */}
+            <div className="lg:hidden mt-6">
+              <div className="bg-white border border-gray-100 rounded-2xl p-6 md:p-8 shadow-lg relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary-600 to-primary-400"></div>
+                {/* Acceptance Checkbox */}
+                <div className="bg-gradient-to-br from-gray-50 to-gray-100/50 border-2 border-gray-200 rounded-2xl p-5 mb-4 shadow-sm">
+                  <label className="flex items-start space-x-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={acceptTerms}
+                      onChange={(e) => setAcceptTerms(e.target.checked)}
+                      className="mt-1 w-5 h-5 text-primary-600 border-gray-300 rounded focus:ring-primary-600 focus:ring-2"
+                      form="carte-grise-mobile-form"
+                      required
+                    />
+                    <span className="text-sm text-gray-700 leading-relaxed">
+                      J'atteste que toutes les informations fournies sont exactes et complètes. Je comprends que les frais de traitement couvrent la vérification, la constitution et la transmission de mon dossier, et qu'ils restent engagés dès la validation de ma demande. J'accepte que le site agisse comme intermédiaire administratif. *
+                    </span>
+                  </label>
+                </div>
+                {/* Payment Info */}
+                <div className="bg-gradient-to-br from-primary-50 to-primary-100/30 border-2 border-primary-200 rounded-2xl p-5 mb-4 shadow-sm">
+                  <div className="flex items-center space-x-2 text-gray-700 mb-2">
+                    <CreditCard className="w-5 h-5 text-primary-600" />
+                    <span className="font-semibold">Paiement sécurisé</span>
+                  </div>
+                  <p className="text-sm text-gray-600">
+                    Paiement sécuriser avec Carte Bancaire, Apple Pay, Google Pay
+                  </p>
+                </div>
+                {/* Error Message */}
+                {submitError && (
+                  <div className="bg-red-50 border-2 border-red-200 text-red-700 px-5 py-4 rounded-2xl mb-4 shadow-sm">
+                    <p className="text-sm font-medium">{submitError}</p>
+                  </div>
+                )}
+                {/* Submit Button */}
+                <button
+                  type="submit"
+                  form="carte-grise-mobile-form"
+                  disabled={!acceptTerms || isSubmitting || !mandatPreviewUrl || !mandatPreviewUrlWithSignature || !isSignatureValidated}
+                  className={`w-full py-4 px-6 rounded-2xl font-bold text-base transition-all duration-300 flex items-center justify-center space-x-2 shadow-xl ${
+                    acceptTerms && !isSubmitting && mandatPreviewUrl && mandatPreviewUrlWithSignature && isSignatureValidated
+                      ? 'bg-gradient-to-r from-primary-600 to-primary-700 text-white hover:from-primary-700 hover:to-primary-800 hover:shadow-2xl transform hover:-translate-y-0.5 active:translate-y-0'
+                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  }`}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                      <span>Traitement en cours...</span>
+                    </>
+                  ) : (
+                    <>
+                      <CreditCard className="w-5 h-5" />
+                      <span>
+                        Procéder au paiement - {
+                          documentType === 'changement-titulaire' ? (
+                            isCalculatingFraisDossier
+                              ? 'Calcul...'
+                              : fraisDeDossier !== null
+                                ? `${(fraisDeDossier + 35.00).toFixed(2)} €`
+                                : selectedDocument?.price
+                          ) : (
+                            isCalculatingPrice
+                              ? 'Calcul...'
+                              : calculatedPrice
+                                ? `${calculatedPrice.totalPrice.toFixed(2)} €`
+                                : selectedDocument?.price
+                          )
+                        }
+                      </span>
+                    </>
+                  )}
+                </button>
               </div>
             </div>
 
