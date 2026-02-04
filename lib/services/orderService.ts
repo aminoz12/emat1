@@ -212,28 +212,17 @@ export async function createCheckoutAndRedirect(orderId: string, amount: number)
       }
 
       if (event.data.type === 'SUMPUP_PAYMENT_SUCCESS') {
-        console.log('Payment successful, waiting 10 seconds before redirecting to mon espace');
+        console.log('Payment successful; popup will redirect to success page then close.');
+        // Popup will redirect to /payment-success after 5s, show message and 15s countdown, then close.
+        // When popup closes (or sends REDIRECT_TO_DASHBOARD), we redirect to dashboard below.
+      } else if (event.data.type === 'REDIRECT_TO_DASHBOARD') {
+        console.log('Success page requested redirect to dashboard');
         window.removeEventListener('message', messageHandler);
-        
-        // Wait 10 seconds before redirecting to dashboard (mon espace)
-        // The popup will show the success message and close itself after 10 seconds
-        setTimeout(() => {
-          // Close popup if still open (with error handling for mobile)
-          try {
-            if (popup && !popup.closed) {
-              popup.close();
-            }
-          } catch (e) {
-            console.warn('Could not close popup:', e);
-          }
-          
-          // Redirect to dashboard (mon espace) after 10 seconds
-          if (window.location.pathname.includes('/dashboard')) {
-            window.location.reload();
-          } else {
-            window.location.href = '/dashboard';
-          }
-        }, 10000);
+        if (window.location.pathname.includes('/dashboard')) {
+          window.location.reload();
+        } else {
+          window.location.href = '/dashboard';
+        }
       } else if (event.data.type === 'SUMPUP_PAYMENT_FAILED') {
         console.log('Payment failed, closing popup');
         window.removeEventListener('message', messageHandler);
@@ -267,22 +256,20 @@ export async function createCheckoutAndRedirect(orderId: string, amount: number)
 
     window.addEventListener('message', messageHandler);
 
-    // Check if popup is closed manually (with error handling for mobile)
+    // When popup is closed (by user or after success page countdown), redirect to dashboard
     const checkPopupClosed = setInterval(() => {
       try {
         if (popup.closed) {
           clearInterval(checkPopupClosed);
           window.removeEventListener('message', messageHandler);
-          console.log('Popup was closed by user');
-          
-          // Reload page immediately when popup is closed
+          console.log('Popup was closed; redirecting to dashboard');
           if (window.location.pathname.includes('/dashboard')) {
             window.location.reload();
+          } else {
+            window.location.href = '/dashboard';
           }
         }
       } catch (e) {
-        // On some mobile browsers, checking popup.closed might throw an error
-        // If we can't check, assume it's still open and continue checking
         console.warn('Error checking popup status:', e);
       }
     }, 500);

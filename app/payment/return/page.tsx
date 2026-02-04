@@ -11,6 +11,8 @@ export default function PaymentReturnPage() {
   const [status, setStatus] = useState<'loading' | 'success' | 'failed'>('loading')
   const [error, setError] = useState<string>('')
   const [countdown, setCountdown] = useState(10)
+  const [redirectCountdown, setRedirectCountdown] = useState(5)
+  const [successOrderId, setSuccessOrderId] = useState<string | null>(null)
 
   useEffect(() => {
     const handlePaymentReturn = async () => {
@@ -116,22 +118,38 @@ export default function PaymentReturnPage() {
           }
         }
 
-        // Start countdown and redirect after 10 seconds
-        let seconds = 10
-        const countdownInterval = setInterval(() => {
-          seconds--
-          setCountdown(seconds)
-          if (seconds <= 0) {
-            clearInterval(countdownInterval)
-            if (window.opener) {
-              // Close popup if opened from popup
-              window.close()
-            } else {
-              // Redirect to dashboard if not in popup
-              router.push('/dashboard')
+        if (paymentSuccess) {
+          // After 5 seconds redirect to our success page (popup or same window)
+          let seconds = 5
+          const redirectInterval = setInterval(() => {
+            seconds--
+            setRedirectCountdown(seconds)
+            if (seconds <= 0) {
+              clearInterval(redirectInterval)
+              const url = `/payment-success?orderId=${orderId || ''}`
+              if (window.opener) {
+                window.location.href = url
+              } else {
+                router.push(url)
+              }
             }
-          }
-        }, 1000)
+          }, 1000)
+        } else {
+          // Failed: start countdown and close/redirect after 10 seconds
+          let seconds = 10
+          const countdownInterval = setInterval(() => {
+            seconds--
+            setCountdown(seconds)
+            if (seconds <= 0) {
+              clearInterval(countdownInterval)
+              if (window.opener) {
+                window.close()
+              } else {
+                router.push('/dashboard')
+              }
+            }
+          }, 1000)
+        }
 
       } catch (err: any) {
         console.error('Payment return error:', err)
@@ -177,20 +195,8 @@ export default function PaymentReturnPage() {
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Paiement réussi !</h2>
             <p className="text-gray-600 mb-2">Votre paiement a été traité avec succès.</p>
             <p className="text-sm text-gray-500">
-              Retour à votre espace dans {countdown} seconde{countdown > 1 ? 's' : ''}...
+              Redirection vers la page de confirmation dans {redirectCountdown} seconde{redirectCountdown !== 1 ? 's' : ''}...
             </p>
-            <button
-              onClick={() => {
-                if (window.opener) {
-                  window.close()
-                } else {
-                  router.push('/dashboard')
-                }
-              }}
-              className="mt-4 px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
-            >
-              Retourner maintenant
-            </button>
           </>
         )}
         
