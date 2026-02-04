@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { CheckCircle, XCircle, Loader2, Phone, Mail, MapPin, Clock } from 'lucide-react'
+import { CheckCircle, XCircle, Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 export default function PaymentReturnPage() {
@@ -26,42 +26,67 @@ export default function PaymentReturnPage() {
       }
 
       try {
+        // Verify payment status with backend
+        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://emat1.onrender.com'
         const supabase = createClient()
         const { data: { session } } = await supabase.auth.getSession()
-
+        
         if (!session) {
           throw new Error('Non autorisé')
         }
 
         let paymentSuccess = false
-        const verifyUrl = `/api/payments/verify-payment/${checkoutId}`
 
+        // First, check status from URL parameter (quick check)
         if (status === 'SUCCESS' || status === 'PAID') {
+          // Verify with backend to ensure accuracy
           if (checkoutId) {
-            const verifyResponse = await fetch(verifyUrl, { credentials: 'include' })
+            const verifyResponse = await fetch(`${backendUrl}/payments/verify-payment/${checkoutId}`, {
+              headers: {
+                'Authorization': `Bearer ${session.access_token}`,
+              },
+            })
+
             if (verifyResponse.ok) {
               const verifyData = await verifyResponse.json()
-              paymentSuccess = verifyData.status === 'PAID'
-            } else {
-              paymentSuccess = true
+              if (verifyData.status === 'PAID') {
+                paymentSuccess = true
+              }
             }
           } else {
+            // No checkoutId but status says success - trust it but log warning
+            console.warn('Payment status is SUCCESS but no checkoutId available for verification')
             paymentSuccess = true
           }
         } else if (status === 'FAILED' || status === 'CANCELLED' || status === 'EXPIRED') {
           paymentSuccess = false
+          // Ensure backend updates payment status to 'failed'
           if (checkoutId) {
             try {
-              await fetch(verifyUrl, { credentials: 'include' })
+              await fetch(`${backendUrl}/payments/verify-payment/${checkoutId}`, {
+                headers: {
+                  'Authorization': `Bearer ${session.access_token}`,
+                },
+              })
             } catch (err) {
-              console.error('Error verifying failed payment:', err)
+              console.error('Error updating failed payment status:', err)
             }
           }
         } else if (checkoutId) {
-          const verifyResponse = await fetch(verifyUrl, { credentials: 'include' })
+          // If no status in URL or unclear, verify payment with backend
+          const verifyResponse = await fetch(`${backendUrl}/payments/verify-payment/${checkoutId}`, {
+            headers: {
+              'Authorization': `Bearer ${session.access_token}`,
+            },
+          })
+
           if (verifyResponse.ok) {
             const verifyData = await verifyResponse.json()
             paymentSuccess = verifyData.status === 'PAID'
+            // If payment is not PAID, ensure it's marked as failed
+            if (verifyData.status !== 'PAID') {
+              paymentSuccess = false
+            }
           } else {
             const errorData = await verifyResponse.json().catch(() => ({}))
             setError(errorData.error || errorData.message || 'Impossible de vérifier le statut du paiement')
@@ -149,35 +174,9 @@ export default function PaymentReturnPage() {
         {status === 'success' && (
           <>
             <CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Paiement accompli</h2>
-            <p className="text-gray-600 mb-4">Votre paiement a été traité avec succès.</p>
-            <p className="text-sm font-medium text-gray-800 mb-6">
-              Vous serez notifié par email lorsque votre commande sera traitée.
-            </p>
-
-            <div className="bg-gray-50 rounded-xl p-4 mb-6 text-left border border-gray-100">
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Nos coordonnées</p>
-              <div className="space-y-2 text-sm text-gray-700">
-                <div className="flex items-center gap-2">
-                  <Phone className="w-4 h-4 text-primary-600 flex-shrink-0" />
-                  <a href="tel:0147851000" className="hover:text-primary-600">01 47 85 10 00</a>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Mail className="w-4 h-4 text-primary-600 flex-shrink-0" />
-                  <a href="mailto:ematricule.info@gmail.com" className="hover:text-primary-600 break-all">ematricule.info@gmail.com</a>
-                </div>
-                <div className="flex items-start gap-2">
-                  <MapPin className="w-4 h-4 text-primary-600 flex-shrink-0 mt-0.5" />
-                  <span>426 Av. de la République, 92000 Nanterre</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-primary-600 flex-shrink-0" />
-                  <span>Lun - Ven : 9h - 18h · Sam : 9h - 12h</span>
-                </div>
-              </div>
-            </div>
-
-            <p className="text-sm text-gray-500 mb-4">
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Paiement réussi !</h2>
+            <p className="text-gray-600 mb-2">Votre paiement a été traité avec succès.</p>
+            <p className="text-sm text-gray-500">
               Retour à votre espace dans {countdown} seconde{countdown > 1 ? 's' : ''}...
             </p>
             <button
@@ -188,9 +187,9 @@ export default function PaymentReturnPage() {
                   router.push('/dashboard')
                 }
               }}
-              className="px-6 py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium"
+              className="mt-4 px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
             >
-              Retourner à mon espace
+              Retourner maintenant
             </button>
           </>
         )}

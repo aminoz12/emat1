@@ -1,35 +1,37 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { headers } from 'next/headers'
 
-const SUMUP_API_BASE = 'https://api.sumup.com/v0.1'
-
-/**
- * Create SumUp checkout directly (no backend server).
- * Single payment path: SumUp hosted checkout only.
- */
 export async function POST(request: Request) {
+  console.log('Received request to /api/payments/create-checkout')
+  
   try {
     const supabase = await createClient()
     const requestData = await request.json()
-
+    console.log('Request data:', requestData)
+    
     const { orderId, amount, currency = 'eur' } = requestData
-
-    if (!orderId || amount == null || amount === '') {
+    
+    if (!orderId || !amount) {
+      console.error('Missing required fields:', { orderId, amount })
       return NextResponse.json(
-        { error: 'Missing required fields (orderId, amount)' },
+        { error: 'Missing required fields' },
         { status: 400 }
       )
     }
 
+    // Verify user is authenticated
     const { data: { user }, error: authError } = await supabase.auth.getUser()
-
+    
     if (authError || !user) {
+      console.error('Authentication error:', authError)
       return NextResponse.json(
         { error: 'Non autorisé' },
         { status: 401 }
       )
     }
 
+    // Get order details from database
     const { data: order, error: orderError } = await supabase
       .from('orders')
       .select('*')
@@ -43,106 +45,106 @@ export async function POST(request: Request) {
       )
     }
 
-    const apiKey = process.env.SUMUP_API_KEY?.trim()
-    const merchantCode = process.env.SUMUP_MERCHANT_CODE?.trim()
-    const frontendUrl =
-      process.env.NEXT_PUBLIC_APP_URL ||
-      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null) ||
-      process.env.FRONTEND_URL ||
-      ''
-
-    if (!apiKey) {
-      console.error('SUMUP_API_KEY is not set')
-      return NextResponse.json(
-        { error: 'Configuration paiement manquante (SUMUP_API_KEY)' },
-        { status: 500 }
-      )
-    }
-
-    if (!merchantCode) {
-      console.error('SUMUP_MERCHANT_CODE is not set')
-      return NextResponse.json(
-        {
-          error:
-            'Configuration manquante: SUMUP_MERCHANT_CODE est requis. Ajoutez-le dans les variables d\'environnement (ex: Vercel). Vous le trouvez dans SumUp > Paramètres > Développeurs.',
-        },
-        { status: 500 }
-      )
-    }
-
-    const amountNum = typeof amount === 'number' ? amount : parseFloat(String(amount))
-    const returnUrl = frontendUrl
-      ? `${frontendUrl.replace(/\/$/, '')}/payment/return?orderId=${orderId}`
-      : undefined
-
-    const body: Record<string, unknown> = {
-      checkout_reference: orderId,
-      amount: amountNum,
-      currency: (currency || 'EUR').toUpperCase(),
-      merchant_code: merchantCode,
-      description: `Commande ${order.reference || orderId}`,
-      hosted_checkout: { enabled: true },
-    }
-
-    if (returnUrl) {
-      body.return_url = returnUrl
-      body.redirect_url = returnUrl
-    }
-
-    const sumupResponse = await fetch(`${SUMUP_API_BASE}/checkouts`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify(body),
+    // Prepare backend URL
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://emat1.onrender.com'
+    const backendEndpoint = `${backendUrl}/payments/create-checkout`
+    
+    console.log('Calling backend service:', backendEndpoint, {
+      orderId,
+      amount,
+      currency,
     })
-
-    const responseData = await sumupResponse.json().catch(() => ({}))
-
-    if (!sumupResponse.ok) {
-      console.error('SumUp API error:', sumupResponse.status, responseData)
-      const msg =
-        responseData.message ||
-        responseData.error ||
-        (sumupResponse.status === 403
-          ? 'SumUp 403 : le scope "payments" doit être activé par SumUp. Allez sur https://developer.sumup.com/contact et demandez l\'activation du scope "payments" pour votre compte. Vérifiez aussi SUMUP_API_KEY (sup_sk_...) et SUMUP_MERCHANT_CODE.'
-          : `SumUp: ${sumupResponse.status}`)
+    
+    // Get session token for backend authorization
+    const { data: sessionData } = await supabase.auth.getSession()
+    const accessToken = sessionData?.session?.access_token
+    
+    if (!accessToken) {
       return NextResponse.json(
-        { error: msg },
-        { status: sumupResponse.status >= 500 ? 502 : 400 }
+        { error: 'Session expirée. Veuillez vous reconnecter.' },
+        { status: 401 }
       )
     }
+    
+    // Call the backend service to create a checkout
+    let response: Response
+    let responseData: any = {}
+    
+    try {
+      response = await fetch(backendEndpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`
+        },
+        body: JSON.stringify({
+          orderId,
+          amount: parseFloat(amount),
+          currency: currency.toLowerCase(),
+        }),
+      })
 
-    const checkoutId = responseData.id
-    let checkoutUrl: string =
-      responseData.hosted_checkout_url ||
-      responseData.redirect_url
-
-    if (!checkoutUrl && responseData.links?.length) {
-      const link = responseData.links.find(
-        (l: { href?: string; rel?: string }) =>
-          (l.href && (l.href.includes('checkout') || l.href.includes('pay'))) ||
-          (l.rel && l.rel.includes('checkout'))
-      )
-      if (link?.href) checkoutUrl = link.href
+      try {
+        responseData = await response.json()
+      } catch (parseError) {
+        console.error('Failed to parse backend response:', parseError)
+        const text = await response.text()
+        console.error('Response text:', text)
+        throw new Error('Réponse invalide du backend')
+      }
+    } catch (fetchError: any) {
+      console.error('Failed to call backend service:', fetchError)
+      console.error('Backend URL:', backendEndpoint)
+      console.error('Error details:', {
+        message: fetchError.message,
+        cause: fetchError.cause,
+        code: fetchError.code,
+        errno: fetchError.errno,
+        stack: fetchError.stack
+      })
+      
+      // If backend is not available, return a helpful error with more details
+      if (fetchError.message?.includes('fetch failed') || 
+          fetchError.code === 'ECONNREFUSED' || 
+          fetchError.code === 'ENOTFOUND' ||
+          fetchError.errno === 'ECONNREFUSED') {
+        const errorMessage = process.env.NODE_ENV === 'development' 
+          ? `Le service de paiement backend n'est pas disponible à ${backendUrl}. Veuillez démarrer le backend ou configurer NEXT_PUBLIC_BACKEND_URL.`
+          : 'Le service de paiement n\'est pas disponible. Veuillez réessayer plus tard ou contacter le support.'
+        throw new Error(errorMessage)
+      }
+      throw fetchError
     }
-
-    if (!checkoutUrl) {
-      checkoutUrl = `https://checkout.sumup.com/b/${checkoutId}`
+    
+    if (!response.ok) {
+      console.error('Backend error:', {
+        status: response.status,
+        statusText: response.statusText,
+        error: responseData
+      })
+      throw new Error(responseData.message || responseData.error || `Erreur ${response.status}: ${response.statusText}`)
     }
+    
+    console.log('Backend response:', responseData)
 
-    await supabase
+    const { checkoutUrl, checkoutId } = responseData
+
+    // Update order with checkout ID
+    const { error: updateError } = await supabase
       .from('orders')
       .update({ payment_intent_id: checkoutId })
       .eq('id', orderId)
 
-    return NextResponse.json({ checkoutUrl, checkoutId })
-  } catch (error: unknown) {
-    console.error('create-checkout error:', error)
-    const message = error instanceof Error ? error.message : 'Erreur serveur'
+    if (updateError) {
+      console.error('Error updating order with checkout ID:', updateError)
+      // Don't fail the request if just the update fails
+    }
+
+    return NextResponse.json({ checkoutUrl })
+  } catch (error: any) {
+    console.error('Error in create-checkout:', error)
     return NextResponse.json(
-      { error: message },
+      { error: error.message || 'Erreur serveur' },
       { status: 500 }
     )
   }
