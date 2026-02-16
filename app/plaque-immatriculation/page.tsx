@@ -454,26 +454,34 @@ export default function PlaqueImmatriculationPage() {
     }
   }
 
-  // Calculate plate price (without delivery): WW 15€, Permanente 10€
-  const calculatePlatePrice = () => {
-    const basePrice = plaqueType === 'ww-provisoire' ? 15.00 : plaqueType === 'permanente' ? 10.00 : 15.90
-    let platePrice = basePrice
-    if (textOption === 'website') platePrice -= 1.00
-    else if (textOption === 'custom') platePrice += 1.50
-    if (fixingMode === 'rivets-premium' || fixingMode === 'rivets-premium-noirs') platePrice += 1.90
-    else if (fixingMode === 'kit-pose') platePrice += 14.90
-    platePrice *= quantity
-    return platePrice
+  // Tarifs: WW 15€, Permanente 10€, Livraison 5€ (constants pour éviter tout bug d'affichage)
+  const PLATE_PRICE_WW_EUR = 15
+  const PLATE_PRICE_PERMANENTE_EUR = 10
+  const DELIVERY_PRICE_EUR = 5
+
+  const calculatePlatePrice = (): number => {
+    if (!plaqueType) return 0
+    const base =
+      plaqueType === 'ww-provisoire'
+        ? PLATE_PRICE_WW_EUR
+        : plaqueType === 'permanente'
+          ? PLATE_PRICE_PERMANENTE_EUR
+          : 0
+    let platePrice = base
+    if (textOption === 'website') platePrice -= 1.0
+    else if (textOption === 'custom') platePrice += 1.5
+    if (fixingMode === 'rivets-premium' || fixingMode === 'rivets-premium-noirs') platePrice += 1.9
+    else if (fixingMode === 'kit-pose') platePrice += 14.9
+    return platePrice * quantity
   }
 
-  // Livraison: 5 €
-  const getDeliveryPrice = () => 5.00
+  const getDeliveryPrice = (): number => DELIVERY_PRICE_EUR
 
-  // Calculate total price (plate + delivery)
-  const calculateTotal = () => {
+  const calculateTotal = (): string => {
     const platePrice = calculatePlatePrice()
     const deliveryPrice = getDeliveryPrice()
-    return (platePrice + deliveryPrice).toFixed(2).replace('.', ',')
+    const total = platePrice + deliveryPrice
+    return total.toFixed(2).replace('.', ',')
   }
 
   return (
