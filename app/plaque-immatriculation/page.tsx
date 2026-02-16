@@ -320,9 +320,8 @@ export default function PlaqueImmatriculationPage() {
     }
 
     try {
-      // TEST MODE: Plate 1€; delivery 10€ normal / 15€ provisional
       const basePrice = calculatePlatePrice()
-      const deliveryPrice = plaqueType === 'ww-provisoire' ? 15.00 : 10.00
+      const deliveryPrice = getDeliveryPrice()
       const totalPrice = basePrice + deliveryPrice
 
       const fullAddress = `${streetNumber} ${streetType} ${streetName}`.trim()
@@ -455,23 +454,20 @@ export default function PlaqueImmatriculationPage() {
     }
   }
 
-  // Calculate plate price (without delivery)
-  // TEST MODE: Fixed price of 1€ for payment testing
-  // ORIGINAL:
-  // const calculatePlatePrice = () => {
-  //   const basePrice = plaqueType === 'ww-provisoire' ? 15.00 : plaqueType === 'permanente' ? 10.00 : 15.90
-  //   let platePrice = basePrice
-  //   if (textOption === 'website') { platePrice -= 1.00 } else if (textOption === 'custom') { platePrice += 1.50 }
-  //   if (fixingMode === 'rivets-premium' || fixingMode === 'rivets-premium-noirs') { platePrice += 1.90 } else if (fixingMode === 'kit-pose') { platePrice += 14.90 }
-  //   platePrice *= quantity
-  //   return platePrice
-  // }
+  // Calculate plate price (without delivery): WW 15€, Permanente 10€
   const calculatePlatePrice = () => {
-    return 1.00
+    const basePrice = plaqueType === 'ww-provisoire' ? 15.00 : plaqueType === 'permanente' ? 10.00 : 15.90
+    let platePrice = basePrice
+    if (textOption === 'website') platePrice -= 1.00
+    else if (textOption === 'custom') platePrice += 1.50
+    if (fixingMode === 'rivets-premium' || fixingMode === 'rivets-premium-noirs') platePrice += 1.90
+    else if (fixingMode === 'kit-pose') platePrice += 14.90
+    platePrice *= quantity
+    return platePrice
   }
 
-  // Delivery: 10€ normal plaque, 15€ provisional (WW)
-  const getDeliveryPrice = () => (plaqueType === 'ww-provisoire' ? 15.00 : 10.00)
+  // Livraison: 5 €
+  const getDeliveryPrice = () => 5.00
 
   // Calculate total price (plate + delivery)
   const calculateTotal = () => {
