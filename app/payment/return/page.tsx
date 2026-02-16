@@ -12,7 +12,6 @@ export default function PaymentReturnPage() {
   const [error, setError] = useState<string>('')
   const [countdown, setCountdown] = useState(10)
   const [redirectCountdown, setRedirectCountdown] = useState(5)
-  const [successOrderId, setSuccessOrderId] = useState<string | null>(null)
 
   useEffect(() => {
     const handlePaymentReturn = async () => {
@@ -28,67 +27,44 @@ export default function PaymentReturnPage() {
       }
 
       try {
-        // Verify payment status with backend
-        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://emat1.onrender.com'
         const supabase = createClient()
         const { data: { session } } = await supabase.auth.getSession()
-        
+
         if (!session) {
           throw new Error('Non autorisé')
         }
 
         let paymentSuccess = false
 
-        // First, check status from URL parameter (quick check)
-        if (status === 'SUCCESS' || status === 'PAID') {
-          // Verify with backend to ensure accuracy
-          if (checkoutId) {
-            const verifyResponse = await fetch(`${backendUrl}/payments/verify-payment/${checkoutId}`, {
-              headers: {
-                'Authorization': `Bearer ${session.access_token}`,
-              },
-            })
+        // Verify via Next.js API only (no backend server)
+        const verifyUrl = `/api/payments/verify-payment/${checkoutId}`
 
+        if (status === 'SUCCESS' || status === 'PAID') {
+          if (checkoutId) {
+            const verifyResponse = await fetch(verifyUrl, { credentials: 'include' })
             if (verifyResponse.ok) {
               const verifyData = await verifyResponse.json()
-              if (verifyData.status === 'PAID') {
-                paymentSuccess = true
-              }
+              if (verifyData.status === 'PAID') paymentSuccess = true
             }
           } else {
-            // No checkoutId but status says success - trust it but log warning
             console.warn('Payment status is SUCCESS but no checkoutId available for verification')
             paymentSuccess = true
           }
         } else if (status === 'FAILED' || status === 'CANCELLED' || status === 'EXPIRED') {
           paymentSuccess = false
-          // Ensure backend updates payment status to 'failed'
           if (checkoutId) {
             try {
-              await fetch(`${backendUrl}/payments/verify-payment/${checkoutId}`, {
-                headers: {
-                  'Authorization': `Bearer ${session.access_token}`,
-                },
-              })
+              await fetch(verifyUrl, { credentials: 'include' })
             } catch (err) {
               console.error('Error updating failed payment status:', err)
             }
           }
         } else if (checkoutId) {
-          // If no status in URL or unclear, verify payment with backend
-          const verifyResponse = await fetch(`${backendUrl}/payments/verify-payment/${checkoutId}`, {
-            headers: {
-              'Authorization': `Bearer ${session.access_token}`,
-            },
-          })
-
+          const verifyResponse = await fetch(verifyUrl, { credentials: 'include' })
           if (verifyResponse.ok) {
             const verifyData = await verifyResponse.json()
             paymentSuccess = verifyData.status === 'PAID'
-            // If payment is not PAID, ensure it's marked as failed
-            if (verifyData.status !== 'PAID') {
-              paymentSuccess = false
-            }
+            if (verifyData.status !== 'PAID') paymentSuccess = false
           } else {
             const errorData = await verifyResponse.json().catch(() => ({}))
             setError(errorData.error || errorData.message || 'Impossible de vérifier le statut du paiement')

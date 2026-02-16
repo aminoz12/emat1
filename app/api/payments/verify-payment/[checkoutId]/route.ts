@@ -1,0 +1,96 @@
+import { NextResponse } from 'next/server'
+import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
+
+/**
+ * GET /api/payments/verify-payment/[checkoutId]
+ * Verifies SumUp checkout status and updates the payments table.
+ * Replaces the need to call the NestJS backend for verification.
+ */
+export async function GET(
+  request: Request,
+  { params }: { params: { checkoutId: string } }
+) {
+  try {
+    const { checkoutId } = params
+    if (!checkoutId) {
+      return NextResponse.json(
+        { error: 'checkoutId required' },
+        { status: 400 }
+      )
+    }
+
+    const supabase = await createClient()
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser()
+
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: 'Non autorisé' },
+        { status: 401 }
+      )
+    }
+
+    const apiKey = process.env.SUMUP_API_KEY
+    if (!apiKey) {
+      console.error('SUMUP_API_KEY is not set')
+      return NextResponse.json(
+        { error: 'Configuration paiement manquante' },
+        { status: 500 }
+      )
+    }
+
+    // Get checkout status from SumUp API
+    const sumupResponse = await fetch(
+      `https://api.sumup.com/v0.1/checkouts/${checkoutId}`,
+      {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    )
+
+    if (!sumupResponse.ok) {
+      const errText = await sumupResponse.text()
+      console.error('SumUp API error:', sumupResponse.status, errText)
+      return NextResponse.json(
+        { error: 'Impossible de vérifier le paiement', status: 'UNKNOWN' },
+        { status: 502 }
+      )
+    }
+
+    const checkout = await sumupResponse.json()
+    const status = (checkout.status || '').toUpperCase()
+
+    // Update payments table (service role)
+    const admin = createAdminClient()
+    const { data: payment } = await admin
+      .from('payments')
+      .select('id')
+      .eq('sumup_checkout_id', checkoutId)
+      .single()
+
+    if (payment) {
+      const dbStatus = status === 'PAID' ? 'succeeded' : 'failed'
+      await admin
+        .from('payments')
+        .update({
+          status: dbStatus,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', payment.id)
+    }
+
+    return NextResponse.json({ status })
+  } catch (error: any) {
+    console.error('Error in verify-payment:', error)
+    return NextResponse.json(
+      { error: error.message || 'Erreur serveur' },
+      { status: 500 }
+    )
+  }
+}

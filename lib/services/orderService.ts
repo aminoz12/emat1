@@ -106,22 +106,33 @@ export async function createOrder(data: OrderData): Promise<CreateOrderResponse>
 /**
  * Create checkout and open SumUp widget in a popup
  */
+const CHECKOUT_REQUEST_TIMEOUT_MS = 20000 // 20s (Next.js API only, no backend)
+
 export async function createCheckoutAndRedirect(orderId: string, amount: number): Promise<void> {
   try {
     console.log('Creating checkout for order:', orderId, 'amount:', amount)
-    
-    const response = await fetch('/api/payments/create-checkout', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include',
-      body: JSON.stringify({
-        orderId,
-        amount: amount,
-        currency: 'eur'
-      }),
-    })
+
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), CHECKOUT_REQUEST_TIMEOUT_MS)
+
+    let response: Response
+    try {
+      response = await fetch('/api/payments/create-checkout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          orderId,
+          amount: amount,
+          currency: 'eur'
+        }),
+        signal: controller.signal,
+      })
+    } finally {
+      clearTimeout(timeoutId)
+    }
 
     // Read the response body only once
     let responseData: any = {};
@@ -281,6 +292,9 @@ export async function createCheckoutAndRedirect(orderId: string, amount: number)
       orderId,
       amount
     });
+    if (error.name === 'AbortError') {
+      throw new Error('Le serveur met trop de temps à répondre. Veuillez réessayer.')
+    }
     throw error
   }
 }

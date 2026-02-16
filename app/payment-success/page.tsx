@@ -15,6 +15,7 @@ export default function PaymentSuccessPage() {
   const [loading, setLoading] = useState(true)
   const [countdown, setCountdown] = useState(15)
   const isPopup = typeof window !== 'undefined' && !!window.opener
+  const redirectedRef = useRef(false)
 
   const goToDashboard = useCallback(() => {
     if (typeof window === 'undefined') return
