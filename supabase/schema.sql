@@ -5,7 +5,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- Create enum types
 CREATE TYPE user_role AS ENUM ('USER', 'ADMIN', 'SUPER_ADMIN');
-CREATE TYPE order_status AS ENUM ('pending', 'processing', 'completed', 'cancelled');
+CREATE TYPE order_status AS ENUM ('pending', 'processing', 'completed', 'cancelled', 'unpaid');
 CREATE TYPE order_type AS ENUM ('carte-grise', 'plaque', 'coc');
 CREATE TYPE service_type AS ENUM ('carte-grise', 'plaque', 'coc');
 

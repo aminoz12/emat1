@@ -65,24 +65,35 @@ export async function GET(
 
     const checkout = await sumupResponse.json()
     const status = (checkout.status || '').toUpperCase()
+    const paid = status === 'PAID'
 
-    // Update payments table (service role)
+    // Update payments table and linked order (service role)
     const admin = createAdminClient()
     const { data: payment } = await admin
       .from('payments')
-      .select('id')
+      .select('id, order_id')
       .eq('sumup_checkout_id', checkoutId)
       .single()
 
     if (payment) {
-      const dbStatus = status === 'PAID' ? 'succeeded' : 'failed'
+      const paymentStatus = paid ? 'succeeded' : 'failed'
       await admin
         .from('payments')
         .update({
-          status: dbStatus,
+          status: paymentStatus,
           updated_at: new Date().toISOString(),
         })
         .eq('id', payment.id)
+
+      // Mark order as completed when paid, unpaid when payment failed/cancelled/expired
+      const orderStatus = paid ? 'completed' : 'unpaid'
+      await admin
+        .from('orders')
+        .update({
+          status: orderStatus,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', payment.order_id)
     }
 
     return NextResponse.json({ status })

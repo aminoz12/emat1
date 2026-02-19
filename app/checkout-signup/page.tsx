@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { createOrder, uploadDocuments } from '@/lib/services/orderService'
-import { CheckCircle, Lock, User, Mail, Phone, MapPin } from 'lucide-react'
+import { createOrder, uploadDocuments, createCheckoutAndRedirect } from '@/lib/services/orderService'
+import { CheckCircle, Lock, User, Mail, Phone, MapPin, CreditCard } from 'lucide-react'
 
 export default function CheckoutSignupPage() {
   const router = useRouter()
@@ -13,6 +13,7 @@ export default function CheckoutSignupPage() {
     confirmPassword: '',
   })
   const [isLoading, setIsLoading] = useState(false)
+  const [redirectingToPayment, setRedirectingToPayment] = useState(false)
   const [error, setError] = useState('')
   const [userData, setUserData] = useState<any>(null)
   const [orderData, setOrderData] = useState<any>(null)
@@ -190,10 +191,10 @@ export default function CheckoutSignupPage() {
         throw new Error('Impossible d\'établir la session. Veuillez réessayer.')
       }
 
-      // Attendre un peu pour que les cookies soient propagés au serveur et que le profil soit créé
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      // Court délai pour que les cookies et le profil soient pris en compte, puis on enchaîne direct sur la commande et le paiement
+      await new Promise(resolve => setTimeout(resolve, 400))
 
-      // Maintenant créer la commande avec l'utilisateur connecté
+      // Créer la commande puis redirection directe vers le paiement
       console.log('Création de la commande avec orderData:', {
         type: orderData.type,
         price: orderData.price,
@@ -310,11 +311,12 @@ export default function CheckoutSignupPage() {
       localStorage.setItem('currentOrderRef', result.order.reference)
       localStorage.setItem('currentOrderPrice', String(orderData.price))
 
-      // Create checkout and redirect directly to SumUp widget
-      const { createCheckoutAndRedirect } = await import('@/lib/services/orderService')
+      // Redirection directe vers le paiement (popup SumUp) — pas de passage par le dashboard
+      setRedirectingToPayment(true)
       await createCheckoutAndRedirect(result.order.id, orderData.price)
     } catch (error: any) {
       console.error('Erreur:', error)
+      setRedirectingToPayment(false)
       setError(error.message || 'Une erreur est survenue')
     } finally {
       setIsLoading(false)
@@ -426,10 +428,15 @@ export default function CheckoutSignupPage() {
 
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={isLoading || redirectingToPayment}
               className="w-full bg-primary-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-primary-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center"
             >
-              {isLoading ? (
+              {redirectingToPayment ? (
+                <>
+                  <CreditCard className="w-5 h-5 mr-2" />
+                  Redirection vers le paiement sécurisé...
+                </>
+              ) : isLoading ? (
                 <>
                   <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
                   Création du compte...
@@ -437,7 +444,7 @@ export default function CheckoutSignupPage() {
               ) : (
                 <>
                   <CheckCircle className="w-5 h-5 mr-2" />
-                  Créer mon compte et continuer
+                  Créer mon compte et continuer vers le paiement
                 </>
               )}
             </button>

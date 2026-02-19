@@ -158,7 +158,7 @@ export async function PATCH(
     const orderId = params.id
     const { status } = await request.json()
 
-    if (!status || !['pending', 'processing', 'completed', 'cancelled'].includes(status)) {
+    if (!status || !['pending', 'processing', 'completed', 'cancelled', 'unpaid'].includes(status)) {
       return NextResponse.json(
         { error: 'Statut invalide' },
         { status: 400 }

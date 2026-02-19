@@ -199,7 +199,7 @@ export async function PATCH(request: NextRequest) {
       )
     }
 
-    const validStatuses = ['pending', 'processing', 'completed', 'cancelled']
+    const validStatuses = ['pending', 'processing', 'completed', 'cancelled', 'unpaid']
     if (!validStatuses.includes(status)) {
       return NextResponse.json(
         { error: 'Statut invalide' },

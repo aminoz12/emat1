@@ -36,7 +36,7 @@ import { createCheckoutAndRedirect } from '@/lib/services/orderService'
 interface Order {
   id: string
   type: 'carte-grise' | 'plaque' | 'coc'
-  status: 'pending' | 'processing' | 'completed' | 'cancelled'
+  status: 'pending' | 'processing' | 'completed' | 'cancelled' | 'unpaid'
   createdAt: string
   updatedAt: string
   price: number
@@ -309,9 +309,14 @@ export default function DashboardPage() {
         color: 'bg-red-100 text-red-800 border-red-200',
         icon: XCircle 
       },
+      unpaid: { 
+        label: 'Non payé', 
+        color: 'bg-orange-100 text-orange-800 border-orange-200',
+        icon: XCircle 
+      },
     }
 
-    const config = statusConfig[status]
+    const config = statusConfig[status] || statusConfig.unpaid
     const Icon = config.icon
 
     return (

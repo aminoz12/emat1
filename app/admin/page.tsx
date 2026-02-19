@@ -90,6 +90,7 @@ export default function AdminDashboard() {
       processing: { label: 'En cours', color: 'bg-blue-100 text-blue-800' },
       completed: { label: 'Terminée', color: 'bg-green-100 text-green-800' },
       cancelled: { label: 'Annulée', color: 'bg-red-100 text-red-800' },
+      unpaid: { label: 'Non payé', color: 'bg-orange-100 text-orange-800' },
     }
     const config = statusConfig[status] || { label: status, color: 'bg-gray-100 text-gray-800' }
     return (

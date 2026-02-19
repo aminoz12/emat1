@@ -177,6 +177,7 @@ export default function AdminOrderDetailsPage() {
       processing: { label: 'En traitement', color: 'bg-blue-100 text-blue-800 border-blue-200' },
       completed: { label: 'Terminé', color: 'bg-green-100 text-green-800 border-green-200' },
       cancelled: { label: 'Annulé', color: 'bg-red-100 text-red-800 border-red-200' },
+      unpaid: { label: 'Non payé', color: 'bg-orange-100 text-orange-800 border-orange-200' },
     }
     const config = statusConfig[status] || { label: status, color: 'bg-gray-100 text-gray-800 border-gray-200' }
     return (
@@ -239,6 +240,7 @@ export default function AdminOrderDetailsPage() {
                 <option value="processing">En traitement</option>
                 <option value="completed">Terminé</option>
                 <option value="cancelled">Annulé</option>
+                <option value="unpaid">Non payé</option>
               </select>
               <button
                 onClick={handleStatusUpdate}

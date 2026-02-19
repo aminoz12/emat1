@@ -216,6 +216,7 @@ export default function AdminOrdersPage() {
       processing: { label: 'En cours', color: 'bg-blue-100 text-blue-800 border-blue-200', icon: Loader2 },
       completed: { label: 'Terminée', color: 'bg-green-100 text-green-800 border-green-200', icon: CheckCircle },
       cancelled: { label: 'Annulée', color: 'bg-red-100 text-red-800 border-red-200', icon: XCircle },
+      unpaid: { label: 'Non payé', color: 'bg-orange-100 text-orange-800 border-orange-200', icon: XCircle },
     }
     const config = statusConfig[status] || { label: status, color: 'bg-gray-100 text-gray-800 border-gray-200', icon: Clock }
     const Icon = config.icon
@@ -417,6 +418,19 @@ export default function AdminOrdersPage() {
             </div>
           </div>
         </div>
+        <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-5 border border-orange-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-orange-600 mb-1">Non payé</p>
+              <p className="text-2xl font-bold text-orange-900">
+                {orders.filter(o => o.status === 'unpaid').length}
+              </p>
+            </div>
+            <div className="w-12 h-12 bg-orange-500 rounded-lg flex items-center justify-center">
+              <XCircle className="w-6 h-6 text-white" />
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Filters */}
@@ -450,6 +464,7 @@ export default function AdminOrdersPage() {
               <option value="processing">En cours</option>
               <option value="completed">Terminées</option>
               <option value="cancelled">Annulées</option>
+              <option value="unpaid">Non payé</option>
             </select>
           </div>
 
@@ -718,12 +733,13 @@ export default function AdminOrdersPage() {
               <div className="px-4 py-2">
                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Changer le statut</p>
                 <div className="space-y-2">
-                  {['pending', 'processing', 'completed', 'cancelled'].map((status) => {
+                  {['pending', 'processing', 'completed', 'cancelled', 'unpaid'].map((status) => {
                     const statusConfig: Record<string, { label: string; icon: any; color: string; bgColor: string }> = {
                       pending: { label: 'En attente', icon: Clock, color: 'text-yellow-600', bgColor: 'bg-yellow-100' },
                       processing: { label: 'En cours', icon: Loader2, color: 'text-blue-600', bgColor: 'bg-blue-100' },
                       completed: { label: 'Terminée', icon: CheckCircle, color: 'text-green-600', bgColor: 'bg-green-100' },
-                      cancelled: { label: 'Annulée', icon: XCircle, color: 'text-red-600', bgColor: 'bg-red-100' }
+                      cancelled: { label: 'Annulée', icon: XCircle, color: 'text-red-600', bgColor: 'bg-red-100' },
+                      unpaid: { label: 'Non payé', icon: XCircle, color: 'text-orange-600', bgColor: 'bg-orange-100' }
                     }
                     const config = statusConfig[status]
                     const Icon = config.icon
@@ -825,7 +841,7 @@ export default function AdminOrdersPage() {
                         {getStatusBadge(orderDetails.status)}
                       </div>
                       <div className="flex flex-wrap gap-2">
-                        {['pending', 'processing', 'completed', 'cancelled'].map((status) => (
+                        {['pending', 'processing', 'completed', 'cancelled', 'unpaid'].map((status) => (
                           <button
                             key={status}
                             onClick={() => updateOrderStatus(orderDetails.id, status)}
@@ -838,7 +854,8 @@ export default function AdminOrdersPage() {
                           >
                             {status === 'pending' ? 'En attente' :
                              status === 'processing' ? 'En cours' :
-                             status === 'completed' ? 'Terminée' : 'Annulée'}
+                             status === 'completed' ? 'Terminée' :
+                             status === 'unpaid' ? 'Non payé' : 'Annulée'}
                           </button>
                         ))}
                       </div>
@@ -1172,7 +1189,7 @@ export default function AdminOrdersPage() {
               <div>
                 <h3 className="text-sm font-semibold text-gray-600 mb-3">Changer le statut</h3>
                 <div className="flex flex-wrap gap-2">
-                  {['pending', 'processing', 'completed', 'cancelled'].map((status) => (
+                  {['pending', 'processing', 'completed', 'cancelled', 'unpaid'].map((status) => (
                     <button
                       key={status}
                       onClick={() => updateOrderStatus(selectedOrder.id, status)}
@@ -1188,7 +1205,8 @@ export default function AdminOrdersPage() {
                       ) : (
                         status === 'pending' ? 'En attente' :
                         status === 'processing' ? 'En cours' :
-                        status === 'completed' ? 'Terminée' : 'Annulée'
+                        status === 'completed' ? 'Terminée' :
+                        status === 'unpaid' ? 'Non payé' : 'Annulée'
                       )}
                     </button>
                   ))}
