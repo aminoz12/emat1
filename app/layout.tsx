@@ -10,6 +10,10 @@ export const metadata: Metadata = {
   title: 'E-matricule - Cartes Grises et Plaques d\'Immatriculation',
   description: 'Votre carte grise & vos plaques d\'immatriculation en 2 minutes. Service d\'immatriculation simplifié en ligne avec habilitation du Ministère de l\'Intérieur.',
   keywords: 'carte grise, plaque immatriculation, immatriculation, véhicule, auto, moto, camion',
+  icons: {
+    icon: '/logo.png',
+    apple: '/logo.png',
+  },
 }
 
 export default function RootLayout({

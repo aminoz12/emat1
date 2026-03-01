@@ -53,8 +53,8 @@ export default function MentionsLegalesPage() {
                   <div>
                     <p className="font-semibold text-gray-900 mb-1">Adresse :</p>
                     <p className="text-gray-700">
-                      123 Avenue des Champs-Élysées<br />
-                      75008 Paris, France
+                      426 Av. de la République<br />
+                      92000 Nanterre, France
                     </p>
                   </div>
                 </div>
@@ -62,8 +62,8 @@ export default function MentionsLegalesPage() {
                   <Mail className="w-5 h-5 text-primary-600 mt-1 flex-shrink-0" />
                   <div>
                     <p className="font-semibold text-gray-900 mb-1">Email :</p>
-                    <a href="mailto:ematricule.info@gmail.com" className="text-primary-600 hover:text-primary-700">
-                      ematricule.info@gmail.com
+                    <a href="mailto:contact@ematricule.fr" className="text-primary-600 hover:text-primary-700">
+                      contact@ematricule.fr
                     </a>
                   </div>
                 </div>

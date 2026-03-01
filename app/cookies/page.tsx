@@ -210,12 +210,12 @@ export default function CookiesPage() {
                   <strong>Espace Auto 92</strong>
                 </p>
                 <p className="text-gray-700">
-                  123 Avenue des Champs-Élysées<br />
-                  75008 Paris, France
+                  426 Av. de la République<br />
+                  92000 Nanterre, France
                 </p>
                 <p className="text-gray-700 mt-2">
-                  <a href="mailto:ematricule.info@gmail.com" className="text-primary-600 hover:text-primary-700 underline">
-                    ematricule.info@gmail.com
+                  <a href="mailto:contact@ematricule.fr" className="text-primary-600 hover:text-primary-700 underline">
+                    contact@ematricule.fr
                   </a>
                 </p>
               </div>

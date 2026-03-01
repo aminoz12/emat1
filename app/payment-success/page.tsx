@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { CheckCircle, Mail, Phone, X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
-const CONTACT_EMAIL = 'ematricule.info@gmail.com'
+const CONTACT_EMAIL = 'contact@ematricule.fr'
 const CONTACT_PHONE = '01 47 85 10 00'
 
 export default function PaymentSuccessPage() {

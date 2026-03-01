@@ -39,9 +39,9 @@ export default function Contact() {
     {
       icon: Mail,
       title: 'Email',
-      content: 'ematricule.info@gmail.com',
+      content: 'contact@ematricule.fr',
       subtitle: 'Réponse sous 24h',
-      href: 'mailto:ematricule.info@gmail.com',
+      href: 'mailto:contact@ematricule.fr',
     },
     {
       icon: MapPin,

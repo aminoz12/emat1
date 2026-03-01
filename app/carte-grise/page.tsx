@@ -260,6 +260,9 @@ export default function CarteGrisePage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
 
+  // Numéro d'immatriculation optionnel uniquement pour ces deux démarches
+  const isRegistrationOptional = documentType === 'immatriculation-provisoire-ww' || documentType === 'carte-grise-vehicule-etranger-ue'
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setSubmitError(null)
@@ -275,15 +278,15 @@ export default function CarteGrisePage() {
       return
     }
     
-    if (!registrationNumber || registrationNumber.trim() === '') {
-      alert('Le numéro d\'immatriculation est obligatoire.')
-      return
-    }
-    
-    // Vérifier le format du numéro d'immatriculation
-    if (!validateRegistrationNumber(registrationNumber)) {
-      alert('Le numéro d\'immatriculation doit être au format AA-123-AA ou 123 ABC 12.')
-      return
+    if (!isRegistrationOptional) {
+      if (!registrationNumber || registrationNumber.trim() === '') {
+        alert('Le numéro d\'immatriculation est obligatoire.')
+        return
+      }
+      if (!validateRegistrationNumber(registrationNumber)) {
+        alert('Le numéro d\'immatriculation doit être au format AA-123-AA ou 123 ABC 12.')
+        return
+      }
     }
 
     if (!acceptTerms) {
@@ -323,7 +326,7 @@ export default function CarteGrisePage() {
         type: 'carte-grise' as const,
         vehicleData: {
           vin: vin.trim().toUpperCase(),
-          registrationNumber: normalizeRegistrationNumber(registrationNumber),
+          registrationNumber: isRegistrationOptional && (!registrationNumber || !registrationNumber.trim()) ? '' : normalizeRegistrationNumber(registrationNumber),
           marque: marque || undefined,
         },
         serviceType: documentType,
@@ -628,18 +631,18 @@ export default function CarteGrisePage() {
         return
       }
 
-      // Vérifier numéro d'immatriculation (obligatoire et format valide)
-      if (!registrationNumber || registrationNumber.trim() === '') {
-        alert('Le numéro d\'immatriculation est obligatoire. Veuillez le renseigner.')
-        setIsGeneratingMandat(false)
-        return
-      }
-      
-      // Vérifier le format du numéro d'immatriculation
-      if (!validateRegistrationNumber(registrationNumber)) {
-        alert('Le numéro d\'immatriculation doit être au format AA-123-AA ou 123 ABC 12.')
-        setIsGeneratingMandat(false)
-        return
+      // Vérifier numéro d'immatriculation (obligatoire sauf immatriculation-provisoire-ww et carte-grise-vehicule-etranger-ue)
+      if (!isRegistrationOptional) {
+        if (!registrationNumber || registrationNumber.trim() === '') {
+          alert('Le numéro d\'immatriculation est obligatoire. Veuillez le renseigner.')
+          setIsGeneratingMandat(false)
+          return
+        }
+        if (!validateRegistrationNumber(registrationNumber)) {
+          alert('Le numéro d\'immatriculation doit être au format AA-123-AA ou 123 ABC 12.')
+          setIsGeneratingMandat(false)
+          return
+        }
       }
 
       // Construire l'adresse complète à partir des 3 champs
@@ -659,7 +662,7 @@ export default function CarteGrisePage() {
         postalCode,
         city,
         vin: vin.trim().toUpperCase(),
-        registrationNumber: normalizeRegistrationNumber(registrationNumber),
+        registrationNumber: isRegistrationOptional && (!registrationNumber || !registrationNumber.trim()) ? '' : normalizeRegistrationNumber(registrationNumber),
         marque: marque || '',
         siret: clientType === 'company' ? (siret || '').trim() : '',
         demarcheType: documentType,
@@ -1453,7 +1456,7 @@ export default function CarteGrisePage() {
                       </div>
                       <div>
                         <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
-                          Numéro d'immatriculation *
+                          Numéro d'immatriculation {!isRegistrationOptional && '*'}
                           <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help" title="Le numéro d'immatriculation figure sur votre plaque et sur la carte grise (champ A).">
                             <Info className="w-3 h-3 text-gray-600" />
                           </div>
@@ -1462,7 +1465,7 @@ export default function CarteGrisePage() {
                           type="text"
                           value={registrationNumber}
                           onChange={handleRegistrationNumberChange}
-                          required
+                          required={!isRegistrationOptional}
                           maxLength={10} // AA-123-AA (9) or 123 ABC 12 (10)
                           className={`w-full px-5 py-3 border-2 rounded-xl focus:ring-4 focus:ring-opacity-20 outline-none transition-all duration-200 ${
                               registrationNumberError
@@ -2219,9 +2222,9 @@ export default function CarteGrisePage() {
                     <button
                       type="button"
                       onClick={handleGenerateMandat}
-                      disabled={isGeneratingMandat || !firstName || !lastName || !email || !streetNumber || !streetType || !streetName || !postalCode || !city || !vin || vin.length !== 17 || !registrationNumber || !validateRegistrationNumber(registrationNumber) || !marque || (clientType === 'company' && !siret)}
+                      disabled={isGeneratingMandat || !firstName || !lastName || !email || !streetNumber || !streetType || !streetName || !postalCode || !city || !vin || vin.length !== 17 || (!isRegistrationOptional && (!registrationNumber || !validateRegistrationNumber(registrationNumber))) || !marque || (clientType === 'company' && !siret)}
                       className={`w-full mb-4 py-4 px-6 rounded-2xl font-bold text-base transition-all duration-300 flex items-center justify-center space-x-2 shadow-lg ${
-                        !isGeneratingMandat && firstName && lastName && email && streetNumber && streetType && streetName && postalCode && city && vin && vin.length === 17 && registrationNumber && validateRegistrationNumber(registrationNumber) && marque && (clientType !== 'company' || siret)
+                        !isGeneratingMandat && firstName && lastName && email && streetNumber && streetType && streetName && postalCode && city && vin && vin.length === 17 && (isRegistrationOptional || (registrationNumber && validateRegistrationNumber(registrationNumber))) && marque && (clientType !== 'company' || siret)
                           ? 'bg-gradient-to-r from-primary-600 to-primary-700 text-white hover:from-primary-700 hover:to-primary-800 hover:shadow-xl transform hover:-translate-y-0.5 active:translate-y-0'
                           : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                       }`}
@@ -2570,9 +2573,9 @@ export default function CarteGrisePage() {
                   <button
                     type="button"
                     onClick={handleGenerateMandat}
-                    disabled={isGeneratingMandat || !firstName || !lastName || !email || !streetNumber || !streetType || !streetName || !postalCode || !city || !vin || vin.length !== 17 || !registrationNumber || !validateRegistrationNumber(registrationNumber) || !marque || (clientType === 'company' && !siret)}
+                    disabled={isGeneratingMandat || !firstName || !lastName || !email || !streetNumber || !streetType || !streetName || !postalCode || !city || !vin || vin.length !== 17 || (!isRegistrationOptional && (!registrationNumber || !validateRegistrationNumber(registrationNumber))) || !marque || (clientType === 'company' && !siret)}
                     className={`w-full mb-4 py-4 px-6 rounded-2xl font-bold text-base transition-all duration-300 flex items-center justify-center space-x-2 shadow-lg ${
-                      !isGeneratingMandat && firstName && lastName && email && streetNumber && streetType && streetName && postalCode && city && vin && vin.length === 17 && registrationNumber && validateRegistrationNumber(registrationNumber) && marque && (clientType !== 'company' || siret)
+                      !isGeneratingMandat && firstName && lastName && email && streetNumber && streetType && streetName && postalCode && city && vin && vin.length === 17 && (isRegistrationOptional || (registrationNumber && validateRegistrationNumber(registrationNumber))) && marque && (clientType !== 'company' || siret)
                         ? 'bg-gradient-to-r from-primary-600 to-primary-700 text-white hover:from-primary-700 hover:to-primary-800 hover:shadow-xl transform hover:-translate-y-0.5 active:translate-y-0'
                         : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                     }`}
@@ -2820,7 +2823,7 @@ export default function CarteGrisePage() {
                       </div>
               <div>
                         <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
-                          Numéro d'immatriculation *
+                          Numéro d'immatriculation {!isRegistrationOptional && '*'}
                           <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help" title="Le numéro d'immatriculation figure sur votre plaque et sur la carte grise (champ A).">
                             <Info className="w-3 h-3 text-gray-600" />
                           </div>
@@ -2829,7 +2832,7 @@ export default function CarteGrisePage() {
                           type="text"
                           value={registrationNumber}
                           onChange={handleRegistrationNumberChange}
-                          required
+                          required={!isRegistrationOptional}
                           maxLength={10} // AA-123-AA (9) or 123 ABC 12 (10)
                           className={`w-full px-5 py-3 border-2 rounded-xl focus:ring-4 focus:ring-opacity-20 outline-none transition-all duration-200 ${
                               registrationNumberError

@@ -17,7 +17,7 @@ export default function AdminSettingsPage() {
   const [isSaving, setIsSaving] = useState(false)
   const [settings, setSettings] = useState({
     siteName: 'EMatricule',
-    siteEmail: 'ematricule.info@gmail.com',
+    siteEmail: 'contact@ematricule.fr',
     sitePhone: '01 47 85 10 00',
     notifyNewOrders: true,
     notifyStatusChange: true,

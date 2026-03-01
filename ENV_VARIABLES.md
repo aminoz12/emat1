@@ -44,6 +44,20 @@ NEXTAUTH_URL=https://your-domain.vercel.app
 NEXTAUTH_SECRET=your-nextauth-secret-here
 ```
 
+### SMTP (email de confirmation de commande)
+Requis pour envoyer l’email de confirmation au client après paiement (from: Contact@ematricule.fr).
+```env
+SMTP_HOST=smtp.example.com
+SMTP_PORT=587
+SMTP_USER=Contact@ematricule.fr
+SMTP_PASS=your-app-password
+SMTP_FROM_EMAIL=Contact@ematricule.fr
+SMTP_FROM_NAME=E-matricule
+```
+- `SMTP_HOST`, `SMTP_PASS` sont obligatoires pour l’envoi.
+- `SMTP_USER` par défaut = `Contact@ematricule.fr` si non défini.
+- Utilisez un mot de passe d’application si votre fournisseur (Gmail, etc.) l’exige.
+
 ### Configuration générale
 ```env
 NODE_ENV=production

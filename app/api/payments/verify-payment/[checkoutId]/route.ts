@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { sendOrderConfirmationEmail } from '@/lib/email'
 
 /**
  * GET /api/payments/verify-payment/[checkoutId]
@@ -94,6 +95,26 @@ export async function GET(
           updated_at: new Date().toISOString(),
         })
         .eq('id', payment.order_id)
+
+      // When paid: send confirmation email to the client (email from order metadata or profile)
+      if (paid) {
+        const { data: order } = await admin
+          .from('orders')
+          .select('metadata, profiles:user_id(email)')
+          .eq('id', payment.order_id)
+          .single()
+        const metadata = (order as any)?.metadata as Record<string, unknown> | null
+        const profileEmail = (order as any)?.profiles?.email as string | undefined
+        const clientEmail = (metadata?.email as string) || profileEmail
+        if (clientEmail && typeof clientEmail === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clientEmail)) {
+          const result = await sendOrderConfirmationEmail(clientEmail)
+          if (!result.success) {
+            console.error('Order confirmation email failed:', result.error)
+          }
+        } else {
+          console.warn('Verify-payment: no valid client email for order', payment.order_id)
+        }
+      }
     }
 
     return NextResponse.json({ status })
