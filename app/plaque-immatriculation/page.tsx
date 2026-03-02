@@ -1400,7 +1400,7 @@ export default function PlaqueImmatriculationPage() {
               <div className="w-full max-w-5xl bg-gradient-to-r from-primary-50 to-primary-100/50 rounded-2xl p-6 md:p-8 border-2 border-primary-200">
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-lg md:text-xl font-medium text-gray-700">Prix du plaque</span>
+                    <span className="text-lg md:text-xl font-medium text-gray-700">Prix</span>
                     <div className="text-xl md:text-2xl font-semibold text-gray-800">
                       {calculatePlatePrice().toFixed(2).replace('.', ',')} €
                     </div>

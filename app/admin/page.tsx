@@ -39,6 +39,7 @@ interface RecentOrder {
   status: string
   price: number
   created_at: string
+  payment?: { status: string; amount: number } | null
   profiles: {
     email: string
     first_name: string
@@ -93,6 +94,22 @@ export default function AdminDashboard() {
       unpaid: { label: 'Non payé', color: 'bg-orange-100 text-orange-800' },
     }
     const config = statusConfig[status] || { label: status, color: 'bg-gray-100 text-gray-800' }
+    return (
+      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.color}`}>
+        {config.label}
+      </span>
+    )
+  }
+
+  const getPaymentStatusBadge = (payment?: { status: string } | null) => {
+    const paymentConfig: Record<string, { label: string; color: string }> = {
+      succeeded: { label: 'Payé', color: 'bg-green-100 text-green-800' },
+      paid: { label: 'Payé', color: 'bg-green-100 text-green-800' },
+      pending: { label: 'En attente', color: 'bg-yellow-100 text-yellow-800' },
+      failed: { label: 'Non payé', color: 'bg-red-100 text-red-800' },
+    }
+    const status = payment?.status || 'pending'
+    const config = paymentConfig[status] || paymentConfig.pending
     return (
       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.color}`}>
         {config.label}
@@ -356,14 +373,15 @@ export default function AdminDashboard() {
                 <th className="text-left py-3 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wider">Client</th>
                 <th className="text-left py-3 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wider">Type</th>
                 <th className="text-left py-3 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wider">Montant</th>
-                <th className="text-left py-3 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wider">Statut</th>
+                <th className="text-left py-3 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wider">Paiement</th>
+                <th className="text-left py-3 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wider">Traitement</th>
                 <th className="text-left py-3 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wider">Date</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
               {recentOrders.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-8 text-center text-gray-500">
+                  <td colSpan={7} className="py-8 text-center text-gray-500">
                     Aucune commande pour le moment
                   </td>
                 </tr>
@@ -386,6 +404,9 @@ export default function AdminDashboard() {
                     </td>
                     <td className="py-4 px-6">
                       <span className="font-medium text-gray-900">{parseFloat(String(order.price)).toFixed(2)}€</span>
+                    </td>
+                    <td className="py-4 px-6">
+                      {getPaymentStatusBadge(order.payment)}
                     </td>
                     <td className="py-4 px-6">
                       {getStatusBadge(order.status)}

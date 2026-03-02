@@ -131,10 +131,27 @@ export async function GET(request: NextRequest) {
     }
 
     console.log(`✅ Récupération réussie: ${orders?.length || 0} commandes sur ${count || 0} total`)
+
+    // Fetch payments for these orders (order_id -> status, amount)
+    const orderIds = (orders || []).map((o: any) => o.id)
+    let paymentsMap: Record<string, { status: string; amount: number; currency?: string }> = {}
+    if (orderIds.length > 0) {
+      const { data: payments } = await adminSupabase
+        .from('payments')
+        .select('order_id, status, amount, currency')
+        .in('order_id', orderIds)
+      payments?.forEach((p: any) => {
+        paymentsMap[p.order_id] = { status: p.status, amount: p.amount, currency: p.currency }
+      })
+    }
+    const ordersWithPayment = (orders || []).map((o: any) => ({
+      ...o,
+      payment: paymentsMap[o.id] || null
+    }))
     
     const responseData = {
       success: true,
-      orders: orders || [],
+      orders: ordersWithPayment,
       pagination: {
         page,
         limit,

@@ -96,17 +96,27 @@ export async function GET(
         })
         .eq('id', payment.order_id)
 
-      // When paid: send confirmation email to the client (email from order metadata or profile)
+      // When paid: send confirmation email (email from order metadata or profile)
       if (paid) {
         const { data: order } = await admin
           .from('orders')
-          .select('metadata, profiles:user_id(email)')
+          .select('metadata, user_id')
           .eq('id', payment.order_id)
           .single()
+        let clientEmail: string | null = null
         const metadata = (order as any)?.metadata as Record<string, unknown> | null
-        const profileEmail = (order as any)?.profiles?.email as string | undefined
-        const clientEmail = (metadata?.email as string) || profileEmail
-        if (clientEmail && typeof clientEmail === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clientEmail)) {
+        if (metadata?.email && typeof metadata.email === 'string') {
+          clientEmail = metadata.email
+        }
+        if (!clientEmail && (order as any)?.user_id) {
+          const { data: profile } = await admin
+            .from('profiles')
+            .select('email')
+            .eq('id', (order as any).user_id)
+            .single()
+          if (profile?.email) clientEmail = profile.email
+        }
+        if (clientEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clientEmail)) {
           const result = await sendOrderConfirmationEmail(clientEmail)
           if (!result.success) {
             console.error('Order confirmation email failed:', result.error)

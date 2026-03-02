@@ -25,7 +25,8 @@ import {
   Phone,
   FileDown,
   X,
-  ChevronRight as ChevronRightIcon
+  ChevronRight as ChevronRightIcon,
+  Paperclip
 } from 'lucide-react'
 
 interface Order {
@@ -37,6 +38,7 @@ interface Order {
   created_at: string
   updated_at: string
   metadata: any
+  payment?: { status: string; amount: number; currency?: string } | null
   profiles: {
     id: string
     email: string
@@ -82,6 +84,7 @@ export default function AdminOrdersPage() {
   const [isDetailsLoading, setIsDetailsLoading] = useState(false)
   const [isDetailsOpen, setIsDetailsOpen] = useState(false)
   const [downloadingOrders, setDownloadingOrders] = useState<Set<string>>(new Set())
+  const [sendingDocFinal, setSendingDocFinal] = useState<Set<string>>(new Set())
   const [openActionMenu, setOpenActionMenu] = useState<string | null>(null)
 
   useEffect(() => {
@@ -210,6 +213,29 @@ export default function AdminOrdersPage() {
     }
   }
 
+  const handleDocFinalUpload = async (orderId: string, file: File) => {
+    setSendingDocFinal(prev => new Set(prev).add(orderId))
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      const response = await fetch(`/api/admin/orders/${orderId}/doc-final`, {
+        method: 'POST',
+        body: formData,
+      })
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error || 'Erreur envoi document')
+      alert('Document envoyé au client par email.')
+    } catch (err: any) {
+      alert(err.message || 'Erreur lors de l\'envoi')
+    } finally {
+      setSendingDocFinal(prev => {
+        const next = new Set(prev)
+        next.delete(orderId)
+        return next
+      })
+    }
+  }
+
   const getStatusBadge = (status: string) => {
     const statusConfig: Record<string, { label: string; color: string; icon: any }> = {
       pending: { label: 'En attente', color: 'bg-yellow-100 text-yellow-800 border-yellow-200', icon: Clock },
@@ -219,6 +245,24 @@ export default function AdminOrdersPage() {
       unpaid: { label: 'Non payé', color: 'bg-orange-100 text-orange-800 border-orange-200', icon: XCircle },
     }
     const config = statusConfig[status] || { label: status, color: 'bg-gray-100 text-gray-800 border-gray-200', icon: Clock }
+    const Icon = config.icon
+    return (
+      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${config.color}`}>
+        <Icon className="w-3.5 h-3.5" />
+        {config.label}
+      </span>
+    )
+  }
+
+  const getPaymentStatusBadge = (payment?: { status: string } | null) => {
+    const paymentConfig: Record<string, { label: string; color: string; icon: any }> = {
+      succeeded: { label: 'Payé', color: 'bg-green-100 text-green-800 border-green-200', icon: CheckCircle },
+      paid: { label: 'Payé', color: 'bg-green-100 text-green-800 border-green-200', icon: CheckCircle },
+      pending: { label: 'En attente', color: 'bg-yellow-100 text-yellow-800 border-yellow-200', icon: Clock },
+      failed: { label: 'Non payé', color: 'bg-red-100 text-red-800 border-red-200', icon: XCircle },
+    }
+    const status = payment?.status || 'pending'
+    const config = paymentConfig[status] || paymentConfig.pending
     const Icon = config.icon
     return (
       <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${config.color}`}>
@@ -521,15 +565,17 @@ export default function AdminOrdersPage() {
                     <th className="text-left py-4 px-6 text-xs font-bold text-gray-700 uppercase tracking-wider">Client</th>
                     <th className="text-left py-4 px-6 text-xs font-bold text-gray-700 uppercase tracking-wider">Type</th>
                     <th className="text-left py-4 px-6 text-xs font-bold text-gray-700 uppercase tracking-wider">Montant</th>
-                    <th className="text-left py-4 px-6 text-xs font-bold text-gray-700 uppercase tracking-wider">Statut</th>
+                    <th className="text-left py-4 px-6 text-xs font-bold text-gray-700 uppercase tracking-wider">Paiement</th>
+                    <th className="text-left py-4 px-6 text-xs font-bold text-gray-700 uppercase tracking-wider">Traitement</th>
                     <th className="text-left py-4 px-6 text-xs font-bold text-gray-700 uppercase tracking-wider">Date</th>
+                    <th className="text-left py-4 px-6 text-xs font-bold text-gray-700 uppercase tracking-wider">DOC-FINAL</th>
                     <th className="text-left py-4 px-6 text-xs font-bold text-gray-700 uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
                   {orders.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="py-12 text-center">
+                      <td colSpan={9} className="py-12 text-center">
                         <div className="flex flex-col items-center justify-center">
                           <p className="text-gray-500 text-lg font-medium mb-2">Aucune commande trouvée</p>
                           <p className="text-gray-400 text-sm mb-4">
@@ -580,12 +626,47 @@ export default function AdminOrdersPage() {
                           </span>
                         </td>
                         <td className="py-5 px-6">
+                          {getPaymentStatusBadge(order.payment)}
+                        </td>
+                        <td className="py-5 px-6">
                           {getStatusBadge(order.status)}
                         </td>
                         <td className="py-5 px-6">
                           <div className="flex flex-col">
                             <span className="text-sm font-medium text-gray-700">{formatDate(order.created_at).split(' ')[0]}</span>
                             <span className="text-xs text-gray-500">{formatDate(order.created_at).split(' ')[1]}</span>
+                          </div>
+                        </td>
+                        <td className="py-5 px-6">
+                          <div className="flex items-center gap-1">
+                            <input
+                              type="file"
+                              id={`doc-final-${order.id}`}
+                              className="hidden"
+                              accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
+                              onChange={(e) => {
+                                const f = e.target.files?.[0]
+                                if (f) handleDocFinalUpload(order.id, f)
+                                e.target.value = ''
+                              }}
+                            />
+                            <label
+                              htmlFor={sendingDocFinal.has(order.id) ? undefined : `doc-final-${order.id}`}
+                              className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border transition-all ${
+                                sendingDocFinal.has(order.id)
+                                  ? 'bg-gray-100 border-gray-200 cursor-not-allowed opacity-70 pointer-events-none'
+                                  : 'cursor-pointer bg-emerald-50 border-emerald-200 text-emerald-800 hover:bg-emerald-100'
+                              }`}
+                            >
+                              {sendingDocFinal.has(order.id) ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <Paperclip className="w-4 h-4" />
+                              )}
+                              <span className="text-xs font-medium">
+                                {sendingDocFinal.has(order.id) ? 'Envoi…' : 'Envoyer doc'}
+                              </span>
+                            </label>
                           </div>
                         </td>
                         <td className="py-5 px-6">
@@ -835,10 +916,16 @@ export default function AdminOrdersPage() {
                 <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
                   {/* Status Card */}
                   <div className="bg-gradient-to-r from-primary-50 via-primary-100 to-primary-50 rounded-xl p-6 border-2 border-primary-200 shadow-md">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                      <div>
-                        <p className="text-sm font-medium text-primary-700 mb-2">Statut actuel</p>
-                        {getStatusBadge(orderDetails.status)}
+                    <div className="flex flex-col gap-4">
+                      <div className="flex flex-wrap items-center gap-4">
+                        <div>
+                          <p className="text-xs font-semibold text-primary-600 uppercase tracking-wider mb-1.5">Statut paiement</p>
+                          {getPaymentStatusBadge(orderDetails.payment)}
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold text-primary-600 uppercase tracking-wider mb-1.5">Statut traitement</p>
+                          {getStatusBadge(orderDetails.status)}
+                        </div>
                       </div>
                       <div className="flex flex-wrap gap-2">
                         {['pending', 'processing', 'completed', 'cancelled', 'unpaid'].map((status) => (

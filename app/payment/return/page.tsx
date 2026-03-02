@@ -36,30 +36,34 @@ export default function PaymentReturnPage() {
 
         let paymentSuccess = false
 
-        // Verify via Next.js API only (no backend server)
-        const verifyUrl = `/api/payments/verify-payment/${checkoutId}`
+        // Verify via Next.js API (by checkoutId or by orderId when SumUp doesn't pass checkout_id)
+        const verifyUrl = checkoutId
+          ? `/api/payments/verify-payment/${checkoutId}`
+          : orderId
+            ? `/api/payments/verify-by-order?orderId=${encodeURIComponent(orderId)}`
+            : null
 
         if (status === 'SUCCESS' || status === 'PAID') {
-          if (checkoutId) {
+          if (verifyUrl) {
             const verifyResponse = await fetch(verifyUrl, { credentials: 'include' })
             if (verifyResponse.ok) {
               const verifyData = await verifyResponse.json()
               if (verifyData.status === 'PAID') paymentSuccess = true
             }
           } else {
-            console.warn('Payment status is SUCCESS but no checkoutId available for verification')
+            console.warn('Payment status is SUCCESS but no orderId or checkoutId for verification')
             paymentSuccess = true
           }
         } else if (status === 'FAILED' || status === 'CANCELLED' || status === 'EXPIRED') {
           paymentSuccess = false
-          if (checkoutId) {
+          if (verifyUrl) {
             try {
               await fetch(verifyUrl, { credentials: 'include' })
             } catch (err) {
               console.error('Error updating failed payment status:', err)
             }
           }
-        } else if (checkoutId) {
+        } else if (verifyUrl) {
           const verifyResponse = await fetch(verifyUrl, { credentials: 'include' })
           if (verifyResponse.ok) {
             const verifyData = await verifyResponse.json()

@@ -529,20 +529,20 @@ export default function AdminOrderDetailsPage() {
                 <div>
                   <p className="text-sm text-gray-600 mb-1">Statut</p>
                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    order.payment.status === 'succeeded' 
+                    (order.payment.status === 'succeeded' || order.payment.status === 'paid')
                       ? 'bg-green-100 text-green-800' 
                       : order.payment.status === 'pending'
                       ? 'bg-yellow-100 text-yellow-800'
                       : 'bg-red-100 text-red-800'
                   }`}>
-                    {order.payment.status === 'succeeded' ? 'Payé' : 
-                     order.payment.status === 'pending' ? 'En attente' : 'Échoué'}
+                    {(order.payment.status === 'succeeded' || order.payment.status === 'paid') ? 'Payé' : 
+                     order.payment.status === 'pending' ? 'En attente' : 'Non payé'}
                   </span>
                 </div>
-                {order.payment.stripe_payment_intent_id && (
+                {order.payment.sumup_checkout_id && (
                   <div>
-                    <p className="text-sm text-gray-600 mb-1">ID Stripe</p>
-                    <p className="font-mono text-xs text-gray-700">{order.payment.stripe_payment_intent_id}</p>
+                    <p className="text-sm text-gray-600 mb-1">ID SumUp</p>
+                    <p className="font-mono text-xs text-gray-700">{order.payment.sumup_checkout_id}</p>
                   </div>
                 )}
               </div>
