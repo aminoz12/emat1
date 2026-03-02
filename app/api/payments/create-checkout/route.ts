@@ -111,16 +111,34 @@ export async function POST(request: Request) {
       `https://checkout.sumup.com/b/${checkoutId}`
 
     const admin = createAdminClient()
-    await admin.from('payments').upsert(
-      {
+    const { data: existing } = await admin
+      .from('payments')
+      .select('id')
+      .eq('order_id', orderId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    if (existing) {
+      await admin
+        .from('payments')
+        .update({
+          amount: amountNum,
+          currency: (currency as string).toUpperCase(),
+          sumup_checkout_id: checkoutId,
+          status: 'pending',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', existing.id)
+    } else {
+      await admin.from('payments').insert({
         order_id: orderId,
         amount: amountNum,
         currency: (currency as string).toUpperCase(),
         sumup_checkout_id: checkoutId,
         status: 'pending',
-      },
-      { onConflict: 'order_id' }
-    )
+      })
+    }
 
     const { error: updateError } = await supabase
       .from('orders')

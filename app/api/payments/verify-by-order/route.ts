@@ -42,12 +42,16 @@ export async function GET(request: Request) {
     }
 
     const admin = createAdminClient()
-    const { data: payment } = await admin
+    // May have multiple payment rows per order; take latest with sumup_checkout_id
+    const { data: payments } = await admin
       .from('payments')
       .select('id, order_id, sumup_checkout_id')
       .eq('order_id', orderId)
-      .single()
+      .not('sumup_checkout_id', 'is', null)
+      .order('created_at', { ascending: false })
+      .limit(1)
 
+    const payment = payments?.[0]
     if (!payment?.sumup_checkout_id) {
       console.error('Verify-by-order: no payment or checkout_id for order', orderId)
       return NextResponse.json(
@@ -85,7 +89,7 @@ export async function GET(request: Request) {
 
     // Update payments and order
     const paymentStatus = paid ? 'succeeded' : 'failed'
-    await admin
+    const { error: payUpdateError } = await admin
       .from('payments')
       .update({
         status: paymentStatus,
@@ -93,14 +97,26 @@ export async function GET(request: Request) {
       })
       .eq('id', payment.id)
 
+    if (payUpdateError) {
+      console.error('Verify-by-order: failed to update payment', payUpdateError)
+      return NextResponse.json(
+        { error: 'Erreur lors de la mise à jour du paiement', status: 'UNKNOWN' },
+        { status: 500 }
+      )
+    }
+
     const orderStatus = paid ? 'completed' : 'unpaid'
-    await admin
+    const { error: orderUpdateError } = await admin
       .from('orders')
       .update({
         status: orderStatus,
         updated_at: new Date().toISOString(),
       })
       .eq('id', payment.order_id)
+
+    if (orderUpdateError) {
+      console.error('Verify-by-order: failed to update order', orderUpdateError)
+    }
 
     // When paid: send confirmation email
     if (paid) {

@@ -132,16 +132,24 @@ export async function GET(request: NextRequest) {
 
     console.log(`✅ Récupération réussie: ${orders?.length || 0} commandes sur ${count || 0} total`)
 
-    // Fetch payments for these orders (order_id -> status, amount)
+    // Fetch payments for these orders. Prefer succeeded; else show latest (by updated_at).
     const orderIds = (orders || []).map((o: any) => o.id)
     let paymentsMap: Record<string, { status: string; amount: number; currency?: string }> = {}
     if (orderIds.length > 0) {
       const { data: payments } = await adminSupabase
         .from('payments')
-        .select('order_id, status, amount, currency')
+        .select('order_id, status, amount, currency, updated_at')
         .in('order_id', orderIds)
+        .order('updated_at', { ascending: false })
       payments?.forEach((p: any) => {
-        paymentsMap[p.order_id] = { status: p.status, amount: p.amount, currency: p.currency }
+        if (!paymentsMap[p.order_id]) {
+          paymentsMap[p.order_id] = { status: p.status, amount: p.amount, currency: p.currency }
+        }
+      })
+      payments?.forEach((p: any) => {
+        if (p.status === 'succeeded') {
+          paymentsMap[p.order_id] = { status: p.status, amount: p.amount, currency: p.currency }
+        }
       })
     }
     const ordersWithPayment = (orders || []).map((o: any) => ({

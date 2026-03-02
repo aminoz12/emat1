@@ -78,7 +78,7 @@ export async function GET(
 
     if (payment) {
       const paymentStatus = paid ? 'succeeded' : 'failed'
-      await admin
+      const { error: payUpdateError } = await admin
         .from('payments')
         .update({
           status: paymentStatus,
@@ -86,15 +86,27 @@ export async function GET(
         })
         .eq('id', payment.id)
 
+      if (payUpdateError) {
+        console.error('Verify-payment: failed to update payment', payUpdateError)
+        return NextResponse.json(
+          { error: 'Erreur lors de la mise à jour du paiement', status: 'UNKNOWN' },
+          { status: 500 }
+        )
+      }
+
       // Mark order as completed when paid, unpaid when payment failed/cancelled/expired
       const orderStatus = paid ? 'completed' : 'unpaid'
-      await admin
+      const { error: orderUpdateError } = await admin
         .from('orders')
         .update({
           status: orderStatus,
           updated_at: new Date().toISOString(),
         })
         .eq('id', payment.order_id)
+
+      if (orderUpdateError) {
+        console.error('Verify-payment: failed to update order', orderUpdateError)
+      }
 
       // When paid: send confirmation email (email from order metadata or profile)
       if (paid) {
@@ -127,7 +139,7 @@ export async function GET(
       }
     }
 
-    return NextResponse.json({ status })
+    return NextResponse.json({ status: status === 'PAID' ? 'PAID' : status })
   } catch (error: any) {
     console.error('Error in verify-payment:', error)
     return NextResponse.json(
