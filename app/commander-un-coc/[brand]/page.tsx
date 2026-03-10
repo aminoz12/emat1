@@ -386,6 +386,16 @@ export default function ProductDetailPage() {
       return
     }
 
+    // Validate pièce d'identité recto/verso (obligatoires)
+    if (!rectoFile) {
+      alert('Veuillez télécharger le recto de votre pièce d\'identité.')
+      return
+    }
+    if (!versoFile) {
+      alert('Veuillez télécharger le verso de votre pièce d\'identité.')
+      return
+    }
+
     // Validate responsibility checkbox
     if (!acceptResponsibility) {
       alert('Veuillez accepter la déclaration de responsabilité.')

@@ -275,6 +275,49 @@ export default function CarteGrisePage() {
   // Numéro d'immatriculation optionnel uniquement pour ces deux démarches
   const isRegistrationOptional = documentType === 'immatriculation-provisoire-ww' || documentType === 'carte-grise-vehicule-etranger-ue'
 
+  /** Returns true if all obligatory documents for the current procedure are uploaded. */
+  const hasRequiredCarteGriseDocuments = (): boolean => {
+    switch (documentType) {
+      case 'changement-titulaire':
+        if (clientType === 'normal') {
+          return !!(idFile && proofAddressFile && certificatCessionFile)
+        }
+        if (clientType === 'hosted') {
+          return !!(idFile && proofAddressFile && certificatCessionFile && hostIdFile && hostProofAddressFile && attestationHebergementFile && assuranceFile)
+        }
+        if (clientType === 'company') {
+          return !!(idFile && proofAddressFile && certificatCessionFile && kbisFile && gerantIdFile)
+        }
+        return false
+      case 'changement-adresse':
+        return !!(currentCardFile && idFile && proofAddressFile)
+      case 'duplicata':
+        if (duplicataReason === 'perte-vol') {
+          return !!(idFile && proofAddressFile && cerfa13750File && cerfa13753File)
+        }
+        return !!(idFile && proofAddressFile && cerfa13750File)
+      case 'declaration-achat':
+        const declBase = !!(carteGriseVendeurFile && demandeCertificatMandatFile && certificatCessionCerfa15776File && certificatDeclarationAchatCerfa13751File && justificatifIdentiteFile && extraitKbisFile)
+        if (!declBase) return false
+        if (achatGarage) return !!(recepisseDeclarationAchatFile)
+        return true
+      case 'fiche-identification':
+        return !!(ficheJustificatifIdentiteFile && fichePermisConduireFile)
+      case 'immatriculation-provisoire-ww':
+        return !!(wwCarteGriseEtrangereFile && wwCertificatConformiteFile && wwJustificatifProprieteFile && wwQuitusFiscalFile && wwJustificatifDomicileFile && wwJustificatifIdentiteFile && wwControleTechniqueFile)
+      case 'carte-grise-vehicule-etranger-ue':
+        return !!(ueCarteGriseEtrangereFile && ueCertificatConformiteFile && ueJustificatifProprieteFile && ueQuitusFiscalFile && ueJustificatifDomicileFile && ueJustificatifIdentiteFile && ueControleTechniqueFile)
+      case 'w-garage':
+        return !!(wGarageKbisFile && wGarageSirenFile && wGarageJustificatifDomiciliationFile && wGarageCniGerantFile && wGarageAssuranceFile && wGaragePreuveActiviteFile)
+      case 'enregistrement-cession':
+        return !!(cessionCarteGriseBarreeFile && cessionCarteIdentiteFile && cessionCertificatVenteFile)
+      case 'demande-quitus-fiscal':
+        return !!(quitusJustificatifIdentiteFile && quitusJustificatifDomicileFile && quitusCertificatImmatriculationEtrangerFile && quitusJustificatifVenteFile && quitusCertificatConformiteFile)
+      default:
+        return !!(idFile && proofAddressFile)
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setSubmitError(null)
@@ -322,12 +365,10 @@ export default function CarteGrisePage() {
         return
       }
 
-      if (documentType === 'demande-quitus-fiscal') {
-        if (!quitusJustificatifIdentiteFile || !quitusJustificatifDomicileFile || !quitusCertificatImmatriculationEtrangerFile || !quitusJustificatifVenteFile || !quitusCertificatConformiteFile) {
-          alert('Veuillez fournir tous les documents obligatoires pour la demande de quitus fiscal.')
-          setIsSubmitting(false)
-          return
-        }
+      if (!hasRequiredCarteGriseDocuments()) {
+        alert('Veuillez télécharger tous les documents obligatoires avant de procéder au paiement.')
+        setIsSubmitting(false)
+        return
       }
       
       // Calculate price
@@ -2972,9 +3013,9 @@ export default function CarteGrisePage() {
                 <button
                   type="submit"
                   form="carte-grise-mobile-form"
-                  disabled={!acceptTerms || isSubmitting || !mandatPreviewUrl || !mandatPreviewUrlWithSignature || !isSignatureValidated}
+                  disabled={!acceptTerms || isSubmitting || !mandatPreviewUrl || !mandatPreviewUrlWithSignature || !isSignatureValidated || !hasRequiredCarteGriseDocuments()}
                   className={`w-full py-4 px-6 rounded-2xl font-bold text-base transition-all duration-300 flex items-center justify-center space-x-2 shadow-xl ${
-                    acceptTerms && !isSubmitting && mandatPreviewUrl && mandatPreviewUrlWithSignature && isSignatureValidated
+                    acceptTerms && !isSubmitting && mandatPreviewUrl && mandatPreviewUrlWithSignature && isSignatureValidated && hasRequiredCarteGriseDocuments()
                       ? 'bg-gradient-to-r from-primary-600 to-primary-700 text-white hover:from-primary-700 hover:to-primary-800 hover:shadow-2xl transform hover:-translate-y-0.5 active:translate-y-0'
                       : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                   }`}
@@ -5761,9 +5802,9 @@ export default function CarteGrisePage() {
                   {/* Submit Button */}
                   <button
                     type="submit"
-                    disabled={!acceptTerms || isSubmitting || !mandatPreviewUrl || !mandatPreviewUrlWithSignature || !isSignatureValidated}
+                    disabled={!acceptTerms || isSubmitting || !mandatPreviewUrl || !mandatPreviewUrlWithSignature || !isSignatureValidated || !hasRequiredCarteGriseDocuments()}
                     className={`w-full py-4 md:py-5 px-6 rounded-2xl font-bold text-lg transition-all duration-300 flex items-center justify-center space-x-2 shadow-xl ${
-                      acceptTerms && !isSubmitting && mandatPreviewUrl && mandatPreviewUrlWithSignature && isSignatureValidated
+                      acceptTerms && !isSubmitting && mandatPreviewUrl && mandatPreviewUrlWithSignature && isSignatureValidated && hasRequiredCarteGriseDocuments()
                         ? 'bg-gradient-to-r from-primary-600 to-primary-700 text-white hover:from-primary-700 hover:to-primary-800 hover:shadow-2xl transform hover:-translate-y-1 active:translate-y-0'
                         : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                     }`}
