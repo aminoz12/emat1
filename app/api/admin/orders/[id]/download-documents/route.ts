@@ -35,12 +35,18 @@ export async function GET(
       )
     }
 
-    const orderId = params.id
+    const orderId = typeof params.id === 'string' ? params.id.trim() : String(params?.id ?? '').trim()
+    if (!orderId) {
+      return NextResponse.json(
+        { error: 'ID de commande manquant' },
+        { status: 400 }
+      )
+    }
 
     // Use admin client to get documents
     const adminSupabase = createAdminClient()
 
-    // Get all documents for this order
+    // Get all documents for this order (order_id is UUID in DB)
     const { data: documents, error: docsError } = await adminSupabase
       .from('documents')
       .select('*')
@@ -54,18 +60,31 @@ export async function GET(
       )
     }
 
-    if (!documents || documents.length === 0) {
-      return NextResponse.json(
-        { error: 'Aucun document trouvé pour cette commande' },
-        { status: 404 }
-      )
-    }
+    const docList = documents ?? []
 
-    // Create ZIP file
+    // Create ZIP file (even when empty, so download doesn't error)
     const zip = new JSZip()
 
+    if (docList.length === 0) {
+      zip.file('README.txt', 'Aucun document n\'a été déposé pour cette commande.')
+      const zipBlob = await zip.generateAsync({ type: 'blob' })
+      const zipBuffer = await zipBlob.arrayBuffer()
+      const { data: order } = await adminSupabase
+        .from('orders')
+        .select('reference')
+        .eq('id', orderId)
+        .single()
+      const fileName = `commande-${order?.reference || orderId}.zip`
+      return new NextResponse(zipBuffer, {
+        headers: {
+          'Content-Type': 'application/zip',
+          'Content-Disposition': `attachment; filename="${fileName}"`,
+        },
+      })
+    }
+
     // Download each document and add to ZIP
-    for (const doc of documents) {
+    for (const doc of docList) {
       if (doc.file_url) {
         try {
           // Try to extract file path from URL
@@ -144,7 +163,7 @@ export async function GET(
       .eq('id', orderId)
       .single()
 
-    const fileName = `commande-${orderId}.zip`
+    const fileName = `commande-${order?.reference || orderId}.zip`
 
     // Return ZIP file
     return new NextResponse(zipBuffer, {
