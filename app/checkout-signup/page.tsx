@@ -265,7 +265,50 @@ export default function CheckoutSignupPage() {
         documentsToUpload.push({ file: files.mandatFile, documentType: mandatType })
       }
 
-      const quitusDocTypes: Record<string, string> = {
+      // Carte grise procedure-specific documents (all types, so admin receives everything)
+      const procedureDocTypeMap: Record<string, string> = {
+        hostIdFile: 'host_id',
+        hostProofAddressFile: 'host_justificatif_domicile',
+        attestationHebergementFile: 'attestation_hebergement',
+        kbisFile: 'kbis',
+        gerantIdFile: 'gerant_id',
+        cerfa13750File: 'cerfa_13750',
+        cerfa13753File: 'cerfa_13753',
+        carteGriseVendeurFile: 'carte_grise_vendeur',
+        demandeCertificatMandatFile: 'demande_certificat_mandat',
+        certificatCessionCerfa15776File: 'certificat_cession_15776',
+        recepisseDeclarationAchatFile: 'recepisse_declaration_achat',
+        certificatDeclarationAchatCerfa13751File: 'certificat_declaration_achat_13751',
+        justificatifIdentiteFile: 'justificatif_identite',
+        extraitKbisFile: 'extrait_kbis',
+        ficheJustificatifIdentiteFile: 'fiche_justificatif_identite',
+        fichePermisConduireFile: 'fiche_permis_conduire',
+        ficheCopieCarteGriseFile: 'fiche_copie_carte_grise',
+        wwCarteGriseEtrangereFile: 'ww_carte_grise_etrangere',
+        wwCertificatConformiteFile: 'ww_certificat_conformite',
+        wwJustificatifProprieteFile: 'ww_justificatif_propriete',
+        wwQuitusFiscalFile: 'ww_quitus_fiscal',
+        wwPermisConduireFile: 'ww_permis_conduire',
+        wwJustificatifDomicileFile: 'ww_justificatif_domicile',
+        wwJustificatifIdentiteFile: 'ww_justificatif_identite',
+        wwControleTechniqueFile: 'ww_controle_technique',
+        ueCarteGriseEtrangereFile: 'ue_carte_grise_etrangere',
+        ueCertificatConformiteFile: 'ue_certificat_conformite',
+        ueJustificatifProprieteFile: 'ue_justificatif_propriete',
+        ueQuitusFiscalFile: 'ue_quitus_fiscal',
+        uePermisConduireFile: 'ue_permis_conduire',
+        ueJustificatifDomicileFile: 'ue_justificatif_domicile',
+        ueJustificatifIdentiteFile: 'ue_justificatif_identite',
+        ueControleTechniqueFile: 'ue_controle_technique',
+        wGarageKbisFile: 'w_garage_kbis',
+        wGarageSirenFile: 'w_garage_siren',
+        wGarageJustificatifDomiciliationFile: 'w_garage_justificatif_domiciliation',
+        wGarageCniGerantFile: 'w_garage_cni_gerant',
+        wGarageAssuranceFile: 'w_garage_assurance',
+        wGaragePreuveActiviteFile: 'w_garage_preuve_activite',
+        cessionCarteGriseBarreeFile: 'cession_carte_grise_barree',
+        cessionCarteIdentiteFile: 'cession_carte_identite',
+        cessionCertificatVenteFile: 'cession_certificat_vente',
         quitusJustificatifIdentiteFile: 'quitus_justificatif_identite',
         quitusJustificatifDomicileFile: 'quitus_justificatif_domicile',
         quitusCertificatImmatriculationEtrangerFile: 'quitus_certificat_immatriculation_etranger',
@@ -277,8 +320,8 @@ export default function CheckoutSignupPage() {
         quitusCopieIdentiteMandataireFile: 'quitus_copie_identite_mandataire',
         quitusDemandeCertificatCerfa13750File: 'quitus_demande_cerfa_13750',
       }
-      if (orderData.serviceType === 'demande-quitus-fiscal') {
-        Object.entries(quitusDocTypes).forEach(([key, docType]) => {
+      if (orderData.type === 'carte-grise') {
+        Object.entries(procedureDocTypeMap).forEach(([key, docType]) => {
           const file = (files as Record<string, File | undefined>)[key]
           if (file) {
             documentsToUpload.push({ file, documentType: docType })

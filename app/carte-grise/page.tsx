@@ -515,8 +515,70 @@ export default function CarteGrisePage() {
         )
       }
 
+      // Procedure-specific files: convert to base64 and store (so they are uploaded for admin)
+      const procedureFileLists: [File | null, string][] = []
+      if (documentType === 'changement-titulaire' && clientType === 'hosted') {
+        procedureFileLists.push([hostIdFile, 'hostIdFile'], [hostProofAddressFile, 'hostProofAddressFile'], [attestationHebergementFile, 'attestationHebergementFile'])
+      }
+      if (documentType === 'changement-titulaire' && clientType === 'company') {
+        procedureFileLists.push([kbisFile, 'kbisFile'], [gerantIdFile, 'gerantIdFile'])
+      }
+      if (documentType === 'duplicata') {
+        procedureFileLists.push([cerfa13750File, 'cerfa13750File'], [cerfa13753File, 'cerfa13753File'])
+      }
+      if (documentType === 'declaration-achat') {
+        procedureFileLists.push(
+          [carteGriseVendeurFile, 'carteGriseVendeurFile'],
+          [demandeCertificatMandatFile, 'demandeCertificatMandatFile'],
+          [certificatCessionCerfa15776File, 'certificatCessionCerfa15776File'],
+          [recepisseDeclarationAchatFile, 'recepisseDeclarationAchatFile'],
+          [certificatDeclarationAchatCerfa13751File, 'certificatDeclarationAchatCerfa13751File'],
+          [justificatifIdentiteFile, 'justificatifIdentiteFile'],
+          [extraitKbisFile, 'extraitKbisFile']
+        )
+      }
+      if (documentType === 'fiche-identification') {
+        procedureFileLists.push([ficheJustificatifIdentiteFile, 'ficheJustificatifIdentiteFile'], [fichePermisConduireFile, 'fichePermisConduireFile'], [ficheCopieCarteGriseFile, 'ficheCopieCarteGriseFile'])
+      }
+      if (documentType === 'immatriculation-provisoire-ww') {
+        procedureFileLists.push(
+          [wwCarteGriseEtrangereFile, 'wwCarteGriseEtrangereFile'],
+          [wwCertificatConformiteFile, 'wwCertificatConformiteFile'],
+          [wwJustificatifProprieteFile, 'wwJustificatifProprieteFile'],
+          [wwQuitusFiscalFile, 'wwQuitusFiscalFile'],
+          [wwPermisConduireFile, 'wwPermisConduireFile'],
+          [wwJustificatifDomicileFile, 'wwJustificatifDomicileFile'],
+          [wwJustificatifIdentiteFile, 'wwJustificatifIdentiteFile'],
+          [wwControleTechniqueFile, 'wwControleTechniqueFile']
+        )
+      }
+      if (documentType === 'carte-grise-vehicule-etranger-ue') {
+        procedureFileLists.push(
+          [ueCarteGriseEtrangereFile, 'ueCarteGriseEtrangereFile'],
+          [ueCertificatConformiteFile, 'ueCertificatConformiteFile'],
+          [ueJustificatifProprieteFile, 'ueJustificatifProprieteFile'],
+          [ueQuitusFiscalFile, 'ueQuitusFiscalFile'],
+          [uePermisConduireFile, 'uePermisConduireFile'],
+          [ueJustificatifDomicileFile, 'ueJustificatifDomicileFile'],
+          [ueJustificatifIdentiteFile, 'ueJustificatifIdentiteFile'],
+          [ueControleTechniqueFile, 'ueControleTechniqueFile']
+        )
+      }
+      if (documentType === 'w-garage') {
+        procedureFileLists.push(
+          [wGarageKbisFile, 'wGarageKbisFile'],
+          [wGarageSirenFile, 'wGarageSirenFile'],
+          [wGarageJustificatifDomiciliationFile, 'wGarageJustificatifDomiciliationFile'],
+          [wGarageCniGerantFile, 'wGarageCniGerantFile'],
+          [wGarageAssuranceFile, 'wGarageAssuranceFile'],
+          [wGaragePreuveActiviteFile, 'wGaragePreuveActiviteFile']
+        )
+      }
+      if (documentType === 'enregistrement-cession') {
+        procedureFileLists.push([cessionCarteGriseBarreeFile, 'cessionCarteGriseBarreeFile'], [cessionCarteIdentiteFile, 'cessionCarteIdentiteFile'], [cessionCertificatVenteFile, 'cessionCertificatVenteFile'])
+      }
       if (documentType === 'demande-quitus-fiscal') {
-        const quitusFiles: [File | null, string][] = [
+        procedureFileLists.push(
           [quitusJustificatifIdentiteFile, 'quitusJustificatifIdentiteFile'],
           [quitusJustificatifDomicileFile, 'quitusJustificatifDomicileFile'],
           [quitusCertificatImmatriculationEtrangerFile, 'quitusCertificatImmatriculationEtrangerFile'],
@@ -526,19 +588,19 @@ export default function CarteGrisePage() {
           [quitusUsageVehiculeFile, 'quitusUsageVehiculeFile'],
           [quitusMandatRepresentationFile, 'quitusMandatRepresentationFile'],
           [quitusCopieIdentiteMandataireFile, 'quitusCopieIdentiteMandataireFile'],
-          [quitusDemandeCertificatCerfa13750File, 'quitusDemandeCertificatCerfa13750File'],
-        ]
-        quitusFiles.forEach(([file, key]) => {
-          if (file) {
-            filePromises.push(
-              convertFileToBase64(file).then(base64 => {
-                (filesToStore as Record<string, { name: string; type: string; base64: string }>)[key] = { name: file.name, type: file.type, base64 }
-              })
-            )
-          }
-        })
+          [quitusDemandeCertificatCerfa13750File, 'quitusDemandeCertificatCerfa13750File']
+        )
       }
-      
+      procedureFileLists.forEach(([file, key]) => {
+        if (file) {
+          filePromises.push(
+            convertFileToBase64(file).then(base64 => {
+              (filesToStore as Record<string, { name: string; type: string; base64: string }>)[key] = { name: file.name, type: file.type, base64 }
+            })
+          )
+        }
+      })
+
       // Handle mandat files
       if (mandatPreviewUrlWithSignature && isSignatureValidated) {
         try {
@@ -639,7 +701,49 @@ export default function CarteGrisePage() {
               documentType: isSignatureValidated ? 'mandat_signe' : 'mandat' 
               })
           }
-          const quitusDocTypes: Record<string, string> = {
+          const procedureDocTypeMap: Record<string, string> = {
+            hostIdFile: 'host_id',
+            hostProofAddressFile: 'host_justificatif_domicile',
+            attestationHebergementFile: 'attestation_hebergement',
+            kbisFile: 'kbis',
+            gerantIdFile: 'gerant_id',
+            cerfa13750File: 'cerfa_13750',
+            cerfa13753File: 'cerfa_13753',
+            carteGriseVendeurFile: 'carte_grise_vendeur',
+            demandeCertificatMandatFile: 'demande_certificat_mandat',
+            certificatCessionCerfa15776File: 'certificat_cession_15776',
+            recepisseDeclarationAchatFile: 'recepisse_declaration_achat',
+            certificatDeclarationAchatCerfa13751File: 'certificat_declaration_achat_13751',
+            justificatifIdentiteFile: 'justificatif_identite',
+            extraitKbisFile: 'extrait_kbis',
+            ficheJustificatifIdentiteFile: 'fiche_justificatif_identite',
+            fichePermisConduireFile: 'fiche_permis_conduire',
+            ficheCopieCarteGriseFile: 'fiche_copie_carte_grise',
+            wwCarteGriseEtrangereFile: 'ww_carte_grise_etrangere',
+            wwCertificatConformiteFile: 'ww_certificat_conformite',
+            wwJustificatifProprieteFile: 'ww_justificatif_propriete',
+            wwQuitusFiscalFile: 'ww_quitus_fiscal',
+            wwPermisConduireFile: 'ww_permis_conduire',
+            wwJustificatifDomicileFile: 'ww_justificatif_domicile',
+            wwJustificatifIdentiteFile: 'ww_justificatif_identite',
+            wwControleTechniqueFile: 'ww_controle_technique',
+            ueCarteGriseEtrangereFile: 'ue_carte_grise_etrangere',
+            ueCertificatConformiteFile: 'ue_certificat_conformite',
+            ueJustificatifProprieteFile: 'ue_justificatif_propriete',
+            ueQuitusFiscalFile: 'ue_quitus_fiscal',
+            uePermisConduireFile: 'ue_permis_conduire',
+            ueJustificatifDomicileFile: 'ue_justificatif_domicile',
+            ueJustificatifIdentiteFile: 'ue_justificatif_identite',
+            ueControleTechniqueFile: 'ue_controle_technique',
+            wGarageKbisFile: 'w_garage_kbis',
+            wGarageSirenFile: 'w_garage_siren',
+            wGarageJustificatifDomiciliationFile: 'w_garage_justificatif_domiciliation',
+            wGarageCniGerantFile: 'w_garage_cni_gerant',
+            wGarageAssuranceFile: 'w_garage_assurance',
+            wGaragePreuveActiviteFile: 'w_garage_preuve_activite',
+            cessionCarteGriseBarreeFile: 'cession_carte_grise_barree',
+            cessionCarteIdentiteFile: 'cession_carte_identite',
+            cessionCertificatVenteFile: 'cession_certificat_vente',
             quitusJustificatifIdentiteFile: 'quitus_justificatif_identite',
             quitusJustificatifDomicileFile: 'quitus_justificatif_domicile',
             quitusCertificatImmatriculationEtrangerFile: 'quitus_certificat_immatriculation_etranger',
@@ -651,7 +755,7 @@ export default function CarteGrisePage() {
             quitusCopieIdentiteMandataireFile: 'quitus_copie_identite_mandataire',
             quitusDemandeCertificatCerfa13750File: 'quitus_demande_cerfa_13750',
           }
-          Object.entries(quitusDocTypes).forEach(([key, docType]) => {
+          Object.entries(procedureDocTypeMap).forEach(([key, docType]) => {
             const stored = (filesToStore as Record<string, { name: string; type: string; base64: string } | undefined>)[key]
             if (stored) {
               filesToUpload.push({

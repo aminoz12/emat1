@@ -91,8 +91,8 @@ export async function POST(request: NextRequest) {
       .from('documents')
       .getPublicUrl(fileName)
 
-    // Save document reference to database
-    const { data: document, error: docError } = await supabase
+    // Save document reference with admin client so it's always visible in admin panel (RLS bypass)
+    const { data: document, error: docError } = await adminSupabase
       .from('documents')
       .insert({
         order_id: orderId,
