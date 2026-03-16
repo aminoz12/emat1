@@ -275,18 +275,18 @@ export default function CarteGrisePage() {
   // Numéro d'immatriculation optionnel uniquement pour ces deux démarches
   const isRegistrationOptional = documentType === 'immatriculation-provisoire-ww' || documentType === 'carte-grise-vehicule-etranger-ue'
 
-  /** Returns true if all obligatory documents for the current procedure are uploaded. */
+  /** Returns true if all obligatory documents for the current procedure are uploaded. Uses same state as form inputs. */
   const hasRequiredCarteGriseDocuments = (): boolean => {
     switch (documentType) {
       case 'changement-titulaire':
         if (clientType === 'normal') {
-          return !!(idFile && proofAddressFile && certificatCessionCerfa15776File)
+          return !!(currentCardFile && idFile && proofAddressFile && certificatCessionCerfa15776File)
         }
         if (clientType === 'hosted') {
-          return !!(idFile && proofAddressFile && certificatCessionCerfa15776File && hostIdFile && hostProofAddressFile && attestationHebergementFile && assuranceFile)
+          return !!(currentCardFile && idFile && proofAddressFile && certificatCessionCerfa15776File && hostIdFile && hostProofAddressFile && attestationHebergementFile && assuranceFile)
         }
         if (clientType === 'company') {
-          return !!(idFile && proofAddressFile && certificatCessionCerfa15776File && kbisFile && gerantIdFile)
+          return !!(currentCardFile && idFile && proofAddressFile && certificatCessionCerfa15776File && kbisFile && gerantIdFile)
         }
         return false
       case 'changement-adresse':
