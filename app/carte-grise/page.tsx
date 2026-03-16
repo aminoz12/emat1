@@ -280,13 +280,13 @@ export default function CarteGrisePage() {
     switch (documentType) {
       case 'changement-titulaire':
         if (clientType === 'normal') {
-          return !!(idFile && proofAddressFile && certificatCessionFile)
+          return !!(idFile && proofAddressFile && certificatCessionCerfa15776File)
         }
         if (clientType === 'hosted') {
-          return !!(idFile && proofAddressFile && certificatCessionFile && hostIdFile && hostProofAddressFile && attestationHebergementFile && assuranceFile)
+          return !!(idFile && proofAddressFile && certificatCessionCerfa15776File && hostIdFile && hostProofAddressFile && attestationHebergementFile && assuranceFile)
         }
         if (clientType === 'company') {
-          return !!(idFile && proofAddressFile && certificatCessionFile && kbisFile && gerantIdFile)
+          return !!(idFile && proofAddressFile && certificatCessionCerfa15776File && kbisFile && gerantIdFile)
         }
         return false
       case 'changement-adresse':
