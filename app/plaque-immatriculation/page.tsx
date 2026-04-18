@@ -360,13 +360,7 @@ export default function PlaqueImmatriculationPage() {
         }
       }
 
-      // Store all form data temporarily in localStorage for checkout-signup page
-      const formDataToStore = {
-        orderData,
-        finalPrice: totalPrice,
-      }
-      
-      localStorage.      // CASE 1: USER IS LOGGED IN
+      // CASE 1: USER IS LOGGED IN
       if (user && !sessionLoading) {
         console.log('User logged in, uploading directly...')
         const result = await createOrder(orderData)
@@ -396,10 +390,7 @@ export default function PlaqueImmatriculationPage() {
       }
       
       router.push('/checkout-signup')
-or.message || 'Une erreur est survenue'))
-        }
-        return
-      }
+
 
     } catch (error: any) {
       console.error('Erreur soumission:', error)

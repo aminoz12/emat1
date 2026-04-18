@@ -540,48 +540,12 @@ export default function CarteGrisePage() {
       console.log('Guest user, storing in IndexedDB...')
       
       // Store order meta in localStorage
-      localStorage.setItem('pendingOrderData', JSON.stringify({ orderData, finalPrice }))
+      localStorage.setItem('pendingOrderData', JSON.stringify({ orderData, price: finalPrice }))
       
       // Store files in IndexedDB (handles large files, no base64 needed)
       await saveFilesToIndexedDB(allFiles)
       
       router.push('/checkout-signup')
-
-          // Store order references
-      localStorage.setItem('currentOrderId', result.order.id)
-      localStorage.setItem('currentOrderRef', result.order.reference)
-          localStorage.setItem('currentOrderPrice', String(orderData.price))
-
-          // Clean up temporary data
-          localStorage.removeItem('pendingOrderData')
-          sessionStorage.removeItem('pendingOrderFiles')
-          
-          // Create checkout and redirect directly to SumUp widget
-          await createCheckoutAndRedirect(result.order.id, orderData.price)
-          return
-        } catch (error: any) {
-          console.error('Erreur création commande:', error)
-          setSubmitError(error.message || 'Une erreur est survenue lors de la création de la commande')
-          setIsSubmitting(false)
-          return
-        }
-      }
-      
-      // User is not logged in - store data and redirect to checkout-signup
-      try {
-        sessionStorage.setItem('pendingOrderFiles', JSON.stringify(filesToStore))
-      } catch (storageError: any) {
-        const isQuota = storageError?.name === 'QuotaExceededError' || /quota|exceeded/i.test(storageError?.message || '')
-        setSubmitError(
-          isQuota
-            ? 'Les documents sont trop volumineux pour passer au paiement. Réduisez la taille des fichiers (compression PDF, images plus légères) ou connectez-vous pour continuer.'
-            : (storageError?.message || 'Impossible d’enregistrer les documents. Réessayez.')
-        )
-        setIsSubmitting(false)
-        return
-      }
-      window.location.href = '/checkout-signup'
-
     } catch (error: any) {
       console.error('Erreur soumission:', error)
       setSubmitError(error.message || 'Une erreur est survenue lors de la soumission.')

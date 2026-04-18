@@ -1,3 +1,4 @@
+/**
  * Service pour la gestion des commandes
  * Centralise les appels API pour créer, récupérer et gérer les commandes
  */
