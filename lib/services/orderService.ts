@@ -57,14 +57,18 @@ export interface GetOrdersResponse {
  */
 export async function createOrder(data: OrderData): Promise<CreateOrderResponse> {
   try {
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 15000) // 15s timeout
+
     const response = await fetch('/api/orders', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      credentials: 'include', // Inclure les cookies dans la requête
+      credentials: 'include',
       body: JSON.stringify(data),
-    })
+      signal: controller.signal,
+    }).finally(() => clearTimeout(timeoutId))
 
     if (!response.ok) {
       let errorMessage = 'Erreur lors de la création de la commande'
@@ -97,6 +101,12 @@ export async function createOrder(data: OrderData): Promise<CreateOrderResponse>
     }
   } catch (error: any) {
     console.error('Erreur createOrder:', error)
+    if (error.name === 'AbortError') {
+      return {
+        success: false,
+        error: 'Le serveur met trop de temps à répondre (commande). Veuillez réessayer.'
+      }
+    }
     return {
       success: false,
       error: error.message || 'Erreur de connexion'
@@ -417,11 +427,15 @@ export async function uploadDocument(
     formData.append('orderId', orderId)
     formData.append('documentType', documentType)
 
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 45000) // 45s for uploads
+
     const response = await fetch('/api/documents/upload', {
       method: 'POST',
-      credentials: 'include', // Important pour inclure les cookies de session
+      credentials: 'include',
       body: formData,
-    })
+      signal: controller.signal,
+    }).finally(() => clearTimeout(timeoutId))
 
     const result = await response.json()
 
@@ -440,6 +454,12 @@ export async function uploadDocument(
     }
   } catch (error: any) {
     console.error('Erreur uploadDocument:', error)
+    if (error.name === 'AbortError') {
+      return {
+        success: false,
+        error: `Délai dépassé pour l'upload de ${documentType}.`
+      }
+    }
     return {
       success: false,
       error: error.message || 'Erreur de connexion'

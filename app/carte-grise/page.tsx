@@ -272,6 +272,7 @@ export default function CarteGrisePage() {
 
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const [submitStep, setSubmitStep] = useState('')
 
   // Numéro d'immatriculation optionnel uniquement pour ces deux démarches
   const isRegistrationOptional = documentType === 'immatriculation-provisoire-ww' || documentType === 'carte-grise-vehicule-etranger-ue'
@@ -322,6 +323,7 @@ export default function CarteGrisePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setSubmitError(null)
+    setSubmitStep('')
     
     // Validation des champs obligatoires
     if (!vin || vin.trim() === '') {
@@ -352,25 +354,40 @@ export default function CarteGrisePage() {
     
     setIsSubmitting(true)
     
+    // Global safety timeout: never hang more than 60 seconds
+    const globalTimeout = setTimeout(() => {
+      console.error('GLOBAL TIMEOUT: handleSubmit took more than 60s, force-resetting')
+      setIsSubmitting(false)
+      setSubmitStep('')
+      setSubmitError('Le traitement a pris trop de temps. Veuillez réessayer.')
+    }, 60000)
+    
     try {
       // Vérifier que le mandat est généré et signé avant de continuer
       if (!mandatPreviewUrl) {
         alert('Veuillez d\'abord générer le mandat avant de continuer.')
         setIsSubmitting(false)
+        clearTimeout(globalTimeout)
         return
       }
       
       if (!mandatPreviewUrlWithSignature || !isSignatureValidated) {
         alert('Veuillez d\'abord signer et valider le mandat avant de continuer.')
         setIsSubmitting(false)
+        clearTimeout(globalTimeout)
         return
       }
 
       if (!hasRequiredCarteGriseDocuments()) {
         alert('Veuillez télécharger tous les documents obligatoires avant de procéder au paiement.')
         setIsSubmitting(false)
+        clearTimeout(globalTimeout)
         return
       }
+      
+      // ─── STEP 1: Préparation des données ──────────────────────────────
+      setSubmitStep('Préparation des données...')
+      console.log('[handleSubmit] Step 1: Preparing data')
       
       // Calculate price
       let finalPrice: number
@@ -412,6 +429,10 @@ export default function CarteGrisePage() {
         }
       }
 
+      // ─── STEP 2: Collecte des fichiers ────────────────────────────────
+      setSubmitStep('Collecte des fichiers...')
+      console.log('[handleSubmit] Step 2: Collecting files')
+      
       // Collect ALL files for either immediate upload or IndexedDB storage
       const allFiles: Record<string, File> = {}
       if (idFile) allFiles.idFile = idFile
@@ -457,31 +478,44 @@ export default function CarteGrisePage() {
       if (wwJustificatifIdentiteFile) allFiles.wwJustificatifIdentiteFile = wwJustificatifIdentiteFile
       if (wwControleTechniqueFile) allFiles.wwControleTechniqueFile = wwControleTechniqueFile
       
-      // Mandat
-      let finalMandatFile: File | null = null
+      // ─── STEP 3: Récupération du mandat signé ────────────────────────
+      setSubmitStep('Récupération du mandat signé...')
+      console.log('[handleSubmit] Step 3: Fetching signed mandat')
+      
       if (mandatPreviewUrlWithSignature && isSignatureValidated) {
         try {
-          const response = await fetch(mandatPreviewUrlWithSignature)
+          const controller = new AbortController()
+          const timeoutId = setTimeout(() => controller.abort(), 10000)
+          const response = await fetch(mandatPreviewUrlWithSignature, { signal: controller.signal })
           const blob = await response.blob()
-          finalMandatFile = new File([blob], `mandat_${documentType}.pdf`, { type: 'application/pdf' })
+          const finalMandatFile = new File([blob], `mandat_${documentType}.pdf`, { type: 'application/pdf' })
           allFiles.mandatFile = finalMandatFile
-        } catch (e) { console.error('Mandat fetch error', e) }
+          clearTimeout(timeoutId)
+          console.log('[handleSubmit] Mandat fetched OK, size:', finalMandatFile.size)
+        } catch (e: any) {
+          console.error('[handleSubmit] Mandat fetch error:', e)
+          // Don't block the entire flow for mandat fetch failure
+        }
       }
 
-      // CASE 1: USER IS LOGGED IN
+      // ─── CASE 1: USER IS LOGGED IN ────────────────────────────────────
       if (user && !sessionLoading) {
-        console.log('User logged in, uploading directly...')
+        // ─── STEP 4a: Création de la commande ───────────────────────────
+        setSubmitStep('Création de la commande...')
+        console.log('[handleSubmit] Step 4a: Creating order (logged in)')
         
-        // Create order
         const result = await createOrder(orderData)
         if (!result.success || !result.order) {
           throw new Error(result.error || 'Erreur lors de la création de la commande')
         }
+        console.log('[handleSubmit] Order created:', result.order.id)
 
-        // Prepare files for upload service
+        // ─── STEP 5a: Upload des documents ──────────────────────────────
+        setSubmitStep('Envoi des documents...')
+        console.log('[handleSubmit] Step 5a: Uploading documents')
+        
         const filesToUpload: Array<{ file: File; documentType: string }> = []
         
-        // Helper to map UI keys to document types
         const keyToDocType: Record<string, string> = {
           idFile: 'carte_identite',
           proofAddressFile: 'justificatif_domicile',
@@ -525,33 +559,62 @@ export default function CarteGrisePage() {
         }
 
         if (filesToUpload.length > 0) {
-          await uploadDocuments(filesToUpload, result.order.id)
+          try {
+            await uploadDocuments(filesToUpload, result.order.id)
+            console.log('[handleSubmit] Documents uploaded OK')
+          } catch (uploadErr) {
+            console.error('[handleSubmit] Document upload error (non-blocking):', uploadErr)
+          }
         }
 
         localStorage.setItem('currentOrderId', result.order.id)
         localStorage.setItem('currentOrderRef', result.order.reference)
         localStorage.setItem('currentOrderPrice', String(orderData.price))
         
-        await createCheckoutAndRedirect(result.order.id, orderData.price)
+        // ─── STEP 6a: Ouverture du paiement ─────────────────────────────
+        setSubmitStep('Ouverture du paiement sécurisé...')
+        console.log('[handleSubmit] Step 6a: Opening payment')
+        
+        try {
+          await createCheckoutAndRedirect(result.order.id, orderData.price)
+        } catch (checkoutErr: any) {
+          console.error('[handleSubmit] Checkout error:', checkoutErr)
+          setSubmitError('Commande créée. Si le paiement ne s\'est pas ouvert, rendez-vous sur votre espace client.')
+          setTimeout(() => router.push('/dashboard'), 3000)
+        }
+        
+        clearTimeout(globalTimeout)
+        setIsSubmitting(false)
+        setSubmitStep('')
         return
       }
 
-      // CASE 2: GUEST USER
-      console.log('Guest user, storing in IndexedDB...')
+      // ─── CASE 2: GUEST USER ──────────────────────────────────────────
+      // ─── STEP 4b: Sauvegarde temporaire ───────────────────────────────
+      setSubmitStep('Sauvegarde de votre dossier...')
+      console.log('[handleSubmit] Step 4b: Saving to IndexedDB (guest)')
       
       // Store order meta in localStorage
       localStorage.setItem('pendingOrderData', JSON.stringify({ orderData, price: finalPrice }))
       
       // Store files in IndexedDB (handles large files, no base64 needed)
       await saveFilesToIndexedDB(allFiles)
+      console.log('[handleSubmit] IndexedDB save OK')
       
+      // ─── STEP 5b: Redirection ─────────────────────────────────────────
+      setSubmitStep('Redirection...')
+      console.log('[handleSubmit] Step 5b: Redirecting to /checkout-signup')
+      
+      clearTimeout(globalTimeout)
       router.push('/checkout-signup')
+      
     } catch (error: any) {
-      console.error('Erreur soumission:', error)
-      setSubmitError(error.message || 'Une erreur est survenue lors de la soumission.')
+      console.error('[handleSubmit] ERROR:', error)
+      clearTimeout(globalTimeout)
+      setSubmitError(error.message || 'Une erreur est survenue lors de la soumission. Veuillez réessayer.')
       alert(error.message || 'Une erreur est survenue. Veuillez réessayer.')
-    } finally {
       setIsSubmitting(false)
+      setSubmitStep('')
     }
   }
 
@@ -5661,7 +5724,7 @@ export default function CarteGrisePage() {
                     {isSubmitting ? (
                       <>
                         <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                        <span>Traitement en cours...</span>
+                        <span>{submitStep || 'Traitement en cours...'}</span>
                       </>
                     ) : (
                       <>

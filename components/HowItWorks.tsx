@@ -23,7 +23,7 @@ const HowItWorks = () => {
     },
     {
       question: "Le paiement est-il sécurisé ?",
-      answer: "Absolument ! Nous utilisons les dernières technologies de cryptage SSL et acceptons tous les moyens de paiement sécurisés. Vous pouvez également payer en 3 fois sans frais.",
+      answer: "Absolument ! Nous utilisons les dernières technologies de cryptage SSL et acceptons tous les moyens de paiement sécurisés.",
       icon: "🔒",
       image: "/faq3.png"
     },
@@ -56,8 +56,8 @@ const HowItWorks = () => {
     },
     {
       number: 2,
-      title: 'Paiement en 3X CB',
-      description: 'Réglez votre commande en toute sécurité, avec la possibilité de payer en 3 fois sans frais par Carte bancaire.',
+      title: 'Paiement sécurisé',
+      description: 'Réglez votre commande en toute sécurité sur notre plateforme.',
       icon: '/payment.png',
       color: 'from-emerald-500 to-emerald-600',
       bgColor: 'bg-emerald-50',

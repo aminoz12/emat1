@@ -23,6 +23,7 @@ function openDB(): Promise<IDBDatabase> {
 
     request.onerror = () => reject(request.error)
     request.onsuccess = () => resolve(request.result)
+    request.onblocked = () => reject(new Error('IndexedDB est bloqué par un autre onglet. Veuillez fermer les autres onglets du site.'))
 
     request.onupgradeneeded = (event: any) => {
       const db = event.target.result
@@ -41,6 +42,31 @@ function openDB(): Promise<IDBDatabase> {
  */
 export async function saveFilesToIndexedDB(filesMap: Record<string, File>): Promise<void> {
   try {
+    // 1. Prepare all data FIRST (async non-IDB work)
+    // This is crucial because awaiting inside an IDB transaction can cause it to auto-commit
+    const entries = Object.entries(filesMap).filter(([, file]) => file instanceof File)
+    const preparedFiles: Array<{ key: string, data: StoredFile }> = []
+
+    for (const [key, file] of entries) {
+      try {
+        const buffer = await file.arrayBuffer()
+        preparedFiles.push({
+          key,
+          data: {
+            buffer,
+            name: file.name,
+            type: file.type || 'application/octet-stream',
+            size: file.size,
+          }
+        })
+      } catch (err) {
+        console.error(`Failed to serialize file "${key}":`, err)
+      }
+    }
+
+    if (preparedFiles.length === 0) return
+
+    // 2. Open DB and start transaction
     const db = await openDB()
     const transaction = db.transaction(STORE_NAME, 'readwrite')
     const store = transaction.objectStore(STORE_NAME)
@@ -48,31 +74,27 @@ export async function saveFilesToIndexedDB(filesMap: Record<string, File>): Prom
     // Clear previous files first
     store.clear()
 
-    // Convert each File to a plain serializable object before storing
-    const entries = Object.entries(filesMap).filter(([, file]) => file instanceof File)
-
-    for (const [key, file] of entries) {
-      try {
-        const buffer = await file.arrayBuffer()
-        const storedFile: StoredFile = {
-          buffer,
-          name: file.name,
-          type: file.type || 'application/octet-stream',
-          size: file.size,
-        }
-        store.put(storedFile, key)
-      } catch (err) {
-        console.error(`Failed to serialize file "${key}":`, err)
-      }
+    // 3. Put all files (all synchronous relative to the transaction)
+    for (const { key, data } of preparedFiles) {
+      store.put(data, key)
     }
 
     return new Promise((resolve, reject) => {
       transaction.oncomplete = () => {
-        console.log(`Saved ${entries.length} files to IndexedDB`)
+        console.log(`Saved ${preparedFiles.length} files to IndexedDB`)
+        db.close()
         resolve()
       }
-      transaction.onerror = () => reject(transaction.error)
-      transaction.onabort = () => reject(new Error('IndexedDB transaction aborted'))
+      transaction.onerror = () => {
+        console.error('IndexedDB transaction error:', transaction.error)
+        db.close()
+        reject(transaction.error)
+      }
+      transaction.onabort = () => {
+        console.error('IndexedDB transaction aborted')
+        db.close()
+        reject(new Error('IndexedDB transaction aborted'))
+      }
     })
   } catch (error) {
     console.error('Error saving to IndexedDB:', error)
@@ -112,10 +134,14 @@ export async function getFilesFromIndexedDB(): Promise<Record<string, File>> {
           cursor.continue()
         } else {
           console.log(`Retrieved ${Object.keys(files).length} files from IndexedDB:`, Object.keys(files))
+          db.close()
           resolve(files)
         }
       }
-      request.onerror = () => reject(request.error)
+      request.onerror = () => {
+        db.close()
+        reject(request.error)
+      }
     })
   } catch (error) {
     console.error('Error reading from IndexedDB:', error)
@@ -134,8 +160,14 @@ export async function clearIndexedDB(): Promise<void> {
     store.clear()
 
     return new Promise((resolve, reject) => {
-      transaction.oncomplete = () => resolve()
-      transaction.onerror = () => reject(transaction.error)
+      transaction.oncomplete = () => {
+        db.close()
+        resolve()
+      }
+      transaction.onerror = () => {
+        db.close()
+        reject(transaction.error)
+      }
     })
   } catch (error) {
     console.error('Error clearing IndexedDB:', error)

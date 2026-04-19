@@ -15,8 +15,8 @@ const ProcessSection = () => {
     },
     {
       number: 2,
-      title: 'Paiement en 3X CB',
-      description: 'Réglez votre commande en toute sécurité, avec la possibilité de payer en 3 fois sans frais par Carte bancaire.',
+      title: 'Paiement sécurisé',
+      description: 'Réglez votre commande en toute sécurité directement sur notre plateforme.',
       icon: '/payment.png',
       color: 'bg-purple-500',
     },
@@ -356,8 +356,7 @@ véhicule et recevez votre devis immédiatement.
                         Paiement sécurisé
                       </h4>
                       <p className="text-gray-600 leading-relaxed text-base">
-                      Procédez au paiement en ligne en toute sérénité, avec la possibilité de régler en 3 fois
-sans frais. Toutes les transactions sont entièrement sécurisées.  </p>
+                      Procédez au paiement en ligne en toute sérénité. Toutes les transactions sont entièrement sécurisées.  </p>
                     </div>
                   </div>
                 </div>
@@ -460,8 +459,7 @@ immatriculation.
                           Paiement sécurisé
                         </h4>
                         <p className="text-gray-600 leading-relaxed text-base">
-                        Procédez au paiement en ligne en toute sérénité, avec la possibilité de régler en 3 fois
-sans frais. Toutes les transactions sont entièrement sécurisées.  </p>
+                        Procédez au paiement en ligne en toute sérénité. Toutes les transactions sont entièrement sécurisées.  </p>
                       </div>
                     </div>
                   </div>
