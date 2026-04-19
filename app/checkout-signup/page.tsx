@@ -1,11 +1,29 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { createOrder, uploadDocuments, createCheckoutAndRedirect } from '@/lib/services/orderService'
 import { getFilesFromIndexedDB, clearIndexedDB } from '@/lib/utils/storage'
-import { CheckCircle, Lock, User, Mail, Phone, MapPin, CreditCard } from 'lucide-react'
+import { CheckCircle, Lock, User, Mail, Phone, MapPin, CreditCard, AlertTriangle, Loader2 } from 'lucide-react'
+
+// Helper: wraps a promise with a timeout
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error(`Délai dépassé (${label}). Veuillez réessayer.`)), ms)
+    ),
+  ])
+}
+
+const STEPS = [
+  { id: 'account', label: 'Création du compte...' },
+  { id: 'signin', label: 'Connexion en cours...' },
+  { id: 'order', label: 'Enregistrement de la commande...' },
+  { id: 'documents', label: 'Envoi des documents...' },
+  { id: 'payment', label: 'Ouverture du paiement...' },
+]
 
 export default function CheckoutSignupPage() {
   const router = useRouter()
@@ -16,15 +34,15 @@ export default function CheckoutSignupPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [redirectingToPayment, setRedirectingToPayment] = useState(false)
   const [error, setError] = useState('')
+  const [currentStep, setCurrentStep] = useState<string>('')
   const [userData, setUserData] = useState<any>(null)
   const [orderData, setOrderData] = useState<any>(null)
   const [files, setFiles] = useState<{ [key: string]: File }>({})
+  const abortRef = useRef(false)
 
   useEffect(() => {
-    // Récupérer les données depuis localStorage
     const storedData = localStorage.getItem('pendingOrderData')
     if (!storedData) {
-      // Pas de données en attente, rediriger vers la page d'accueil
       router.push('/')
       return
     }
@@ -42,25 +60,21 @@ export default function CheckoutSignupPage() {
     setOrderData(data.orderData)
 
     const loadFiles = async () => {
-      // 1. D'abord tenter de récupérer depuis IndexedDB (notre nouvelle méthode pour les gros fichiers)
       try {
         const idbFiles = await getFilesFromIndexedDB()
         if (Object.keys(idbFiles).length > 0) {
           console.log('Fichiers récupérés depuis IndexedDB:', Object.keys(idbFiles))
           setFiles(idbFiles)
-          return // Si on a trouvé dans IDB, on s'arrête là
+          return
         }
       } catch (err) {
         console.error('Erreur lecture IndexedDB:', err)
       }
 
-      // 2. Repli sur sessionStorage (base64) pour les anciennes sessions
       const storedFiles = sessionStorage.getItem('pendingOrderFiles')
       if (storedFiles) {
         try {
           const filesData = JSON.parse(storedFiles)
-          console.log('Fichiers récupérés depuis sessionStorage:', Object.keys(filesData))
-          
           const fileObjects: { [key: string]: File } = {}
           for (const [key, fileData] of Object.entries(filesData)) {
             if (fileData && typeof fileData === 'object' && 'base64' in fileData) {
@@ -73,8 +87,7 @@ export default function CheckoutSignupPage() {
                 }
                 const byteArray = new Uint8Array(byteNumbers)
                 const blob = new Blob([byteArray], { type: fileInfo.type || 'application/octet-stream' })
-                const fileName = fileInfo.name || `${key}_${Date.now()}`
-                fileObjects[key] = new File([blob], fileName, { type: fileInfo.type || 'application/octet-stream' })
+                fileObjects[key] = new File([blob], fileInfo.name || key, { type: fileInfo.type || 'application/octet-stream' })
               } catch (convertError) {
                 console.error(`Erreur conversion fichier ${key}:`, convertError)
               }
@@ -84,8 +97,6 @@ export default function CheckoutSignupPage() {
         } catch (error) {
           console.error('Erreur récupération fichiers sessionStorage:', error)
         }
-      } else {
-        console.warn('Aucun fichier trouvé')
       }
     }
 
@@ -93,19 +104,25 @@ export default function CheckoutSignupPage() {
   }, [router])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    })
+    setFormData({ ...formData, [e.target.name]: e.target.value })
     setError('')
+  }
+
+  const handleCancel = () => {
+    abortRef.current = true
+    setIsLoading(false)
+    setRedirectingToPayment(false)
+    setCurrentStep('')
+    setError('Opération annulée. Vous pouvez réessayer.')
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    abortRef.current = false
     setIsLoading(true)
     setError('')
+    setCurrentStep('account')
 
-    // Validation
     if (formData.password !== formData.confirmPassword) {
       setError('Les mots de passe ne correspondent pas')
       setIsLoading(false)
@@ -125,133 +142,114 @@ export default function CheckoutSignupPage() {
     }
 
     try {
-      const supabase = createClient()
+      // ─── STEP 1: Create account ───────────────────────────────────────
+      setCurrentStep('account')
+      const createUserResponse = await withTimeout(
+        fetch('/api/auth/create-user', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: userData.email,
+            password: formData.password,
+            firstName: userData.firstName,
+            lastName: userData.lastName,
+            phone: userData.phone,
+            address: userData.address,
+            postalCode: userData.postalCode,
+            city: userData.city,
+          }),
+        }),
+        20000,
+        'création du compte'
+      )
 
-      // Créer le compte utilisateur via l'API avec confirmation automatique de l'email
-      const userDataToSend = {
-        email: userData.email,
-        password: formData.password,
-        firstName: userData.firstName,
-        lastName: userData.lastName,
-        phone: userData.phone,
-        address: userData.address,
-        postalCode: userData.postalCode,
-        city: userData.city,
-      }
-      
-      console.log('Données utilisateur à envoyer:', userDataToSend)
-      
-      const createUserResponse = await fetch('/api/auth/create-user', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(userDataToSend),
-      })
+      if (abortRef.current) return
 
       const createUserResult = await createUserResponse.json()
-
       if (!createUserResponse.ok) {
-        const errorMessage = createUserResult.error || 'Erreur lors de la création du compte'
-        console.error('Erreur création utilisateur:', {
-          status: createUserResponse.status,
-          error: errorMessage,
-          details: createUserResult.details
-        })
-        throw new Error(errorMessage)
+        throw new Error(createUserResult.error || 'Erreur lors de la création du compte')
       }
 
-      // Maintenant se connecter avec le compte créé
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: userData.email,
-        password: formData.password,
-      })
-      
+      // ─── STEP 2: Sign in ──────────────────────────────────────────────
+      setCurrentStep('signin')
+      const supabase = createClient()
+
+      const { error: signInError } = await withTimeout(
+        supabase.auth.signInWithPassword({
+          email: userData.email,
+          password: formData.password,
+        }),
+        15000,
+        'connexion'
+      )
+
+      if (abortRef.current) return
       if (signInError) {
-        throw new Error('Compte créé mais impossible de se connecter. Veuillez réessayer.')
+        throw new Error('Compte créé mais impossible de se connecter. Veuillez réessayer dans quelques instants.')
       }
 
-      // Vérifier que la session est bien établie
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession()
+      // Verify session
+      const { data: sessionData, error: sessionError } = await withTimeout(
+        supabase.auth.getSession(),
+        10000,
+        'vérification session'
+      )
       if (sessionError || !sessionData.session) {
-        throw new Error('Impossible d\'établir la session. Veuillez réessayer.')
+        throw new Error('Session non établie. Veuillez réessayer.')
       }
 
-      // Court délai pour que les cookies et le profil soient pris en compte
-      await new Promise(resolve => setTimeout(resolve, 500))
+      // Wait for profile to be created by DB trigger
+      await new Promise(resolve => setTimeout(resolve, 600))
 
-      // Créer la commande
-      console.log('Création de la commande avec orderData:', {
-        type: orderData.type,
-        price: orderData.price,
-        hasVehicleData: !!orderData.vehicleData
-      })
-      
-      const result = await createOrder(orderData)
+      if (abortRef.current) return
+
+      // ─── STEP 3: Create order ─────────────────────────────────────────
+      setCurrentStep('order')
+      const result = await withTimeout(
+        createOrder(orderData),
+        20000,
+        'création de la commande'
+      )
+
+      if (abortRef.current) return
 
       if (!result.success || !result.order) {
-        console.error('Erreur création commande:', result.error)
         let errorMessage = result.error || 'Erreur lors de la création de la commande'
         if (result.error?.includes('foreign key') || result.error?.includes('user_id')) {
           errorMessage = 'Erreur de profil utilisateur. Veuillez rafraîchir la page et réessayer.'
-        } else if (result.error?.includes('constraint') || result.error?.includes('violation')) {
-          errorMessage = 'Erreur de validation des données. Veuillez vérifier vos informations.'
         }
         throw new Error(errorMessage)
       }
-      
-      console.log('Commande créée avec succès:', result.order.id)
 
-      // --- LOAD FILES FRESH FROM IndexedDB at submit time ---
+      console.log('Commande créée:', result.order.id)
+
+      // ─── STEP 4: Upload documents ─────────────────────────────────────
+      setCurrentStep('documents')
+
+      // Always re-read from IndexedDB at submit time to avoid stale state
       let freshFiles: Record<string, File> = {}
       try {
         freshFiles = await getFilesFromIndexedDB()
-        console.log('Fichiers récupérés depuis IndexedDB (submit):', Object.keys(freshFiles))
       } catch (err) {
-        console.error('Erreur lecture IndexedDB lors de la soumission:', err)
+        console.error('Erreur IndexedDB:', err)
       }
-      // Fallback to state files if IndexedDB was empty
       if (Object.keys(freshFiles).length === 0 && Object.keys(files).length > 0) {
         freshFiles = files
-        console.log('Utilisation des fichiers depuis l\'état React:', Object.keys(freshFiles))
       }
 
-      // Uploader les documents
-      const documentsToUpload: Array<{ file: File; documentType: string }> = []
-      
-      console.log('Fichiers disponibles pour upload:', Object.keys(freshFiles))
-      
-      // Documents de base
-      const baseDocMap: Record<string, string> = {
+      const docTypeMap: Record<string, string> = {
         idFile: 'carte_identite',
         proofAddressFile: 'justificatif_domicile',
         currentCardFile: 'carte_grise_actuelle',
         certificatCessionFile: 'certificat_cession',
+        certificatCessionCerfa15776File: 'certificat_cession_15776',
         permisConduireFile: 'permis_conduire',
         controleTechniqueFile: 'controle_technique',
         assuranceFile: 'assurance',
         carteGriseFile: 'carte_grise',
         rectoFile: 'carte_grise_recto',
         versoFile: 'carte_grise_verso',
-      }
-
-      for (const [key, docType] of Object.entries(baseDocMap)) {
-        const file = freshFiles[key]
-        if (file) {
-          console.log(`Ajout ${docType}:`, file.name)
-          documentsToUpload.push({ file, documentType: docType })
-        }
-      }
-
-      // Mandat signé
-      if (freshFiles.mandatFile) {
-        const mandatType = orderData.metadata?.isSignatureValidated ? 'mandat_signe' : 'mandat'
-        console.log('Ajout mandat:', freshFiles.mandatFile.name, `(${mandatType})`)
-        documentsToUpload.push({ file: freshFiles.mandatFile, documentType: mandatType })
-      }
-
-      // Documents spécifiques aux procédures carte-grise
-      const procedureDocTypeMap: Record<string, string> = {
+        mandatFile: 'mandat',
         hostIdFile: 'host_id',
         hostProofAddressFile: 'host_justificatif_domicile',
         attestationHebergementFile: 'attestation_hebergement',
@@ -260,10 +258,8 @@ export default function CheckoutSignupPage() {
         companyAssuranceFile: 'company_assurance',
         cerfa13750File: 'cerfa_13750',
         cerfa13753File: 'cerfa_13753',
-        mandatFile: 'mandat',
         carteGriseVendeurFile: 'carte_grise_vendeur',
         demandeCertificatMandatFile: 'demande_certificat_mandat',
-        certificatCessionCerfa15776File: 'certificat_cession_15776',
         recepisseDeclarationAchatFile: 'recepisse_declaration_achat',
         certificatDeclarationAchatCerfa13751File: 'certificat_declaration_achat_13751',
         justificatifIdentiteFile: 'justificatif_identite',
@@ -315,73 +311,75 @@ export default function CheckoutSignupPage() {
         quitusDemandeCertificatCerfa13750File: 'quitus_demande_cerfa_13750',
       }
 
-      Object.entries(procedureDocTypeMap).forEach(([key, docType]) => {
-        const file = (freshFiles as Record<string, File | undefined>)[key]
-        if (file && !documentsToUpload.find(d => d.documentType === docType)) {
-          documentsToUpload.push({ file, documentType: docType })
-        }
-      })
-      
-      console.log(`Total documents à uploader: ${documentsToUpload.length}`)
-
-      if (documentsToUpload.length > 0) {
-        console.log(`Début upload de ${documentsToUpload.length} documents...`)
-        const uploadResult = await uploadDocuments(documentsToUpload, result.order.id)
-        console.log(`Résultat upload: ${uploadResult.uploaded}/${documentsToUpload.length} uploadés`)
-        
-        if (!uploadResult.success) {
-          console.error('Certains documents n\'ont pas pu être uploadés:', uploadResult.errors)
-          // Ne pas bloquer le paiement — l'admin peut toujours demander les documents manuellement
-        }
-      } else {
-        // No files found — log a warning but continue to payment
-        // Admin will receive order data and can request documents manually
-        console.warn('Aucun document trouvé à uploader. La commande sera créée sans documents.')
+      // Override mandat type based on signature
+      if (freshFiles.mandatFile) {
+        docTypeMap.mandatFile = orderData.metadata?.isSignatureValidated ? 'mandat_signe' : 'mandat'
       }
 
-      // Nettoyer les données temporaires
+      const documentsToUpload: Array<{ file: File; documentType: string }> = []
+      for (const [key, docType] of Object.entries(docTypeMap)) {
+        const file = (freshFiles as Record<string, File | undefined>)[key]
+        if (file) {
+          documentsToUpload.push({ file, documentType: docType })
+        }
+      }
+
+      console.log(`Upload de ${documentsToUpload.length} documents...`)
+      if (documentsToUpload.length > 0) {
+        // Don't await document upload with timeout - just run in background if needed
+        // but wait for it so admin gets the files
+        try {
+          const uploadResult = await withTimeout(
+            uploadDocuments(documentsToUpload, result.order.id),
+            60000,
+            'upload documents'
+          )
+          console.log(`Upload terminé: ${uploadResult.uploaded}/${documentsToUpload.length}`)
+        } catch (uploadErr) {
+          // Don't block payment on upload failure
+          console.error('Erreur upload documents (non bloquant):', uploadErr)
+        }
+      } else {
+        console.warn('Aucun document à uploader.')
+      }
+
+      if (abortRef.current) return
+
+      // ─── Cleanup ──────────────────────────────────────────────────────
       localStorage.removeItem('pendingOrderData')
       sessionStorage.removeItem('pendingOrderFiles')
-      await clearIndexedDB()
+      try { await clearIndexedDB() } catch (_) {}
 
-      // Stocker les références de commande
       localStorage.setItem('currentOrderId', result.order.id)
       localStorage.setItem('currentOrderRef', result.order.reference)
       localStorage.setItem('currentOrderPrice', String(orderData.price))
 
-      // Redirection vers le paiement
+      // ─── STEP 5: Payment ──────────────────────────────────────────────
+      setCurrentStep('payment')
+      setIsLoading(false)
       setRedirectingToPayment(true)
 
-      // Lancer le paiement — createCheckoutAndRedirect ouvre un popup ou redirige
-      // On redirige vers le dashboard après (le popup gérera la suite)
       try {
         await createCheckoutAndRedirect(result.order.id, orderData.price)
-      } catch (checkoutError: any) {
-        console.error('Erreur lors de la création du checkout:', checkoutError)
-        // En cas d'erreur de paiement, rediriger vers le dashboard
-        // La commande a bien été créée, l'admin la verra
-        setError('Commande créée. Erreur lors de l\'ouverture du paiement. Veuillez contacter le support ou réessayer depuis votre espace client.')
-        setRedirectingToPayment(false)
-        // Redirect to dashboard anyway so user can see their order
-        setTimeout(() => {
-          router.push('/dashboard')
-        }, 3000)
-        return
+        // After popup is opened, navigate to dashboard (popup handles payment)
+        router.push('/dashboard')
+      } catch (checkoutErr: any) {
+        console.error('Erreur checkout:', checkoutErr)
+        // Even if checkout fails, redirect to dashboard with order created
+        setError('Commande créée avec succès. Si le paiement ne s\'est pas ouvert, allez dans votre espace client.')
+        setTimeout(() => router.push('/dashboard'), 3000)
       }
 
-      // Redirect to dashboard after payment is initiated
-      // (popup handles SumUp, this page stays as dashboard)
-      router.push('/dashboard')
-
     } catch (error: any) {
-      console.error('Erreur:', error)
-      setRedirectingToPayment(false)
-      setError(error.message || 'Une erreur est survenue')
+      console.error('Erreur checkout-signup:', error)
+      setError(error.message || 'Une erreur est survenue. Veuillez réessayer.')
     } finally {
       setIsLoading(false)
     }
   }
 
+  const currentStepLabel = STEPS.find(s => s.id === currentStep)?.label || 'Traitement en cours...'
+  const currentStepIndex = STEPS.findIndex(s => s.id === currentStep)
 
   if (!userData || !orderData) {
     return (
@@ -399,15 +397,11 @@ export default function CheckoutSignupPage() {
       <div className="max-w-2xl mx-auto">
         <div className="bg-white rounded-lg shadow-lg p-8">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              Créer votre compte
-            </h1>
-            <p className="text-gray-600">
-              Complétez votre inscription pour finaliser votre commande
-            </p>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Créer votre compte</h1>
+            <p className="text-gray-600">Complétez votre inscription pour finaliser votre commande</p>
           </div>
 
-          {/* Aperçu des informations */}
+          {/* User info summary */}
           <div className="bg-gray-50 rounded-lg p-6 mb-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
               <User className="w-5 h-5 mr-2 text-primary-600" />
@@ -437,9 +431,54 @@ export default function CheckoutSignupPage() {
             </div>
           </div>
 
+          {/* Error display */}
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
-              {error}
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6 flex items-start gap-2">
+              <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+              <span>{error}</span>
+            </div>
+          )}
+
+          {/* Loading progress display */}
+          {(isLoading || redirectingToPayment) && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2 text-blue-700 font-medium">
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <span>{redirectingToPayment ? 'Ouverture du paiement...' : currentStepLabel}</span>
+                </div>
+                {isLoading && !redirectingToPayment && (
+                  <button
+                    type="button"
+                    onClick={handleCancel}
+                    className="text-xs text-red-600 hover:underline"
+                  >
+                    Annuler
+                  </button>
+                )}
+              </div>
+              {/* Step progress bar */}
+              <div className="flex gap-1">
+                {STEPS.map((step, idx) => (
+                  <div
+                    key={step.id}
+                    className={`h-1.5 flex-1 rounded-full transition-all duration-500 ${
+                      idx < currentStepIndex
+                        ? 'bg-blue-600'
+                        : idx === currentStepIndex
+                          ? 'bg-blue-400 animate-pulse'
+                          : 'bg-blue-100'
+                    }`}
+                  />
+                ))}
+              </div>
+              <div className="flex justify-between mt-1">
+                {STEPS.map((step, idx) => (
+                  <span key={step.id} className={`text-xs ${idx <= currentStepIndex ? 'text-blue-600' : 'text-blue-200'}`}>
+                    {idx + 1}
+                  </span>
+                ))}
+              </div>
             </div>
           )}
 
@@ -456,7 +495,8 @@ export default function CheckoutSignupPage() {
                 onChange={handleChange}
                 required
                 minLength={6}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-600 focus:border-primary-600 outline-none"
+                disabled={isLoading || redirectingToPayment}
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-600 focus:border-primary-600 outline-none disabled:bg-gray-100"
                 placeholder="Choisissez un mot de passe sécurisé"
               />
               <p className="text-xs text-gray-500 mt-1">Minimum 6 caractères</p>
@@ -474,7 +514,8 @@ export default function CheckoutSignupPage() {
                 onChange={handleChange}
                 required
                 minLength={6}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-600 focus:border-primary-600 outline-none"
+                disabled={isLoading || redirectingToPayment}
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-600 focus:border-primary-600 outline-none disabled:bg-gray-100"
                 placeholder="Confirmez votre mot de passe"
               />
             </div>
@@ -498,8 +539,8 @@ export default function CheckoutSignupPage() {
                 </>
               ) : isLoading ? (
                 <>
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                  Création du compte...
+                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                  {currentStepLabel}
                 </>
               ) : (
                 <>
@@ -514,5 +555,3 @@ export default function CheckoutSignupPage() {
     </div>
   )
 }
-
-
