@@ -63,6 +63,8 @@ export default function AdminDocumentsPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedDoc, setSelectedDoc] = useState<Document | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [signedUrls, setSignedUrls] = useState<Record<string, string>>({})
+  const [loadingSignedUrl, setLoadingSignedUrl] = useState<string | null>(null)
 
   useEffect(() => {
     fetchDocuments()
@@ -94,6 +96,47 @@ export default function AdminDocumentsPage() {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const getSignedUrl = async (doc: Document): Promise<string> => {
+    // Return cached URL if available
+    if (signedUrls[doc.id]) return signedUrls[doc.id]
+
+    setLoadingSignedUrl(doc.id)
+    try {
+      const res = await fetch(`/api/admin/documents/signed-url?documentId=${doc.id}`)
+      const data = await res.json()
+      const url = data.url || doc.file_url
+      setSignedUrls(prev => ({ ...prev, [doc.id]: url }))
+      return url
+    } catch (err) {
+      console.error('Erreur signed URL:', err)
+      return doc.file_url
+    } finally {
+      setLoadingSignedUrl(null)
+    }
+  }
+
+  const openDocument = async (doc: Document) => {
+    const url = await getSignedUrl(doc)
+    window.open(url, '_blank')
+  }
+
+  const downloadDocument = async (doc: Document) => {
+    const url = await getSignedUrl(doc)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = doc.name
+    a.target = '_blank'
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+  }
+
+  const previewDocument = async (doc: Document) => {
+    const url = await getSignedUrl(doc)
+    setSignedUrls(prev => ({ ...prev, [doc.id]: url }))
+    setSelectedDoc(doc)
   }
 
   const deleteDocument = async (docId: string) => {
@@ -299,21 +342,21 @@ export default function AdminDocumentsPage() {
                       <td className="py-4 px-6">
                         <div className="flex items-center gap-2">
                           <button
-                            onClick={() => setSelectedDoc(doc)}
-                            className="p-2 text-gray-600 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+                            onClick={() => previewDocument(doc)}
+                            disabled={loadingSignedUrl === doc.id}
+                            className="p-2 text-gray-600 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors disabled:opacity-50"
                             title="Voir"
                           >
                             <Eye className="w-4 h-4" />
                           </button>
-                          <a
-                            href={doc.file_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          <button
+                            onClick={() => downloadDocument(doc)}
+                            disabled={loadingSignedUrl === doc.id}
+                            className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50"
                             title="Télécharger"
                           >
                             <Download className="w-4 h-4" />
-                          </a>
+                          </button>
                           <button
                             onClick={() => deleteDocument(doc.id)}
                             className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
@@ -379,23 +422,20 @@ export default function AdminDocumentsPage() {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <a
-                  href={selectedDoc.file_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <button
+                  onClick={() => openDocument(selectedDoc)}
                   className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                   title="Ouvrir dans un nouvel onglet"
                 >
                   <ExternalLink className="w-5 h-5" />
-                </a>
-                <a
-                  href={selectedDoc.file_url}
-                  download
+                </button>
+                <button
+                  onClick={() => downloadDocument(selectedDoc)}
                   className="p-2 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
                   title="Télécharger"
                 >
                   <Download className="w-5 h-5" />
-                </a>
+                </button>
                 <button
                   onClick={() => deleteDocument(selectedDoc.id)}
                   disabled={isDeleting}
@@ -415,17 +455,21 @@ export default function AdminDocumentsPage() {
 
             {/* Preview */}
             <div className="flex-1 overflow-auto p-4 bg-gray-100">
-              {isImage(selectedDoc.file_type) ? (
+              {loadingSignedUrl === selectedDoc.id ? (
+                <div className="flex items-center justify-center min-h-[400px]">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+                </div>
+              ) : isImage(selectedDoc.file_type) ? (
                 <div className="flex items-center justify-center min-h-[400px]">
                   <img
-                    src={selectedDoc.file_url}
+                    src={signedUrls[selectedDoc.id] || selectedDoc.file_url}
                     alt={selectedDoc.name}
                     className="max-w-full max-h-[70vh] object-contain rounded-lg shadow-lg"
                   />
                 </div>
               ) : isPdf(selectedDoc.file_type) ? (
                 <iframe
-                  src={selectedDoc.file_url}
+                  src={signedUrls[selectedDoc.id] || selectedDoc.file_url}
                   className="w-full h-[70vh] rounded-lg shadow-lg"
                   title={selectedDoc.name}
                 />
@@ -433,14 +477,12 @@ export default function AdminDocumentsPage() {
                 <div className="flex flex-col items-center justify-center min-h-[400px] text-gray-500">
                   <File className="w-16 h-16 mb-4" />
                   <p>Aperçu non disponible pour ce type de fichier</p>
-                  <a
-                    href={selectedDoc.file_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <button
+                    onClick={() => downloadDocument(selectedDoc)}
                     className="mt-4 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
                   >
                     Télécharger le fichier
-                  </a>
+                  </button>
                 </div>
               )}
             </div>
