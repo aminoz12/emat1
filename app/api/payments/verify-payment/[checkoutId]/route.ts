@@ -94,8 +94,8 @@ export async function GET(
         )
       }
 
-      // Mark order as completed when paid, unpaid when payment failed/cancelled/expired
-      const orderStatus = paid ? 'completed' : 'unpaid'
+      // Mark order as pending when paid, unpaid when payment failed/cancelled/expired
+      const orderStatus = paid ? 'pending' : 'unpaid'
       const { error: orderUpdateError } = await admin
         .from('orders')
         .update({

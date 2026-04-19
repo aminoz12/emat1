@@ -163,6 +163,8 @@ export default function AdminDocumentsPage() {
   const isImage = (fileType: string) => fileType?.startsWith('image/')
   const isPdf = (fileType: string) => fileType?.includes('pdf')
 
+  const getSignedUrl = (url: string) => url ? `/api/admin/documents/signed-url?url=${encodeURIComponent(url)}` : '#'
+
   return (
     <div className="space-y-6">
       {/* Page header */}
@@ -306,7 +308,7 @@ export default function AdminDocumentsPage() {
                             <Eye className="w-4 h-4" />
                           </button>
                           <a
-                            href={doc.file_url}
+                            href={getSignedUrl(doc.file_url)}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
@@ -380,7 +382,7 @@ export default function AdminDocumentsPage() {
               </div>
               <div className="flex items-center gap-2">
                 <a
-                  href={selectedDoc.file_url}
+                  href={getSignedUrl(selectedDoc.file_url)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
@@ -389,7 +391,7 @@ export default function AdminDocumentsPage() {
                   <ExternalLink className="w-5 h-5" />
                 </a>
                 <a
-                  href={selectedDoc.file_url}
+                  href={getSignedUrl(selectedDoc.file_url)}
                   download
                   className="p-2 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
                   title="Télécharger"
@@ -418,14 +420,14 @@ export default function AdminDocumentsPage() {
               {isImage(selectedDoc.file_type) ? (
                 <div className="flex items-center justify-center min-h-[400px]">
                   <img
-                    src={selectedDoc.file_url}
+                    src={getSignedUrl(selectedDoc.file_url)}
                     alt={selectedDoc.name}
                     className="max-w-full max-h-[70vh] object-contain rounded-lg shadow-lg"
                   />
                 </div>
               ) : isPdf(selectedDoc.file_type) ? (
                 <iframe
-                  src={selectedDoc.file_url}
+                  src={getSignedUrl(selectedDoc.file_url)}
                   className="w-full h-[70vh] rounded-lg shadow-lg"
                   title={selectedDoc.name}
                 />
@@ -434,7 +436,7 @@ export default function AdminDocumentsPage() {
                   <File className="w-16 h-16 mb-4" />
                   <p>Aperçu non disponible pour ce type de fichier</p>
                   <a
-                    href={selectedDoc.file_url}
+                    href={getSignedUrl(selectedDoc.file_url)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="mt-4 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"

@@ -306,7 +306,7 @@ export default function CarteGrisePage() {
       case 'fiche-identification':
         return !!(ficheJustificatifIdentiteFile && fichePermisConduireFile)
       case 'immatriculation-provisoire-ww':
-        return !!(wwCarteGriseEtrangereFile && wwCertificatConformiteFile && wwJustificatifProprieteFile && wwQuitusFiscalFile && wwJustificatifDomicileFile && wwJustificatifIdentiteFile && wwControleTechniqueFile)
+        return !!(wwCarteGriseEtrangereFile && wwJustificatifProprieteFile && wwQuitusFiscalFile && wwJustificatifDomicileFile && wwJustificatifIdentiteFile && wwControleTechniqueFile)
       case 'carte-grise-vehicule-etranger-ue':
         return !!(ueCarteGriseEtrangereFile && ueCertificatConformiteFile && ueJustificatifProprieteFile && ueQuitusFiscalFile && ueJustificatifDomicileFile && ueJustificatifIdentiteFile && ueControleTechniqueFile)
       case 'w-garage':
@@ -2335,16 +2335,7 @@ export default function CarteGrisePage() {
                           <span className="text-sm text-gray-500">{wwCarteGriseEtrangereFile ? wwCarteGriseEtrangereFile.name : 'Aucun fichier choisi'}</span>
                         </div>
                       </div>
-                      <div className="mb-4">
-                        <label className="flex items-center text-sm font-medium text-gray-900 mb-2">Certificat de conformité ou document de la DRIRE ou de non-conformité *</label>
-                        <div className="flex items-center space-x-3">
-                          <label className="cursor-pointer">
-                            <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2"><Upload className="w-4 h-4" /><span>Choisir un fichier</span></span>
-                            <input type="file" onChange={handleFileChange(setWwCertificatConformiteFile)} className="hidden" accept="image/*,.pdf" required />
-                          </label>
-                          <span className="text-sm text-gray-500">{wwCertificatConformiteFile ? wwCertificatConformiteFile.name : 'Aucun fichier choisi'}</span>
-                        </div>
-                      </div>
+
                       <div className="mb-4">
                         <label className="flex items-center text-sm font-medium text-gray-900 mb-2">Justificatif de propriété du véhicule (facture d'achat ou certificat de cession) *</label>
                         <div className="flex items-center space-x-3">
@@ -4710,33 +4701,7 @@ export default function CarteGrisePage() {
                           </div>
                         </div>
 
-                        {/* Certificat de conformité ou document de la DRIRE ou de non-conformité */}
-                        <div className="mb-4">
-                          <label className="flex items-center text-sm font-medium text-gray-900 mb-2">
-                            Certificat de conformité ou document de la DRIRE ou de non-conformité *
-                            <div className="w-4 h-4 ml-2 rounded-full bg-gray-300 flex items-center justify-center cursor-help">
-                              <Info className="w-3 h-3 text-gray-600" />
-                            </div>
-                          </label>
-                          <div className="flex items-center space-x-3">
-                            <label className="cursor-pointer">
-                              <span className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 transition-colors flex items-center space-x-2">
-                                <Upload className="w-4 h-4" />
-                                <span>Choisir un fichier</span>
-                              </span>
-                              <input
-                                type="file"
-                                onChange={handleFileChange(setWwCertificatConformiteFile)}
-                                className="hidden"
-                                accept="image/*,.pdf"
-                                required
-                              />
-                            </label>
-                            <span className="text-sm text-gray-500">
-                              {wwCertificatConformiteFile ? wwCertificatConformiteFile.name : 'Aucun fichier choisi'}
-                            </span>
-                          </div>
-                        </div>
+
 
                         {/* Justificatif de propriété du véhicule */}
                         <div className="mb-4">

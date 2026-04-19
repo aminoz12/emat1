@@ -105,7 +105,7 @@ export async function GET(request: Request) {
       )
     }
 
-    const orderStatus = paid ? 'completed' : 'unpaid'
+    const orderStatus = paid ? 'pending' : 'unpaid'
     const { error: orderUpdateError } = await admin
       .from('orders')
       .update({

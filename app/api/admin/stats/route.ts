@@ -77,18 +77,18 @@ export async function GET(request: NextRequest) {
       console.error('Erreur récupération commandes terminées:', completedError)
     }
 
-    // Chiffre d'affaires = somme des montants des paiements réussis (payments.status = 'succeeded')
-    const { data: paymentsData, error: revenueError } = await supabase
-      .from('payments')
-      .select('amount')
-      .eq('status', 'succeeded')
+    // Chiffre d'affaires = somme des `price` des commandes validées (en cours de traitement ou terminées)
+    const { data: revenueData, error: revenueError } = await supabase
+      .from('orders')
+      .select('price')
+      .in('status', ['pending', 'processing', 'completed'])
 
     if (revenueError) {
       console.error('Erreur récupération revenus:', revenueError)
     }
 
-    const totalRevenue = paymentsData?.reduce((sum, p) => {
-      const amount = typeof p.amount === 'string' ? parseFloat(p.amount) : (p.amount || 0)
+    const totalRevenue = revenueData?.reduce((sum, order) => {
+      const amount = typeof order.price === 'string' ? parseFloat(order.price) : (order.price || 0)
       return sum + amount
     }, 0) || 0
 
